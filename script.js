@@ -1,9 +1,6 @@
 /* ============================================================
-   RASTRGRADE v22 — UPGRADE ONLY
-   Удалены: рулетка, кейсы, батлы, ачивки, бонус раз в минуту,
-   ежедневный 7-дневный бонус, звук перезарядки.
-   Оставлено: апгрейд, магазин, инвентарь, статистика.
-   При первом входе — 5₴ один раз, больше ничего.
+   RASTRGRADE v23 — UPGRADE (RustGrade layout)
+   Честный рандом + психология затягивания
    ============================================================ */
 
 /* ============ КУРС ВАЛЮТ ============ */
@@ -102,22 +99,23 @@ const RARITIES = {
     mythical:  { name:'МИФИЧЕСКИЙ',  color:'#ff0044' }
 };
 
-const HOUSE_EDGE = 0.08;
-const MAX_UPGRADE_SLOTS = 6;
-
+/* ============================================================
+   ПРЕСЕТЫ — ТАБЛИЦА D
+   mult = во сколько раз цель дороже источника
+   chance = шанс победы
+   Честный рандом — без подкруток
+   ============================================================ */
 const PRESETS = [
-    {mult:1.5,label:'1.5x',chance:(1/1.5)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:2,label:'2x',chance:(1/2)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:3,label:'3x',chance:(1/3)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:4,label:'4x',chance:(1/4)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:6,label:'6x',chance:(1/6)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:8,label:'8x',chance:(1/8)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:10,label:'10x',chance:(1/10)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:20,label:'20x',chance:(1/20)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:50,label:'50x',chance:(1/50)*100*(1-HOUSE_EDGE),fixed:false},
-    {mult:null,label:'35%',chance:35,fixed:true},
-    {mult:null,label:'50%',chance:50,fixed:true},
-    {mult:null,label:'75%',chance:75,fixed:true}
+    { mult: 1.5, label: 'x1.5', chance: 70, kind: 'mult' },
+    { mult: 2,   label: 'x2',   chance: 55, kind: 'mult' },
+    { mult: 3,   label: 'x3',   chance: 40, kind: 'mult' },
+    { mult: 5,   label: 'x5',   chance: 25, kind: 'mult' },
+    { mult: 10,  label: 'x10',  chance: 13, kind: 'mult' },
+    { mult: 20,  label: 'x20',  chance: 7,  kind: 'mult' },
+    { mult: 50,  label: 'x50',  chance: 3,  kind: 'mult' },
+    { chance: 35, label: '35%', kind: 'fixed' },
+    { chance: 50, label: '50%', kind: 'fixed' },
+    { chance: 75, label: '75%', kind: 'fixed' }
 ];
 
 const LEVELS = [
@@ -142,13 +140,15 @@ var state = {
     inventory: [],
     profit: 0,
     totalWon: 0, totalLost: 0, upgrades: 0, purchases: 0,
-    multiUpgrades: 0, multi6: 0,
     bestDrop: null, bestUpgrade: null,
-    upgradeSources: [], upgradeTarget: null, selectedPreset: null,
+    upgradeSource: null,
+    upgradeTarget: null,
+    selectedPreset: null,
     housePlayerLost: 0, houseCasinoWon: 0,
     xp: 0, level: 1,
     soundOn: true,
     shopFilter: 'all', shopSort: 'price-asc',
+    invPanelFilter: 'all', itemsPanelFilter: 'all',
     firstVisit: true
 };
 
@@ -161,7 +161,6 @@ function save() {
             totalWon: state.totalWon, totalLost: state.totalLost,
             upgrades: state.upgrades,
             purchases: state.purchases,
-            multiUpgrades: state.multiUpgrades, multi6: state.multi6,
             bestDrop: state.bestDrop ? {id:state.bestDrop.id, rarity:state.bestDrop.rarity} : null,
             bestUpgrade: state.bestUpgrade ? {id:state.bestUpgrade.id, rarity:state.bestUpgrade.rarity} : null,
             housePlayerLost: state.housePlayerLost, houseCasinoWon: state.houseCasinoWon,
@@ -170,15 +169,14 @@ function save() {
             shopFilter: state.shopFilter, shopSort: state.shopSort,
             firstVisit: false
         };
-        localStorage.setItem('rastrgrade_v22', JSON.stringify(save_data));
+        localStorage.setItem('rastrgrade_v23', JSON.stringify(save_data));
     } catch(e) {}
 }
 
 function load() {
     try {
-        var raw = localStorage.getItem('rastrgrade_v22');
+        var raw = localStorage.getItem('rastrgrade_v23');
         if (!raw) {
-            /* Первый вход — даём 5₴ */
             state.balance = 5;
             state.firstVisit = false;
             save();
@@ -209,8 +207,6 @@ const SOUND_FILES = {
     lose: 'sounds/lose.mp3',
     click: 'sounds/click.mp3',
     buy: 'sounds/buy.mp3',
-    gunshot: 'sounds/gunshot.mp3',
-    drums: 'sounds/drums.mp3',
     levelup: 'sounds/levelup.mp3'
 };
 
@@ -334,7 +330,6 @@ function stopAllLoopSounds() {
     });
 }
 
-/* АПГРЕЙД — звук SPIN вместо reload */
 function startUpgradeSound(duration) {
     duration = duration || 4200;
     var h = startLoopSound('spin', 0.55);
@@ -364,26 +359,20 @@ function log(msg, type) {
     }, 3500);
 }
 
-/* ============ УТИЛИТЫ ============ */
-function findTargetSkin(base, mult) {
-    var target = base * mult; var best = null, bestDiff = Infinity;
-    SKINS.forEach(function(s){
-        if (s.price <= base) return;
-        var d = Math.abs(s.price - target);
-        if (d < bestDiff) { bestDiff = d; best = s; }
-    });
-    return best;
-}
-function findTargetByChance(base, chance) {
-    var target = base * 100 * (1 - HOUSE_EDGE) / chance;
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+
+/* Находит скин-цель, ближайший к target-цене */
+function findTargetByPrice(targetPrice) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
-        if (s.price <= base) return;
-        var d = Math.abs(s.price - target);
+        var d = Math.abs(s.price - targetPrice);
         if (d < bestDiff) { bestDiff = d; best = s; }
     });
     return best;
 }
+
 function addXP(n) {
     state.xp += n;
     var prev = state.level;
@@ -396,12 +385,16 @@ function addXP(n) {
     }
 }
 
-/* ============ DOM CACHE ============ */
+/* ============ UI ============ */
 var DOM = {};
 function cacheDom() {
     ['balance','profit','invCount','invValue','statTotalWon','statTotalLost',
      'statUpgrades','statPurchases','statBestDrop','statBestUpgrade',
-     'housePlayer','houseCasino','levelBadge','levelName','levelBarFill']
+     'housePlayer','houseCasino','levelBadge','levelName','levelBarFill',
+     'sourcePriceLabel','targetPriceLabel','sourceSlot','targetSlot',
+     'sourceRemoveBtn','targetRemoveBtn','circlePercent','circleStatus',
+     'presetContainer','invPanelCount','invPanelList','targetsCount',
+     'itemsPanelGrid','invSearch','itemsSearch']
     .forEach(function(id){ DOM[id] = $(id); });
     DOM.shopBalance = $('shopBalance');
 }
@@ -434,6 +427,9 @@ function updateUI() {
     save();
 }
 
+/* ============================================================
+   SHOW RESULT
+   ============================================================ */
 function showResult(o) {
     var inner = $('resultInner');
     inner.className = 'modal-inner result-inner ' + o.type;
@@ -483,7 +479,9 @@ function closeResult() {
     $('resultModal').classList.remove('show');
 }
 
-/* ============ АПГРЕЙД ============ */
+/* ============================================================
+   UPGRADE — SOURCE / TARGET SLOTS
+   ============================================================ */
 var CIRCLE_RADIUS = 100;
 var CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
@@ -491,22 +489,20 @@ function drawChanceSector(chance) {
     chance = Math.max(0, Math.min(100, chance));
     var len = (chance / 100) * CIRCLE_CIRCUMFERENCE;
     $('chanceSector').setAttribute('stroke-dasharray', len + ' ' + CIRCLE_CIRCUMFERENCE);
-    $('chanceOutline').setAttribute('stroke-dasharray', len + ' ' + CIRCLE_CIRCUMFERENCE);
-    var c1, c2;
-    if (chance >= 65) { c1 = '#7ed321'; c2 = '#4caf50'; }
-    else if (chance >= 35) { c1 = '#f5c542'; c2 = '#ff9800'; }
-    else if (chance >= 15) { c1 = '#ff9800'; c2 = '#ff6b1a'; }
-    else { c1 = '#ff6b1a'; c2 = '#ff3b3b'; }
-    $('chanceGradient').children[0].setAttribute('stop-color', c1);
-    $('chanceGradient').children[1].setAttribute('stop-color', c2);
+    var color;
+    if (chance >= 65) color = '#7ed321';
+    else if (chance >= 35) color = '#f5c542';
+    else if (chance >= 15) color = '#ff6b1a';
+    else color = '#ff3b3b';
+    $('chanceSector').style.color = color;
 }
 function setNeedleAngle(deg) { $('circleNeedle').style.transform = 'rotate(' + deg + 'deg)'; }
 function updateCircleChance(chance, statusText, statusClass) {
     drawChanceSector(chance);
-    $('circlePercent').textContent = chance.toFixed(2) + '%';
+    $('circlePercent').textContent = Math.round(chance) + '%';
     var s = $('circleStatus');
     s.textContent = statusText || '';
-    s.className = 'circle-status ' + (statusClass || '');
+    s.className = 'upg-status ' + (statusClass || '');
     var color;
     if (chance >= 65) color = '#7ed321';
     else if (chance >= 35) color = '#f5c542';
@@ -514,197 +510,238 @@ function updateCircleChance(chance, statusText, statusClass) {
     else color = '#ff3b3b';
     $('circlePercent').style.color = color;
 }
-function getSourceSum() { return state.upgradeSources.reduce(function(s, src) { return s + src.skin.price; }, 0); }
 
-var _multiSlotsReady = false;
-function renderMultiSlots() {
-    var wrap = $('multiSlots');
-    var frag = document.createDocumentFragment();
-    for (var i = 0; i < MAX_UPGRADE_SLOTS; i++) {
-        var slot = document.createElement('div');
-        slot.className = 'multi-slot';
-        var src = state.upgradeSources[i];
-        if (src) {
-            slot.classList.add('filled', src.skin.rarity);
-            slot.dataset.idx = i;
-            slot.innerHTML = renderSkinIcon(src.skin) +
-                '<div class="name">' + src.skin.name + '</div>' +
-                '<div class="price">' + formatUah(src.skin.price) + '</div>' +
-                '<div class="remove-btn" data-idx="' + i + '">✕</div>';
-        } else if (i === state.upgradeSources.length) {
-            slot.classList.add('empty-slot-special');
-            slot.dataset.add = '1';
-            slot.innerHTML = '<div class="empty-plus">+</div><div class="slot-hint">Добавить</div>';
-        } else {
-            slot.classList.add('empty-slot-special');
-            slot.innerHTML = '<div class="empty-plus">🔒</div><div class="slot-hint">Сначала</div>';
-        }
-        frag.appendChild(slot);
-    }
-    wrap.replaceChildren(frag);
-    if (!_multiSlotsReady) {
-        _multiSlotsReady = true;
-        wrap.addEventListener('click', function(e) {
-            var removeBtn = e.target.closest('.remove-btn');
-            if (removeBtn) {
-                e.stopPropagation();
-                unlockAudio(); sClick();
-                var idx = parseInt(removeBtn.dataset.idx, 10);
-                state.upgradeSources.splice(idx, 1);
-                state.selectedPreset = null; state.upgradeTarget = null;
-                renderMultiSlots(); renderPresets(); updateUpgradeUI();
-                return;
-            }
-            var addSlot = e.target.closest('[data-add="1"]');
-            if (addSlot) {
-                unlockAudio(); sClick(); openSkinSelector();
-            }
-        });
+/* Рендер левого слота (источник) */
+function renderSourceSlot() {
+    var slot = $('sourceSlot');
+    if (state.upgradeSource) {
+        slot.className = 'upg-item-slot filled ' + state.upgradeSource.rarity;
+        slot.innerHTML =
+            renderSkinIcon(state.upgradeSource) +
+            '<div class="upg-item-name">' + state.upgradeSource.name + '</div>' +
+            '<div class="upg-item-rarity" style="color:' + RARITIES[state.upgradeSource.rarity].color + '">' + RARITIES[state.upgradeSource.rarity].name + '</div>';
+        $('sourcePriceLabel').textContent = formatUah(state.upgradeSource.price);
+        $('sourceRemoveBtn').style.display = 'block';
+    } else {
+        slot.className = 'upg-item-slot';
+        slot.innerHTML =
+            '<div class="upg-item-empty">' +
+                '<div class="upg-item-empty-icon">+</div>' +
+                '<div class="upg-item-empty-text">Выбрать предмет</div>' +
+            '</div>';
+        $('sourcePriceLabel').textContent = '—';
+        $('sourceRemoveBtn').style.display = 'none';
     }
 }
 
+/* Рендер правого слота (цель) */
+function renderTargetSlot() {
+    var slot = $('targetSlot');
+    if (state.upgradeTarget) {
+        slot.className = 'upg-item-slot filled ' + state.upgradeTarget.rarity;
+        slot.innerHTML =
+            renderSkinIcon(state.upgradeTarget) +
+            '<div class="upg-item-name">' + state.upgradeTarget.name + '</div>' +
+            '<div class="upg-item-rarity" style="color:' + RARITIES[state.upgradeTarget.rarity].color + '">' + RARITIES[state.upgradeTarget.rarity].name + '</div>';
+        $('targetPriceLabel').textContent = formatUah(state.upgradeTarget.price);
+        $('targetRemoveBtn').style.display = 'block';
+    } else {
+        slot.className = 'upg-item-slot';
+        slot.innerHTML =
+            '<div class="upg-item-empty">' +
+                '<div class="upg-item-empty-icon">?</div>' +
+                '<div class="upg-item-empty-text">Цель</div>' +
+            '</div>';
+        $('targetPriceLabel').textContent = '—';
+        $('targetRemoveBtn').style.display = 'none';
+    }
+}
+
+/* Обновить круг при выборе пресета */
+function updateCircleFromPreset() {
+    if (state.selectedPreset === null || !state.upgradeSource || !state.upgradeTarget) {
+        updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+        setNeedleAngle(0);
+        $('upgradeBtn').disabled = true;
+        return;
+    }
+    var preset = PRESETS[state.selectedPreset];
+    var chance = preset.chance;
+    var status = chance >= 60 ? 'высокий шанс' :
+                 chance >= 30 ? 'средний шанс' :
+                 chance >= 15 ? 'риск' : 'ХАЙ РИСК';
+    var statusClass = chance >= 60 ? 'win' : chance >= 15 ? '' : 'lose';
+    updateCircleChance(chance, status.toUpperCase(), statusClass);
+    setNeedleAngle(0);
+    $('upgradeBtn').disabled = false;
+}
+
+/* Рендер пресетов */
 function renderPresets() {
     var container = $('presetContainer');
     var frag = document.createDocumentFragment();
-    var hasSources = state.upgradeSources.length > 0;
+    var hasTarget = !!(state.upgradeSource && state.upgradeTarget);
     PRESETS.forEach(function(p, idx) {
         var btn = document.createElement('button');
-        btn.className = 'preset-btn';
-        btn.disabled = !hasSources;
+        btn.className = 'upg-preset-btn';
+        btn.disabled = !hasTarget;
         btn.dataset.idx = idx;
-        btn.innerHTML = '<span class="preset-mult">' + p.label + '</span><span class="preset-chance">' + p.chance.toFixed(1) + '%</span>';
+        btn.innerHTML = '<span class="upg-preset-mult">' + p.label + '</span><span class="upg-preset-chance">' + p.chance + '%</span>';
         if (state.selectedPreset === idx) btn.classList.add('active');
         btn.addEventListener('click', function() { selectPreset(idx); });
         frag.appendChild(btn);
     });
     container.replaceChildren(frag);
-    if (hasSources) {
-        var sum = getSourceSum();
-        $('presetInfo').textContent = 'База: ' + formatUah(sum) + ' · ' + state.upgradeSources.length + ' шт.';
-    } else {
-        $('presetInfo').textContent = 'Сначала добавь скины в слоты';
-    }
 }
 
+/* Выбор пресета */
 function selectPreset(idx) {
-    if (state.upgradeSources.length === 0) { log('❌ Сначала добавь скины', 'lose'); return; }
+    if (!state.upgradeSource) { log('❌ Сначала выбери предмет', 'lose'); return; }
+    if (!state.upgradeTarget) { log('❌ Сначала выбери цель', 'lose'); return; }
     unlockAudio(); sClick();
     state.selectedPreset = idx;
-    var sum = getSourceSum(); var p = PRESETS[idx];
-    var target = p.fixed ? findTargetByChance(sum, p.chance) : findTargetSkin(sum, p.mult);
-    if (!target) { log('❌ Нет подходящего скина', 'lose'); return; }
-    state.upgradeTarget = target;
-    var realChance = Math.min(95, (sum / target.price) * 100 * (1 - HOUSE_EDGE));
-    state.upgradeTarget._chance = realChance;
-    renderPresets(); updateUpgradeUI();
-}
+    var p = PRESETS[idx];
 
-function updateUpgradeUI() {
-    var sum = getSourceSum();
-    $('sourceCount').textContent = state.upgradeSources.length + ' / ' + MAX_UPGRADE_SLOTS;
-    $('sourceSumPrice').textContent = formatUah(sum);
-    if (state.upgradeTarget) {
-        $('targetBox').innerHTML = renderSkinIcon(state.upgradeTarget) +
-            '<div class="name">' + state.upgradeTarget.name + '</div>' +
-            '<div class="price">' + formatUah(state.upgradeTarget.price) + '</div>';
-        $('targetBox').className = 'skin-slot target ' + state.upgradeTarget.rarity;
-        $('targetPriceLabel').textContent = formatUah(state.upgradeTarget.price);
+    /* Для множителей — пересчитываем ЦЕЛЬ. Для фикс. шанса — цель уже подобрана */
+    if (p.kind === 'mult') {
+        var targetPrice = state.upgradeSource.price * p.mult;
+        var target = findTargetByPrice(targetPrice);
+        if (!target || target.price <= state.upgradeSource.price) {
+            log('❌ Нет подходящей цели для x' + p.mult, 'lose');
+            state.selectedPreset = null;
+            return;
+        }
+        state.upgradeTarget = target;
+        /* Обновляем реальный шанс если цель не идеально подходит */
+        var realChance = Math.min(95, (state.upgradeSource.price / target.price) * 100);
+        state.upgradeTarget._realChance = realChance;
+        state.upgradeTarget._presetChance = p.chance;
     } else {
-        $('targetBox').innerHTML = '<div class="skin-slot-empty">—</div>';
-        $('targetBox').className = 'skin-slot target';
-        $('targetPriceLabel').textContent = '0 ₴';
+        /* fixed chance — цель уже стоит, шанс = p.chance */
+        if (state.upgradeTarget.price <= state.upgradeSource.price) {
+            log('❌ Цель дешевле источника', 'lose');
+            state.selectedPreset = null;
+            return;
+        }
+        state.upgradeTarget._realChance = p.chance;
     }
-    if (state.upgradeTarget && state.upgradeTarget._chance !== undefined) {
-        var chance = state.upgradeTarget._chance;
-        var status, statusClass;
-        if (chance >= 65) { status = 'высокий шанс'; statusClass = 'win'; }
-        else if (chance >= 35) { status = 'средний шанс'; statusClass = ''; }
-        else if (chance >= 15) { status = 'низкий шанс'; statusClass = ''; }
-        else { status = 'очень низкий шанс'; statusClass = 'lose'; }
-        updateCircleChance(chance, status, statusClass);
-        setNeedleAngle(0);
-        $('upgradeBtn').disabled = false;
-    } else {
-        updateCircleChance(0, 'выбери скины', '');
-        setNeedleAngle(0);
-        $('upgradeBtn').disabled = true;
-    }
+    renderTargetSlot();
+    renderPresets();
+    updateCircleFromPreset();
 }
 
-var selectorFilter = 'all';
-function openSkinSelector() {
-    if (state.upgradeSources.length >= MAX_UPGRADE_SLOTS) { log('❌ Максимум 6 скинов', 'lose'); return; }
-    if (state.inventory.length === 0) { log('❌ Инвентарь пуст', 'lose'); return; }
-    var filters = $('skinFilters');
-    var frag = document.createDocumentFragment();
-    var allBtn = document.createElement('button');
-    allBtn.className = 'filter-btn active'; allBtn.textContent = 'Все'; allBtn.dataset.filter = 'all';
-    frag.appendChild(allBtn);
-    Object.entries(RARITIES).forEach(function(kv) {
-        var b = document.createElement('button');
-        b.className = 'filter-btn'; b.textContent = kv[1].name; b.dataset.filter = kv[0]; b.style.color = kv[1].color;
-        frag.appendChild(b);
-    });
-    filters.replaceChildren(frag);
-    filters.querySelectorAll('.filter-btn').forEach(function(b) {
-        b.addEventListener('click', function() {
-            filters.querySelectorAll('.filter-btn').forEach(function(x) { x.classList.remove('active'); });
-            b.classList.add('active'); selectorFilter = b.dataset.filter; renderSkinSelectorGrid();
-        });
-    });
-    selectorFilter = 'all'; renderSkinSelectorGrid();
-    $('skinSelector').classList.add('show');
-}
+/* ============================================================
+   INVENTORY PANEL (слева снизу)
+   ============================================================ */
+function renderInvPanel() {
+    var list = $('invPanelList');
+    var filter = state.invPanelFilter;
+    var search = ($('invSearch').value || '').toLowerCase();
+    var sorted = state.inventory.slice().sort(function(a,b) { return b.price - a.price; });
+    if (filter !== 'all') sorted = sorted.filter(function(s) { return s.rarity === filter; });
+    if (search) sorted = sorted.filter(function(s) { return s.name.toLowerCase().indexOf(search) >= 0; });
 
-function renderSkinSelectorGrid() {
-    var grid = $('skinSelectorGrid');
-    var usedIdx = {};
-    state.upgradeSources.forEach(function(s) { usedIdx[s._invIdx] = true; });
-    var frag = document.createDocumentFragment();
-    var source = state.inventory.map(function(s, idx) { return {skin:s, _invIdx:idx}; });
-    if (selectorFilter !== 'all') source = source.filter(function(item) { return item.skin.rarity === selectorFilter; });
-    if (source.length === 0) {
-        grid.innerHTML = '<div class="empty-inv" style="grid-column:1/-1">Ничего не найдено</div>';
+    $('invPanelCount').textContent = state.inventory.length + '/' + state.inventory.length;
+
+    if (sorted.length === 0) {
+        list.innerHTML = '<div class="upg-inv-empty">Инвентарь пуст</div>';
         return;
     }
-    source.forEach(function(item) {
-        var skin = item.skin;
+
+    var frag = document.createDocumentFragment();
+    sorted.forEach(function(skin) {
         var el = document.createElement('div');
-        el.className = 'skin-item ' + skin.rarity;
-        if (usedIdx[item._invIdx]) el.classList.add('already-used');
-        el.innerHTML = renderSkinIcon(skin) + '<div class="name">' + skin.name + '</div><div class="price">' + formatUah(skin.price) + '</div>';
-        el.dataset.invIdx = item._invIdx;
+        el.className = 'upg-inv-item ' + skin.rarity;
+        if (state.upgradeSource && state.upgradeSource === skin) el.classList.add('used');
+        el.innerHTML = renderSkinIcon(skin) +
+            '<div class="upg-inv-name">' + skin.name + '</div>' +
+            '<div class="upg-inv-price">' + formatUah(skin.price) + '</div>';
         el.addEventListener('click', function() {
-            if (usedIdx[item._invIdx]) return;
             unlockAudio(); sClick();
-            state.upgradeSources.push({ skin: skin, _invIdx: item._invIdx });
-            state.selectedPreset = null; state.upgradeTarget = null;
-            $('skinSelector').classList.remove('show');
-            renderMultiSlots(); renderPresets(); updateUpgradeUI();
+            state.upgradeSource = skin;
+            state.upgradeTarget = null;
+            state.selectedPreset = null;
+            renderSourceSlot();
+            renderTargetSlot();
+            renderInvPanel();
+            renderPresets();
+            updateCircleFromPreset();
+        });
+        frag.appendChild(el);
+    });
+    list.replaceChildren(frag);
+}
+
+/* ============================================================
+   ITEMS PANEL (справа снизу) — цели для апгрейда
+   ============================================================ */
+function renderItemsPanel() {
+    var grid = $('itemsPanelGrid');
+    var filter = state.itemsPanelFilter;
+    var search = ($('itemsSearch').value || '').toLowerCase();
+    var items = SKINS.slice();
+    if (filter !== 'all') items = items.filter(function(s) { return s.rarity === filter; });
+    if (search) items = items.filter(function(s) { return s.name.toLowerCase().indexOf(search) >= 0; });
+
+    $('targetsCount').textContent = items.length;
+
+    if (items.length === 0) {
+        grid.innerHTML = '<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';
+        return;
+    }
+
+    var frag = document.createDocumentFragment();
+    items.forEach(function(skin) {
+        var el = document.createElement('div');
+        el.className = 'upg-target-item ' + skin.rarity;
+        el.innerHTML = renderSkinIcon(skin) +
+            '<div class="upg-target-name">' + skin.name + '</div>' +
+            '<div class="upg-target-price">' + formatUah(skin.price) + '</div>';
+        el.addEventListener('click', function() {
+            unlockAudio(); sClick();
+            state.upgradeTarget = skin;
+            state.selectedPreset = null;
+            renderTargetSlot();
+            renderPresets();
+            updateCircleFromPreset();
         });
         frag.appendChild(el);
     });
     grid.replaceChildren(frag);
 }
 
+/* ============================================================
+   АНИМАЦИЯ АПГРЕЙДА
+   ============================================================ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
-        var duration = 4200;
+        var duration = 4000;
         var sectorEnd = chance * 3.6;
         var finalAngle;
         if (willWin) {
+            /* Попадание внутрь сектора */
             var margin = Math.min(sectorEnd * 0.15, 8);
             finalAngle = Math.max(margin, Math.random() * (sectorEnd - margin));
         } else {
-            var outsideStart = sectorEnd + 5; var outsideEnd = 355;
-            finalAngle = outsideStart >= outsideEnd ? (sectorEnd + 2 + Math.random() * 3) % 360 : outsideStart + Math.random() * (outsideEnd - outsideStart);
+            /* ПРОМАХ — психологический приём "почти выиграл" */
+            var roll = Math.random();
+            if (roll < 0.7) {
+                /* 70% провалов — почти добежал (за 2-5 градусов до порога) */
+                finalAngle = sectorEnd + 2 + Math.random() * 3;
+            } else {
+                /* 30% — совсем мимо */
+                var farStart = sectorEnd + 20;
+                var farEnd = 355;
+                finalAngle = farStart + Math.random() * (farEnd - farStart);
+            }
         }
-        var fullSpins = 6 + Math.floor(Math.random() * 3);
+        var fullSpins = 8 + Math.floor(Math.random() * 4);
         var totalRotation = fullSpins * 360 + finalAngle;
         var start = performance.now();
         var sound = startUpgradeSound(duration);
         function animate(now) {
             var t = Math.min(1, (now - start) / duration);
+            /* Easing: быстрый разгон, плавное торможение */
             var eased = 1 - Math.pow(1 - t, 4);
             setNeedleAngle(totalRotation * eased);
             if (t < 1) requestAnimationFrame(animate);
@@ -712,8 +749,13 @@ function playUpgradeAnimation(chance, willWin) {
                 setNeedleAngle(finalAngle);
                 if (sound) sound.stop();
                 var s = $('circleStatus');
-                if (willWin) { s.textContent = '✅ победа'; s.className = 'circle-status win'; }
-                else { s.textContent = '❌ провал'; s.className = 'circle-status lose'; }
+                if (willWin) {
+                    s.textContent = '✅ ПОБЕДА';
+                    s.className = 'upg-status win';
+                } else {
+                    s.textContent = '❌ ПРОВАЛ';
+                    s.className = 'upg-status lose';
+                }
                 setTimeout(resolve, 900);
             }
         }
@@ -721,7 +763,178 @@ function playUpgradeAnimation(chance, willWin) {
     });
 }
 
-/* ============ МАГАЗИН ============ */
+/* ============================================================
+   КНОПКА АПГРЕЙД
+   ============================================================ */
+$('upgradeBtn').addEventListener('click', async function() {
+    if (!state.upgradeSource || !state.upgradeTarget) return;
+    if (state.selectedPreset === null) return;
+    if (state.upgrading) return;
+    unlockAudio();
+    var btn = $('upgradeBtn');
+    btn.style.pointerEvents = 'none';
+
+    var preset = PRESETS[state.selectedPreset];
+    var chance = preset.chance;
+
+    /* ЧЕСТНЫЙ РАНДОМ */
+    var roll = Math.random() * 100;
+    var success = roll < chance;
+
+    state.upgrading = true;
+    state.upgrades++;
+
+    btn.disabled = true;
+
+    var sourceSkin = state.upgradeSource;
+    var targetSkin = state.upgradeTarget;
+    var sourceValue = sourceSkin.price;
+    var targetValue = targetSkin.price;
+
+    addXP(20);
+
+    await playUpgradeAnimation(chance, success);
+
+    /* Убираем источник из инвентаря */
+    var srcIdx = state.inventory.indexOf(sourceSkin);
+    if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
+
+    if (success) {
+        /* Игрок получает цельный скин */
+        state.inventory.push(targetSkin);
+        state.totalWon += targetValue;
+        state.profit += targetValue - sourceValue;
+        state.houseCasinoWon += targetValue;
+        if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
+        sWin(targetSkin.rarity);
+        showResult({
+            type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
+            value: '+' + formatUah(targetValue), canSell: true,
+            sellCallback: function() {
+                var i = state.inventory.indexOf(targetSkin);
+                if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); }
+            }
+        });
+        log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
+    } else {
+        /* ПРОВАЛ — источник исчез */
+        state.totalLost += sourceValue;
+        state.profit -= sourceValue;
+        state.housePlayerLost += sourceValue;
+        sLose();
+        showResult({
+            type: 'result-lose', icon: '💀', title: '❌ ПРОВАЛ',
+            skin: null,
+            value: 'Потеряно: ' + formatUah(sourceValue),
+            canSell: false
+        });
+        log('⚡ ' + sourceSkin.name + ' → провал ❌', 'lose');
+    }
+
+    /* СБРОС */
+    state.upgradeSource = null;
+    state.upgradeTarget = null;
+    state.selectedPreset = null;
+    state.upgrading = false;
+    btn.style.pointerEvents = '';
+    btn.disabled = true;
+
+    renderSourceSlot();
+    renderTargetSlot();
+    renderInvPanel();
+    renderItemsPanel();
+    renderPresets();
+    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+    setNeedleAngle(0);
+    updateUI();
+    renderInventory();
+});
+
+/* ============================================================
+   СЛОТЫ — открытие панелей выбора
+   ============================================================ */
+$('sourceSlot').addEventListener('click', function() {
+    if (state.upgradeSource) return;
+    unlockAudio(); sClick();
+    /* Скроллим к панели инвентаря */
+    var panel = document.querySelector('.upg-inv-panel');
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+$('targetSlot').addEventListener('click', function() {
+    if (state.upgradeTarget) return;
+    unlockAudio(); sClick();
+    var panel = document.querySelector('.upg-items-panel');
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+$('sourceRemoveBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    unlockAudio(); sClick();
+    state.upgradeSource = null;
+    state.upgradeTarget = null;
+    state.selectedPreset = null;
+    renderSourceSlot();
+    renderTargetSlot();
+    renderInvPanel();
+    renderPresets();
+    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+    setNeedleAngle(0);
+    $('upgradeBtn').disabled = true;
+});
+
+$('targetRemoveBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    unlockAudio(); sClick();
+    state.upgradeTarget = null;
+    state.selectedPreset = null;
+    renderTargetSlot();
+    renderPresets();
+    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+    setNeedleAngle(0);
+    $('upgradeBtn').disabled = true;
+});
+
+/* ============================================================
+   ФИЛЬТРЫ ПАНЕЛЕЙ
+   ============================================================ */
+function initPanelFilters(containerId, filterKey, callback) {
+    var container = $(containerId);
+    container.innerHTML = '';
+    var all = document.createElement('button');
+    all.className = 'upg-inv-filter active';
+    all.textContent = 'Все';
+    all.dataset.filter = 'all';
+    all.style.color = '';
+    container.appendChild(all);
+    Object.entries(RARITIES).forEach(function(kv) {
+        var b = document.createElement('button');
+        b.className = 'upg-inv-filter';
+        b.textContent = kv[1].name;
+        b.dataset.filter = kv[0];
+        b.style.color = kv[1].color;
+        container.appendChild(b);
+    });
+    container.querySelectorAll('.upg-inv-filter').forEach(function(b) {
+        b.addEventListener('click', function() {
+            unlockAudio(); sClick();
+            container.querySelectorAll('.upg-inv-filter').forEach(function(x) { x.classList.remove('active'); });
+            b.classList.add('active');
+            state[filterKey] = b.dataset.filter;
+            callback();
+        });
+    });
+}
+
+initPanelFilters('invPanelFilters', 'invPanelFilter', renderInvPanel);
+initPanelFilters('itemsPanelFilters', 'itemsPanelFilter', renderItemsPanel);
+
+$('invSearch').addEventListener('input', function() { renderInvPanel(); });
+$('itemsSearch').addEventListener('input', function() { renderItemsPanel(); });
+
+/* ============================================================
+   МАГАЗИН
+   ============================================================ */
 var _shopVisibleCount = 20;
 function renderShop() {
     var grid = $('shopGrid');
@@ -777,7 +990,9 @@ function openBuyModal(skin, price) {
 }
 var pendingPurchase = null;
 
-/* ============ ИНВЕНТАРЬ ============ */
+/* ============================================================
+   ИНВЕНТАРЬ (page)
+   ============================================================ */
 var invFilter = 'all';
 function renderInventory() {
     var inv = $('inventory');
@@ -801,7 +1016,7 @@ function renderInventory() {
 function sellSkin(skin) {
     var idx = state.inventory.indexOf(skin); if (idx < 0) return;
     state.inventory.splice(idx, 1); state.balance += skin.price;
-    updateUI(); renderInventory(); sClick();
+    updateUI(); renderInventory(); renderInvPanel(); sClick();
     log('💰 Продано: ' + skin.name + ' +' + formatUah(skin.price), 'info');
 }
 
@@ -812,64 +1027,6 @@ load();
 
 $('resultContinue').addEventListener('click', closeResult);
 
-$('closeSkinSelector').addEventListener('click', function() {
-    sClick(); $('skinSelector').classList.remove('show');
-});
-
-$('resetUpgradeBtn').addEventListener('click', function() {
-    unlockAudio(); sClick();
-    state.upgradeSources = []; state.upgradeTarget = null; state.selectedPreset = null;
-    renderMultiSlots(); renderPresets(); updateUpgradeUI();
-});
-
-$('upgradeBtn').addEventListener('click', async function() {
-    if (state.upgradeSources.length === 0 || !state.upgradeTarget) return;
-    if (state.upgrading) return;
-    unlockAudio();
-    var btn = $('upgradeBtn');
-    btn.style.pointerEvents = 'none';
-    var chance = state.upgradeTarget._chance;
-    var success = Math.random() * 100 < chance;
-    state.upgrading = true; state.upgrades++;
-    var slotCount = state.upgradeSources.length;
-    if (slotCount >= 2) state.multiUpgrades++;
-    if (slotCount === 6) state.multi6++;
-    btn.disabled = true; $('resetUpgradeBtn').disabled = true;
-    var sources = state.upgradeSources.slice();
-    var targetSkin = state.upgradeTarget;
-    var totalSourceValue = sources.reduce(function(s, src) { return s + src.skin.price; }, 0);
-    addXP(25 + slotCount * 5);
-    await playUpgradeAnimation(chance, success);
-    var idxs = sources.map(function(s) { return s._invIdx; }).sort(function(a, b) { return b - a; });
-    idxs.forEach(function(idx) { if (idx >= 0 && idx < state.inventory.length) state.inventory.splice(idx, 1); });
-    if (success) {
-        state.inventory.push(targetSkin);
-        state.totalWon += targetSkin.price; state.profit += targetSkin.price - totalSourceValue;
-        state.houseCasinoWon += targetSkin.price;
-        if (!state.bestDrop || targetSkin.price > state.bestDrop.price) state.bestDrop = targetSkin;
-        if (!state.bestUpgrade || targetSkin.price > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
-        sWin(targetSkin.rarity);
-        showResult({
-            type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
-            value: '+' + formatUah(targetSkin.price), canSell: true,
-            sellCallback: function() {
-                var i = state.inventory.indexOf(targetSkin);
-                if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); }
-            }
-        });
-        log('⚡ ' + slotCount + ' скин(ов) → ' + targetSkin.name + ' ✅', 'win');
-    } else {
-        state.totalLost += totalSourceValue; state.profit -= totalSourceValue;
-        state.housePlayerLost += totalSourceValue; sLose();
-        showResult({ type: 'result-lose', icon: '💀', title: '❌ ПРОВАЛ', skin: null, value: 'Потеряно: ' + formatUah(totalSourceValue) + ' (' + slotCount + ' шт.)', canSell: false });
-        log('⚡ ' + slotCount + ' скин(ов) → провал ❌', 'lose');
-    }
-    state.upgradeSources = []; state.upgradeTarget = null; state.selectedPreset = null;
-    state.upgrading = false; $('resetUpgradeBtn').disabled = false;
-    btn.style.pointerEvents = '';
-    renderMultiSlots(); renderPresets(); updateUpgradeUI(); updateUI(); renderInventory();
-});
-
 $('soundBtn').addEventListener('click', function() {
     state.soundOn = !state.soundOn;
     $('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
@@ -879,7 +1036,7 @@ $('soundBtn').addEventListener('click', function() {
 
 $('resetAllBtn').addEventListener('click', function() {
     if (!confirm('Сбросить весь прогресс?')) return;
-    localStorage.removeItem('rastrgrade_v22');
+    localStorage.removeItem('rastrgrade_v23');
     location.reload();
 });
 
@@ -895,18 +1052,18 @@ $('buyConfirm').addEventListener('click', function() {
     state.inventory.push(skin);
     state.purchases++;
     state.totalLost += price; state.profit -= price;
-    state.housePlayerLost += price; state.houseCasinoWon += price;
+    state.housePlayerLost += price;
     addXP(10); sBuy();
     log('🛒 Куплено: ' + skin.name + ' за ' + formatUah(price), 'win');
     $('buyModal').classList.remove('show'); pendingPurchase = null;
-    updateUI(); renderShop(); renderInventory();
+    updateUI(); renderShop(); renderInventory(); renderInvPanel();
 });
 
 $('sellAllBtn').addEventListener('click', function() {
     if (state.inventory.length === 0) return;
     var total = state.inventory.reduce(function(s, i) { return s + i.price; }, 0);
     state.balance += total; state.inventory = [];
-    updateUI(); renderInventory(); sBuy();
+    updateUI(); renderInventory(); renderInvPanel(); sBuy();
     log('💰 Продано: +' + formatUah(total), 'win');
 });
 
@@ -942,6 +1099,7 @@ document.querySelectorAll('.nav-tab').forEach(function(tab) {
         tab.classList.add('active');
         $('page-' + tab.dataset.page).classList.add('active');
         if (tab.dataset.page === 'shop') { _shopVisibleCount = 20; renderShop(); }
+        if (tab.dataset.page === 'inventory') renderInventory();
     });
 });
 
@@ -959,15 +1117,16 @@ if (shopFilterBtn) {
 $('shopSort').value = state.shopSort;
 $('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
 
-if (state.upgradeSources && state.upgradeSources.length > 0) {
-    state.upgradeSources = state.upgradeSources.filter(function(s) { return s && s.skin; });
-}
-
-renderMultiSlots();
+/* ============ INITIAL RENDER ============ */
+renderSourceSlot();
+renderTargetSlot();
 renderPresets();
+renderInvPanel();
+renderItemsPanel();
 renderShop();
 updateUI();
 renderInventory();
-updateUpgradeUI();
+updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+setNeedleAngle(0);
 
 document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
