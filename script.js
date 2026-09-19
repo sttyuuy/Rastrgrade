@@ -1,6 +1,7 @@
 /* ============================================================
-   RASTRGRADE v24 — UPGRADE (RustGrade layout)
-   ФИКС БАГА: реальный шанс всегда = (source / target) × 100
+   RASTRGRADE v25 — UPGRADE ONLY
+   Убраны пресеты 35/50/75, оставлены только множители x1.5...x500
+   Шанс ВСЕГДА = (source / target) × 100 — честный
    ============================================================ */
 
 /* ============ КУРС ВАЛЮТ ============ */
@@ -100,22 +101,18 @@ const RARITIES = {
 };
 
 /* ============================================================
-   ПРЕСЕТЫ
-   kind: 'mult' — подбор цели по множителю цены
-   kind: 'chance' — подбор цели по желаемому шансу
-   Реальный шанс ВСЕГДА = (source / target) × 100
+   ПРЕСЕТЫ — ТОЛЬКО МНОЖИТЕЛИ
    ============================================================ */
 const PRESETS = [
-    { kind: 'mult',   mult: 1.5, label: 'x1.5' },
-    { kind: 'mult',   mult: 2,   label: 'x2' },
-    { kind: 'mult',   mult: 3,   label: 'x3' },
-    { kind: 'mult',   mult: 5,   label: 'x5' },
-    { kind: 'mult',   mult: 10,  label: 'x10' },
-    { kind: 'mult',   mult: 20,  label: 'x20' },
-    { kind: 'mult',   mult: 50,  label: 'x50' },
-    { kind: 'chance', chance: 35, label: '35%' },
-    { kind: 'chance', chance: 50, label: '50%' },
-    { kind: 'chance', chance: 75, label: '75%' }
+    { mult: 1.5, label: 'x1.5' },
+    { mult: 2,   label: 'x2'   },
+    { mult: 3,   label: 'x3'   },
+    { mult: 5,   label: 'x5'   },
+    { mult: 10,  label: 'x10'  },
+    { mult: 20,  label: 'x20'  },
+    { mult: 50,  label: 'x50'  },
+    { mult: 100, label: 'x100' },
+    { mult: 500, label: 'x500' }
 ];
 
 const LEVELS = [
@@ -167,13 +164,13 @@ function save() {
             soundOn: state.soundOn,
             shopFilter: state.shopFilter, shopSort: state.shopSort
         };
-        localStorage.setItem('rastrgrade_v24', JSON.stringify(save_data));
+        localStorage.setItem('rastrgrade_v25', JSON.stringify(save_data));
     } catch(e) {}
 }
 
 function load() {
     try {
-        var raw = localStorage.getItem('rastrgrade_v24');
+        var raw = localStorage.getItem('rastrgrade_v25');
         if (!raw) {
             state.balance = 5;
             save();
@@ -358,18 +355,18 @@ function log(msg, type) {
    УТИЛИТЫ
    ============================================================ */
 
-/* Находит скин-цель, ближайший к заданной цене. Исключает source если он передан. */
-function findTargetByPrice(targetPrice, excludeSkin) {
+/* Ищет скин, ближайший по цене к targetPrice. Исключает sourceSkin */
+function findTargetByPrice(targetPrice, sourceSkin) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
-        if (excludeSkin && s.id === excludeSkin.id) return;
+        if (sourceSkin && s.id === sourceSkin.id) return;
         var d = Math.abs(s.price - targetPrice);
         if (d < bestDiff) { bestDiff = d; best = s; }
     });
     return best;
 }
 
-/* Считает реальный шанс от цены */
+/* Реальный шанс всегда = (source / target) × 100 */
 function calcRealChance(sourcePrice, targetPrice) {
     var chance = (sourcePrice / targetPrice) * 100;
     if (chance > 95) chance = 95;
@@ -565,7 +562,7 @@ function renderTargetSlot() {
     }
 }
 
-/* Обновление круга — всегда берёт РЕАЛЬНЫЙ шанс от цены цели */
+/* Обновление круга — реальный шанс */
 function updateCircleFromPreset() {
     if (!state.upgradeSource || !state.upgradeTarget) {
         updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
@@ -573,8 +570,6 @@ function updateCircleFromPreset() {
         DOM.upgradeBtn.disabled = true;
         return;
     }
-
-    /* ФИКС: реальный шанс всегда = source/target × 100 */
     var chance = calcRealChance(state.upgradeSource.price, state.upgradeTarget.price);
     state.upgradeTarget._realChance = chance;
 
@@ -590,7 +585,7 @@ function updateCircleFromPreset() {
     DOM.upgradeBtn.disabled = false;
 }
 
-/* Рендер пресетов — теперь с РЕАЛЬНЫМ шансом для текущего источника */
+/* Рендер пресетов — с реальным шансом */
 function renderPresets() {
     var container = $('presetContainer');
     var frag = document.createDocumentFragment();
@@ -602,34 +597,24 @@ function renderPresets() {
         btn.disabled = !hasSource;
         btn.dataset.idx = idx;
 
-        var displayChance = p.kind === 'mult' ? null : p.chance;
-        var displayLabel = p.label;
+        var displayText = '—';
 
-        /* Если есть источник — считаем РЕАЛЬНЫЙ шанс для этого пресета */
         if (hasSource) {
             var sourcePrice = state.upgradeSource.price;
-            var desiredTargetPrice = (p.kind === 'mult')
-                ? sourcePrice * p.mult
-                : sourcePrice / (p.chance / 100);
+            var desiredTargetPrice = sourcePrice * p.mult;
             var target = findTargetByPrice(desiredTargetPrice, state.upgradeSource);
 
-            if (target) {
+            if (target && target.price > sourcePrice) {
                 var realChance = calcRealChance(sourcePrice, target.price);
-                displayChance = realChance;
+                if (realChance >= 10) displayText = Math.round(realChance) + '%';
+                else displayText = realChance.toFixed(2) + '%';
+            } else {
+                displayText = '—';
             }
         }
 
-        var displayText;
-        if (displayChance === null) {
-            displayText = '—';
-        } else if (displayChance >= 10) {
-            displayText = Math.round(displayChance) + '%';
-        } else {
-            displayText = displayChance.toFixed(2) + '%';
-        }
-
         btn.innerHTML =
-            '<span class="upg-preset-mult">' + displayLabel + '</span>' +
+            '<span class="upg-preset-mult">' + p.label + '</span>' +
             '<span class="upg-preset-chance">' + displayText + '</span>';
 
         if (state.selectedPreset === idx) btn.classList.add('active');
@@ -639,35 +624,24 @@ function renderPresets() {
     container.replaceChildren(frag);
 }
 
-/* Выбор пресета */
+/* Выбор пресета — только множители */
 function selectPreset(idx) {
     if (!state.upgradeSource) { log('❌ Сначала выбери предмет', 'lose'); return; }
     unlockAudio(); sClick();
 
     var p = PRESETS[idx];
     var sourcePrice = state.upgradeSource.price;
+    var desiredTargetPrice = sourcePrice * p.mult;
 
-    /* Определяем желаемую цену цели */
-    var desiredTargetPrice;
-    if (p.kind === 'mult') {
-        desiredTargetPrice = sourcePrice * p.mult;
-    } else {
-        desiredTargetPrice = sourcePrice / (p.chance / 100);
-    }
-
-    /* Ищем ближайший скин (не тот же что источник) */
     var target = findTargetByPrice(desiredTargetPrice, state.upgradeSource);
 
     if (!target || target.price <= sourcePrice) {
-        log('❌ Нет подходящей цели для этого пресета', 'lose');
+        log('❌ Нет подходящей цели для ' + p.label, 'lose');
         return;
     }
 
-    /* Устанавливаем цель */
     state.upgradeTarget = target;
     state.selectedPreset = idx;
-
-    /* Реальный шанс считается АВТОМАТИЧЕСКИ из цены цели */
     state.upgradeTarget._realChance = calcRealChance(sourcePrice, target.price);
 
     renderTargetSlot();
@@ -718,7 +692,7 @@ function renderInvPanel() {
 }
 
 /* ============================================================
-   ITEMS PANEL (цели)
+   ITEMS PANEL
    ============================================================ */
 function renderItemsPanel() {
     var grid = $('itemsPanelGrid');
@@ -749,7 +723,6 @@ function renderItemsPanel() {
             }
             unlockAudio(); sClick();
             state.upgradeTarget = skin;
-            /* Сбрасываем пресет — реальный шанс посчитается автоматически */
             state.selectedPreset = null;
             state.upgradeTarget._realChance = calcRealChance(state.upgradeSource.price, skin.price);
 
@@ -771,11 +744,9 @@ function playUpgradeAnimation(chance, willWin) {
         var sectorEnd = chance * 3.6;
         var finalAngle;
         if (willWin) {
-            /* Попадание внутри сектора */
             var margin = Math.min(sectorEnd * 0.15, 8);
             finalAngle = Math.max(margin, Math.random() * (sectorEnd - margin));
         } else {
-            /* Промaх. 70% — почти выиграл (за 0.5-2° до порога) */
             var roll = Math.random();
             if (roll < 0.7) {
                 finalAngle = sectorEnd + 0.5 + Math.random() * 1.5;
@@ -814,7 +785,7 @@ function playUpgradeAnimation(chance, willWin) {
 }
 
 /* ============================================================
-   КНОПКА АПГРЕЙД — ФИНАЛЬНЫЙ ФИКС
+   КНОПКА АПГРЕЙД
    ============================================================ */
 $('upgradeBtn').addEventListener('click', async function() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
@@ -824,13 +795,11 @@ $('upgradeBtn').addEventListener('click', async function() {
     var btn = $('upgradeBtn');
     btn.style.pointerEvents = 'none';
 
-    /* ФИКС: используем РЕАЛЬНЫЙ шанс от цены цели */
     var chance = state.upgradeTarget._realChance;
     if (chance === undefined) {
         chance = calcRealChance(state.upgradeSource.price, state.upgradeTarget.price);
     }
 
-    /* ЧЕСТНЫЙ РАНДОМ */
     var roll = Math.random() * 100;
     var success = roll < chance;
 
@@ -847,7 +816,6 @@ $('upgradeBtn').addEventListener('click', async function() {
 
     await playUpgradeAnimation(chance, success);
 
-    /* Убираем источник из инвентаря */
     var srcIdx = state.inventory.indexOf(sourceSkin);
     if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
 
@@ -881,7 +849,6 @@ $('upgradeBtn').addEventListener('click', async function() {
         log('⚡ ' + sourceSkin.name + ' → провал ❌', 'lose');
     }
 
-    /* СБРОС */
     state.upgradeSource = null;
     state.upgradeTarget = null;
     state.selectedPreset = null;
@@ -1084,7 +1051,7 @@ $('soundBtn').addEventListener('click', function() {
 
 $('resetAllBtn').addEventListener('click', function() {
     if (!confirm('Сбросить весь прогресс?')) return;
-    localStorage.removeItem('rastrgrade_v24');
+    localStorage.removeItem('rastrgrade_v25');
     location.reload();
 });
 
