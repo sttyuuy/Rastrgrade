@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RASTRGRADE v17 — REAL SKINS & UAH</title>
+<title>RASTRGRADE v22 — UPGRADE</title>
 <meta name="theme-color" content="#050508">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
         <div class="logo">
             <span class="logo-icon">⚡</span>
             <span class="logo-rust">RASTR</span><span class="logo-grade">GRADE</span>
-            <span class="logo-version">v17.0 UAH</span>
+            <span class="logo-version">v22</span>
         </div>
         <div class="level-box">
             <div class="level-badge" id="levelBadge">1</div>
@@ -53,9 +53,6 @@
             <span>🎁</span>
             <span class="hud-btn-badge" id="dailyBadge">!</span>
         </button>
-        <button class="hud-btn" id="bonusBtn" title="Бонус">
-            <span>💎</span>
-        </button>
         <button class="hud-btn" id="soundBtn" title="Звук">
             <span id="soundIcon">🔊</span>
         </button>
@@ -63,80 +60,15 @@
 </header>
 
 <nav class="nav-tabs">
-    <button class="nav-tab active" data-page="roulette"><span class="nav-tab-icon">🎰</span><span class="nav-tab-text">Рулетка</span></button>
-    <button class="nav-tab" data-page="cases"><span class="nav-tab-icon">📦</span><span class="nav-tab-text">Кейсы</span></button>
-    <button class="nav-tab" data-page="upgrade"><span class="nav-tab-icon">⚡</span><span class="nav-tab-text">Апгрейд</span></button>
-    <button class="nav-tab" data-page="battles"><span class="nav-tab-icon">⚔️</span><span class="nav-tab-text">Батлы</span></button>
+    <button class="nav-tab active" data-page="upgrade"><span class="nav-tab-icon">⚡</span><span class="nav-tab-text">Апгрейд</span></button>
     <button class="nav-tab" data-page="shop"><span class="nav-tab-icon">🛒</span><span class="nav-tab-text">Магазин</span></button>
     <button class="nav-tab" data-page="inventory"><span class="nav-tab-icon">🎒</span><span class="nav-tab-text">Инвентарь</span></button>
-    <button class="nav-tab" data-page="achievements"><span class="nav-tab-icon">🏆</span><span class="nav-tab-text">Ачивки</span></button>
     <button class="nav-tab" data-page="stats"><span class="nav-tab-icon">📊</span><span class="nav-tab-text">Стата</span></button>
 </nav>
 
 <main class="main">
 
-    <section class="page active" id="page-roulette">
-        <div class="card">
-            <div class="card-head">
-                <div>
-                    <h2 class="card-title"><span class="card-title-icon">🎰</span> Крутилка</h2>
-                    <div class="card-sub">RTP 88% • House Edge 12%</div>
-                </div>
-                <div class="card-badge">88% RTP</div>
-            </div>
-            <div class="roulette-wrap">
-                <div class="roulette" id="roulette">
-                    <div class="roulette-pointer"></div>
-                    <div class="roulette-track" id="track"></div>
-                    <div class="roulette-fade roulette-fade-l"></div>
-                    <div class="roulette-fade roulette-fade-r"></div>
-                </div>
-            </div>
-            <div class="bet-row">
-                <div class="bet-buttons">
-                    <button class="bet-opt" data-bet="50">50 ₴</button>
-                    <button class="bet-opt active" data-bet="100">100 ₴</button>
-                    <button class="bet-opt" data-bet="500">500 ₴</button>
-                    <button class="bet-opt" data-bet="1000">1K</button>
-                    <button class="bet-opt" data-bet="5000">5K</button>
-                    <button class="bet-opt" data-bet="25000">25K</button>
-                </div>
-                <button class="btn-primary spin-btn" id="spinBtn">
-                    <span>КРУТИТЬ</span>
-                    <span class="btn-price" id="spinCost">100 ₴</span>
-                </button>
-            </div>
-            <div class="chances-bar">
-                <div class="chance-item common" style="flex:55">55%</div>
-                <div class="chance-item uncommon" style="flex:25">25%</div>
-                <div class="chance-item rare" style="flex:13">13%</div>
-                <div class="chance-item epic" style="flex:5">5%</div>
-                <div class="chance-item legendary" style="flex:1.7">1.7%</div>
-                <div class="chance-item mythical" style="flex:0.3">✦</div>
-            </div>
-        </div>
-        <div class="card" style="margin-top:20px">
-            <div class="card-head">
-                <h2 class="card-title"><span class="card-title-icon">📜</span> История дропов</h2>
-                <div class="card-sub">Последние 20</div>
-            </div>
-            <div class="history-row" id="historyRow">
-                <div class="history-empty">Пока пусто — крути рулетку!</div>
-            </div>
-        </div>
-    </section>
-
-    <section class="page" id="page-cases">
-        <div class="card">
-            <div class="card-head">
-                <h2 class="card-title"><span class="card-title-icon">📦</span> Кейсы</h2>
-                <div class="card-sub">5 кейсов с разными RTP</div>
-            </div>
-            <div class="cases-grid" id="casesGrid"></div>
-        </div>
-    </section>
-
-    <section class="page" id="page-upgrade">
+    <section class="page active" id="page-upgrade">
         <div class="card">
             <div class="card-head">
                 <h2 class="card-title"><span class="card-title-icon">⚡</span> Мульти-Апгрейд</h2>
@@ -206,59 +138,6 @@
         </div>
     </section>
 
-    <section class="page" id="page-battles">
-        <div class="card">
-            <div class="card-head">
-                <h2 class="card-title"><span class="card-title-icon">⚔️</span> Батлы</h2>
-                <div class="card-sub">Кто выбьет дороже — забирает всё</div>
-            </div>
-            <div class="battle-modes" id="battleModes">
-                <button class="battle-mode active" data-mode="1v1">
-                    <div class="battle-mode-name">⚔️ 1 vs 1</div>
-                    <div class="battle-mode-desc">Дуэль · Ты vs Бот</div>
-                </button>
-                <button class="battle-mode" data-mode="1v1v1">
-                    <div class="battle-mode-name">🔥 1 vs 1 vs 1</div>
-                    <div class="battle-mode-desc">Тройной · Ты vs 2 бота</div>
-                </button>
-            </div>
-            <div class="battle-tiers" id="battleTiers">
-                <button class="battle-tier" data-tier="low">
-                    <div class="battle-tier-icon">🪙</div>
-                    <div class="battle-tier-name">Low</div>
-                    <div class="battle-tier-price">100 ₴</div>
-                </button>
-                <button class="battle-tier active" data-tier="mid">
-                    <div class="battle-tier-icon">💵</div>
-                    <div class="battle-tier-name">Mid</div>
-                    <div class="battle-tier-price">1 000 ₴</div>
-                </button>
-                <button class="battle-tier" data-tier="high">
-                    <div class="battle-tier-icon">💎</div>
-                    <div class="battle-tier-name">High</div>
-                    <div class="battle-tier-price">10 000 ₴</div>
-                </button>
-                <button class="battle-tier" data-tier="ultra">
-                    <div class="battle-tier-icon">👑</div>
-                    <div class="battle-tier-name">Ultra</div>
-                    <div class="battle-tier-price">50 000 ₴</div>
-                </button>
-            </div>
-            <div class="battle-arena" id="battleArena">
-                <div class="battle-empty">
-                    <div class="battle-empty-icon">⚔️</div>
-                    <div>Выбери режим и тир, потом жми «В БОЙ»</div>
-                </div>
-            </div>
-            <div class="battle-actions">
-                <button class="btn-primary" id="battleBtn">
-                    <span>⚔️ В БОЙ</span>
-                    <span class="btn-price" id="battleCost">1 000 ₴</span>
-                </button>
-            </div>
-        </div>
-    </section>
-
     <section class="page" id="page-shop">
         <div class="card">
             <div class="card-head">
@@ -308,31 +187,19 @@
         </div>
     </section>
 
-    <section class="page" id="page-achievements">
-        <div class="card">
-            <div class="card-head">
-                <h2 class="card-title"><span class="card-title-icon">🏆</span> Достижения</h2>
-                <div class="card-sub">Открыто: <span id="achCount" class="gold">0 / 0</span></div>
-            </div>
-            <div class="ach-grid" id="achGrid"></div>
-        </div>
-    </section>
-
     <section class="page" id="page-stats">
         <div class="card">
             <div class="card-head">
                 <h2 class="card-title"><span class="card-title-icon">📊</span> Статистика</h2>
-                <div class="card-sub">Курс: 1 USD = 44.60 ₴ (НБУ 17.09.2026)</div>
+                <div class="card-sub">Курс: 1 USD = 44.60 ₴ (НБУ)</div>
             </div>
             <div class="stats-grid">
                 <div class="stat-card"><div class="stat-card-icon">💵</div><div class="stat-card-value" id="statTotalWon">0</div><div class="stat-card-label">Выиграно</div></div>
                 <div class="stat-card"><div class="stat-card-icon">💸</div><div class="stat-card-value red" id="statTotalLost">0</div><div class="stat-card-label">Потрачено</div></div>
-                <div class="stat-card"><div class="stat-card-icon">🎰</div><div class="stat-card-value" id="statSpins">0</div><div class="stat-card-label">Прокруток</div></div>
-                <div class="stat-card"><div class="stat-card-icon">📦</div><div class="stat-card-value" id="statCases">0</div><div class="stat-card-label">Кейсов</div></div>
                 <div class="stat-card"><div class="stat-card-icon">⚡</div><div class="stat-card-value" id="statUpgrades">0</div><div class="stat-card-label">Апгрейдов</div></div>
-                <div class="stat-card"><div class="stat-card-icon">⚔️</div><div class="stat-card-value" id="statBattles">0</div><div class="stat-card-label">Батлов</div></div>
                 <div class="stat-card"><div class="stat-card-icon">🛒</div><div class="stat-card-value" id="statPurchases">0</div><div class="stat-card-label">Покупок</div></div>
-                <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-card-value" id="statBestDrop">—</div><div class="stat-card-label">Лучший дроп</div></div>
+                <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-card-value" id="statBestDrop">—</div><div class="stat-card-label">Лучший апгрейд</div></div>
+                <div class="stat-card"><div class="stat-card-icon">💰</div><div class="stat-card-value" id="statBestUpgrade">—</div><div class="stat-card-label">Лучшая покупка</div></div>
             </div>
             <div class="house-balance">
                 <div class="house-balance-title">📉 Баланс казино</div>
