@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RASTRGRADE v22 — UPGRADE</title>
+<title>RASTRGRADE v23</title>
 <meta name="theme-color" content="#050508">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
         <div class="logo">
             <span class="logo-icon">⚡</span>
             <span class="logo-rust">RASTR</span><span class="logo-grade">GRADE</span>
-            <span class="logo-version">v22</span>
+            <span class="logo-version">v23</span>
         </div>
         <div class="level-box">
             <div class="level-badge" id="levelBadge">1</div>
@@ -39,7 +39,7 @@
             <div class="hud-stat-icon">💰</div>
             <div>
                 <div class="hud-stat-label">Баланс</div>
-                <div class="hud-stat-value gold" id="balance">1 000 ₴</div>
+                <div class="hud-stat-value gold" id="balance">5 ₴</div>
             </div>
         </div>
         <div class="hud-stat">
@@ -49,10 +49,6 @@
                 <div class="hud-stat-value" id="profit">0 ₴</div>
             </div>
         </div>
-        <button class="hud-btn" id="dailyBtn" title="Ежедневный бонус">
-            <span>🎁</span>
-            <span class="hud-btn-badge" id="dailyBadge">!</span>
-        </button>
         <button class="hud-btn" id="soundBtn" title="Звук">
             <span id="soundIcon">🔊</span>
         </button>
@@ -68,76 +64,113 @@
 
 <main class="main">
 
+    <!-- ===================== UPGRADE ===================== -->
     <section class="page active" id="page-upgrade">
-        <div class="card">
-            <div class="card-head">
-                <h2 class="card-title"><span class="card-title-icon">⚡</span> Мульти-Апгрейд</h2>
-                <div class="card-sub">Ставь 1-6 скинов · сумма = база апгрейда</div>
-            </div>
-            <div class="upgrade-stage">
-                <div class="upgrade-circle-wrap">
-                    <svg class="upgrade-circle-svg" viewBox="0 0 240 240">
-                        <defs>
-                            <linearGradient id="chanceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#7ed321"/>
-                                <stop offset="100%" stop-color="#4caf50"/>
-                            </linearGradient>
-                            <radialGradient id="centerGlow">
-                                <stop offset="0%" stop-color="rgba(255,107,26,0.15)"/>
-                                <stop offset="100%" stop-color="rgba(255,107,26,0)"/>
-                            </radialGradient>
-                        </defs>
-                        <circle class="circle-bg" cx="120" cy="120" r="100"/>
-                        <circle class="circle-ticks" cx="120" cy="120" r="100"/>
-                        <circle class="circle-chance-sector" cx="120" cy="120" r="100" stroke-dasharray="0 628.32" id="chanceSector"/>
-                        <circle class="circle-chance-outline" cx="120" cy="120" r="100" stroke-dasharray="0 628.32" id="chanceOutline"/>
-                        <circle cx="120" cy="120" r="70" fill="url(#centerGlow)"/>
-                    </svg>
-                    <div class="circle-needle" id="circleNeedle">
-                        <div class="circle-needle-head"></div>
-                        <div class="circle-needle-body"></div>
+        <div class="upg-wrap">
+
+            <!-- TOP ROW: LEFT ITEM | CIRCLE | RIGHT ITEM -->
+            <div class="upg-top">
+
+                <!-- LEFT: source item -->
+                <div class="upg-panel upg-panel-left">
+                    <div class="upg-panel-head">
+                        <span class="upg-panel-label">ПРЕДМЕТ</span>
+                        <span class="upg-panel-price" id="sourcePriceLabel">—</span>
                     </div>
-                    <div class="circle-center">
-                        <div class="circle-percent" id="circlePercent">0.00%</div>
-                        <div class="circle-status" id="circleStatus">выбери скины</div>
+                    <div class="upg-item-slot" id="sourceSlot">
+                        <div class="upg-item-empty">
+                            <div class="upg-item-empty-icon">+</div>
+                            <div class="upg-item-empty-text">Выбрать предмет</div>
+                        </div>
+                    </div>
+                    <button class="upg-btn-remove" id="sourceRemoveBtn" style="display:none">✕ Убрать</button>
+                </div>
+
+                <!-- CENTER: circle + chance + button -->
+                <div class="upg-center">
+                    <div class="upg-circle-wrap">
+                        <svg class="upg-circle-svg" viewBox="0 0 240 240">
+                            <defs>
+                                <linearGradient id="chanceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ff3b3b"/>
+                                    <stop offset="50%" stop-color="#f5c542"/>
+                                    <stop offset="100%" stop-color="#7ed321"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="upg-circle-bg" cx="120" cy="120" r="100"/>
+                            <circle class="upg-circle-sector" cx="120" cy="120" r="100"
+                                    stroke-dasharray="0 628.32" id="chanceSector"/>
+                        </svg>
+                        <div class="upg-needle" id="circleNeedle">
+                            <div class="upg-needle-head"></div>
+                            <div class="upg-needle-body"></div>
+                        </div>
+                        <div class="upg-circle-center">
+                            <div class="upg-percent" id="circlePercent">—</div>
+                            <div class="upg-status" id="circleStatus">ВЫБЕРИ ПРЕДМЕТ</div>
+                        </div>
+                    </div>
+
+                    <button class="upg-action-btn" id="upgradeBtn" disabled>АПГРЕЙД</button>
+                </div>
+
+                <!-- RIGHT: target item -->
+                <div class="upg-panel upg-panel-right">
+                    <div class="upg-panel-head">
+                        <span class="upg-panel-label">ЦЕЛЬ</span>
+                        <span class="upg-panel-price" id="targetPriceLabel">—</span>
+                    </div>
+                    <div class="upg-item-slot" id="targetSlot">
+                        <div class="upg-item-empty">
+                            <div class="upg-item-empty-icon">?</div>
+                            <div class="upg-item-empty-text">Цель</div>
+                        </div>
+                    </div>
+                    <button class="upg-btn-remove" id="targetRemoveBtn" style="display:none">✕ Убрать</button>
+                </div>
+
+            </div>
+
+            <!-- PRESETS ROW -->
+            <div class="upg-presets-row" id="presetContainer"></div>
+
+            <!-- BOTTOM ROW: inventory | items -->
+            <div class="upg-bottom">
+
+                <!-- LEFT: my inventory -->
+                <div class="upg-inv-panel">
+                    <div class="upg-inv-head">
+                        <span class="upg-inv-title">🎒 МОЙ ИНВЕНТАРЬ</span>
+                        <span class="upg-inv-count" id="invPanelCount">0/0</span>
+                    </div>
+                    <div class="upg-inv-search">
+                        <input type="text" class="upg-inv-input" id="invSearch" placeholder="Поиск...">
+                    </div>
+                    <div class="upg-inv-filters" id="invPanelFilters"></div>
+                    <div class="upg-inv-list" id="invPanelList">
+                        <div class="upg-inv-empty">Инвентарь пуст</div>
                     </div>
                 </div>
-                <div class="multi-slots" id="multiSlots"></div>
-                <div class="upgrade-summary">
-                    <div class="upgrade-summary-item">
-                        <div class="upgrade-summary-label">Твоих скинов</div>
-                        <div class="upgrade-summary-value orange" id="sourceCount">0 / 6</div>
+
+                <!-- RIGHT: items for upgrade -->
+                <div class="upg-items-panel">
+                    <div class="upg-items-head">
+                        <span class="upg-items-title">🎯 ПРЕДМЕТЫ ДЛЯ АПГРЕЙДА</span>
+                        <span class="upg-items-count" id="targetsCount">0</span>
                     </div>
-                    <div class="upgrade-summary-item">
-                        <div class="upgrade-summary-label">Суммарная цена</div>
-                        <div class="upgrade-summary-value" id="sourceSumPrice">0 ₴</div>
+                    <div class="upg-items-search">
+                        <input type="text" class="upg-items-input" id="itemsSearch" placeholder="Поиск цели...">
                     </div>
-                    <div class="upgrade-summary-item">
-                        <div class="upgrade-summary-label">Целевой скин</div>
-                        <div class="upgrade-summary-value green" id="targetPriceLabel">0 ₴</div>
-                    </div>
+                    <div class="upg-items-filters" id="itemsPanelFilters"></div>
+                    <div class="upg-items-grid" id="itemsPanelGrid"></div>
                 </div>
-                <div class="upgrade-target-row">
-                    <div class="upgrade-arrow-big">→</div>
-                    <div class="skin-slot target" id="targetBox">
-                        <div class="skin-slot-empty">—</div>
-                    </div>
-                </div>
+
             </div>
-            <div class="presets-block">
-                <div class="presets-head">
-                    <span>🎯 Множитель / шанс</span>
-                    <span id="presetInfo">Сначала добавь скины в слоты</span>
-                </div>
-                <div class="presets-grid" id="presetContainer"></div>
-            </div>
-            <div class="upgrade-actions">
-                <button class="btn-primary" id="upgradeBtn" disabled>АПГРЕЙД</button>
-                <button class="btn-secondary" id="resetUpgradeBtn">СБРОС</button>
-            </div>
+
         </div>
     </section>
 
+    <!-- ===================== SHOP ===================== -->
     <section class="page" id="page-shop">
         <div class="card">
             <div class="card-head">
@@ -146,7 +179,7 @@
             </div>
             <div class="shop-info-bar">
                 <div class="shop-info-text"><span style="font-size:1.5rem">💰</span><span>Твой баланс:</span></div>
-                <div class="shop-info-value" id="shopBalance">1 000 ₴</div>
+                <div class="shop-info-value" id="shopBalance">5 ₴</div>
             </div>
             <div class="shop-filters">
                 <button class="shop-filter active" data-rarity="all">Все</button>
@@ -167,6 +200,7 @@
         </div>
     </section>
 
+    <!-- ===================== INVENTORY ===================== -->
     <section class="page" id="page-inventory">
         <div class="card">
             <div class="card-head">
@@ -187,25 +221,26 @@
         </div>
     </section>
 
+    <!-- ===================== STATS ===================== -->
     <section class="page" id="page-stats">
         <div class="card">
             <div class="card-head">
                 <h2 class="card-title"><span class="card-title-icon">📊</span> Статистика</h2>
-                <div class="card-sub">Курс: 1 USD = 44.60 ₴ (НБУ)</div>
+                <div class="card-sub">Курс: 1 USD = 44.60 ₴</div>
             </div>
             <div class="stats-grid">
                 <div class="stat-card"><div class="stat-card-icon">💵</div><div class="stat-card-value" id="statTotalWon">0</div><div class="stat-card-label">Выиграно</div></div>
                 <div class="stat-card"><div class="stat-card-icon">💸</div><div class="stat-card-value red" id="statTotalLost">0</div><div class="stat-card-label">Потрачено</div></div>
                 <div class="stat-card"><div class="stat-card-icon">⚡</div><div class="stat-card-value" id="statUpgrades">0</div><div class="stat-card-label">Апгрейдов</div></div>
                 <div class="stat-card"><div class="stat-card-icon">🛒</div><div class="stat-card-value" id="statPurchases">0</div><div class="stat-card-label">Покупок</div></div>
-                <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-card-value" id="statBestDrop">—</div><div class="stat-card-label">Лучший апгрейд</div></div>
-                <div class="stat-card"><div class="stat-card-icon">💰</div><div class="stat-card-value" id="statBestUpgrade">—</div><div class="stat-card-label">Лучшая покупка</div></div>
+                <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-card-value" id="statBestDrop">—</div><div class="stat-card-label">Лучший дроп</div></div>
+                <div class="stat-card"><div class="stat-card-icon">🎯</div><div class="stat-card-value" id="statBestUpgrade">—</div><div class="stat-card-label">Лучшая цель</div></div>
             </div>
             <div class="house-balance">
-                <div class="house-balance-title">📉 Баланс казино</div>
+                <div class="house-balance-title">📉 Твой баланс</div>
                 <div class="house-balance-row">
-                    <span>Игрок проиграл: <span class="red" id="housePlayer">0 ₴</span></span>
-                    <span>Казино заработало: <span class="green" id="houseCasino">0 ₴</span></span>
+                    <span>Потрачено: <span class="red" id="housePlayer">0 ₴</span></span>
+                    <span>Получено: <span class="green" id="houseCasino">0 ₴</span></span>
                 </div>
             </div>
             <button class="btn-secondary" id="resetAllBtn" style="margin-top:20px">🗑️ СБРОСИТЬ ВСЁ</button>
@@ -213,17 +248,6 @@
     </section>
 
 </main>
-
-<div class="modal" id="skinSelector">
-    <div class="modal-inner">
-        <div class="modal-head">
-            <h3>Выбери скин</h3>
-            <button class="modal-close" id="closeSkinSelector">✕</button>
-        </div>
-        <div class="modal-filters" id="skinFilters"></div>
-        <div class="skin-grid" id="skinSelectorGrid"></div>
-    </div>
-</div>
 
 <div class="modal" id="resultModal">
     <div class="modal-inner result-inner" id="resultInner">
@@ -249,16 +273,6 @@
             <button class="btn-primary" id="buyConfirm">КУПИТЬ</button>
             <button class="btn-secondary" id="buyCancel">ОТМЕНА</button>
         </div>
-    </div>
-</div>
-
-<div class="modal" id="dailyModal">
-    <div class="modal-inner daily-inner">
-        <div class="daily-icon">🎁</div>
-        <h2 class="daily-title">ЕЖЕДНЕВНЫЙ БОНУС</h2>
-        <div class="daily-day">День <span id="dailyDay">1</span> / 7</div>
-        <div class="daily-rewards" id="dailyRewards"></div>
-        <button class="btn-primary" id="dailyClaim">ЗАБРАТЬ</button>
     </div>
 </div>
 
