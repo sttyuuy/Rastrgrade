@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RASTRGRADE v23</title>
+<title>RASTRGRADE v24</title>
 <meta name="theme-color" content="#050508">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
         <div class="logo">
             <span class="logo-icon">⚡</span>
             <span class="logo-rust">RASTR</span><span class="logo-grade">GRADE</span>
-            <span class="logo-version">v23</span>
+            <span class="logo-version">v24</span>
         </div>
         <div class="level-box">
             <div class="level-badge" id="levelBadge">1</div>
@@ -64,14 +64,10 @@
 
 <main class="main">
 
-    <!-- ===================== UPGRADE ===================== -->
     <section class="page active" id="page-upgrade">
         <div class="upg-wrap">
 
-            <!-- TOP ROW: LEFT ITEM | CIRCLE | RIGHT ITEM -->
             <div class="upg-top">
-
-                <!-- LEFT: source item -->
                 <div class="upg-panel upg-panel-left">
                     <div class="upg-panel-head">
                         <span class="upg-panel-label">ПРЕДМЕТ</span>
@@ -86,7 +82,6 @@
                     <button class="upg-btn-remove" id="sourceRemoveBtn" style="display:none">✕ Убрать</button>
                 </div>
 
-                <!-- CENTER: circle + chance + button -->
                 <div class="upg-center">
                     <div class="upg-circle-wrap">
                         <svg class="upg-circle-svg" viewBox="0 0 240 240">
@@ -110,11 +105,9 @@
                             <div class="upg-status" id="circleStatus">ВЫБЕРИ ПРЕДМЕТ</div>
                         </div>
                     </div>
-
                     <button class="upg-action-btn" id="upgradeBtn" disabled>АПГРЕЙД</button>
                 </div>
 
-                <!-- RIGHT: target item -->
                 <div class="upg-panel upg-panel-right">
                     <div class="upg-panel-head">
                         <span class="upg-panel-label">ЦЕЛЬ</span>
@@ -128,16 +121,11 @@
                     </div>
                     <button class="upg-btn-remove" id="targetRemoveBtn" style="display:none">✕ Убрать</button>
                 </div>
-
             </div>
 
-            <!-- PRESETS ROW -->
             <div class="upg-presets-row" id="presetContainer"></div>
 
-            <!-- BOTTOM ROW: inventory | items -->
             <div class="upg-bottom">
-
-                <!-- LEFT: my inventory -->
                 <div class="upg-inv-panel">
                     <div class="upg-inv-head">
                         <span class="upg-inv-title">🎒 МОЙ ИНВЕНТАРЬ</span>
@@ -152,7 +140,6 @@
                     </div>
                 </div>
 
-                <!-- RIGHT: items for upgrade -->
                 <div class="upg-items-panel">
                     <div class="upg-items-head">
                         <span class="upg-items-title">🎯 ПРЕДМЕТЫ ДЛЯ АПГРЕЙДА</span>
@@ -164,13 +151,11 @@
                     <div class="upg-items-filters" id="itemsPanelFilters"></div>
                     <div class="upg-items-grid" id="itemsPanelGrid"></div>
                 </div>
-
             </div>
 
         </div>
     </section>
 
-    <!-- ===================== SHOP ===================== -->
     <section class="page" id="page-shop">
         <div class="card">
             <div class="card-head">
@@ -200,7 +185,6 @@
         </div>
     </section>
 
-    <!-- ===================== INVENTORY ===================== -->
     <section class="page" id="page-inventory">
         <div class="card">
             <div class="card-head">
@@ -221,7 +205,6 @@
         </div>
     </section>
 
-    <!-- ===================== STATS ===================== -->
     <section class="page" id="page-stats">
         <div class="card">
             <div class="card-head">
