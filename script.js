@@ -1,6 +1,6 @@
 /* ============================================================
-   RASTRGRADE v23 — UPGRADE (RustGrade layout)
-   Честный рандом + психология затягивания
+   RASTRGRADE v24 — UPGRADE (RustGrade layout)
+   ФИКС БАГА: реальный шанс всегда = (source / target) × 100
    ============================================================ */
 
 /* ============ КУРС ВАЛЮТ ============ */
@@ -100,22 +100,22 @@ const RARITIES = {
 };
 
 /* ============================================================
-   ПРЕСЕТЫ — ТАБЛИЦА D
-   mult = во сколько раз цель дороже источника
-   chance = шанс победы
-   Честный рандом — без подкруток
+   ПРЕСЕТЫ
+   kind: 'mult' — подбор цели по множителю цены
+   kind: 'chance' — подбор цели по желаемому шансу
+   Реальный шанс ВСЕГДА = (source / target) × 100
    ============================================================ */
 const PRESETS = [
-    { mult: 1.5, label: 'x1.5', chance: 70, kind: 'mult' },
-    { mult: 2,   label: 'x2',   chance: 55, kind: 'mult' },
-    { mult: 3,   label: 'x3',   chance: 40, kind: 'mult' },
-    { mult: 5,   label: 'x5',   chance: 25, kind: 'mult' },
-    { mult: 10,  label: 'x10',  chance: 13, kind: 'mult' },
-    { mult: 20,  label: 'x20',  chance: 7,  kind: 'mult' },
-    { mult: 50,  label: 'x50',  chance: 3,  kind: 'mult' },
-    { chance: 35, label: '35%', kind: 'fixed' },
-    { chance: 50, label: '50%', kind: 'fixed' },
-    { chance: 75, label: '75%', kind: 'fixed' }
+    { kind: 'mult',   mult: 1.5, label: 'x1.5' },
+    { kind: 'mult',   mult: 2,   label: 'x2' },
+    { kind: 'mult',   mult: 3,   label: 'x3' },
+    { kind: 'mult',   mult: 5,   label: 'x5' },
+    { kind: 'mult',   mult: 10,  label: 'x10' },
+    { kind: 'mult',   mult: 20,  label: 'x20' },
+    { kind: 'mult',   mult: 50,  label: 'x50' },
+    { kind: 'chance', chance: 35, label: '35%' },
+    { kind: 'chance', chance: 50, label: '50%' },
+    { kind: 'chance', chance: 75, label: '75%' }
 ];
 
 const LEVELS = [
@@ -148,8 +148,7 @@ var state = {
     xp: 0, level: 1,
     soundOn: true,
     shopFilter: 'all', shopSort: 'price-asc',
-    invPanelFilter: 'all', itemsPanelFilter: 'all',
-    firstVisit: true
+    invPanelFilter: 'all', itemsPanelFilter: 'all'
 };
 
 function save() {
@@ -166,19 +165,17 @@ function save() {
             housePlayerLost: state.housePlayerLost, houseCasinoWon: state.houseCasinoWon,
             xp: state.xp, level: state.level,
             soundOn: state.soundOn,
-            shopFilter: state.shopFilter, shopSort: state.shopSort,
-            firstVisit: false
+            shopFilter: state.shopFilter, shopSort: state.shopSort
         };
-        localStorage.setItem('rastrgrade_v23', JSON.stringify(save_data));
+        localStorage.setItem('rastrgrade_v24', JSON.stringify(save_data));
     } catch(e) {}
 }
 
 function load() {
     try {
-        var raw = localStorage.getItem('rastrgrade_v23');
+        var raw = localStorage.getItem('rastrgrade_v24');
         if (!raw) {
             state.balance = 5;
-            state.firstVisit = false;
             save();
             return;
         }
@@ -187,10 +184,8 @@ function load() {
         state.inventory = (state.inventory||[]).map(resolveSkin).filter(Boolean);
         if (state.bestDrop) state.bestDrop = resolveSkin(state.bestDrop);
         if (state.bestUpgrade) state.bestUpgrade = resolveSkin(state.bestUpgrade);
-        state.firstVisit = false;
     } catch(e) {
         state.balance = 5;
-        state.firstVisit = false;
         save();
     }
 }
@@ -331,7 +326,7 @@ function stopAllLoopSounds() {
 }
 
 function startUpgradeSound(duration) {
-    duration = duration || 4200;
+    duration = duration || 4000;
     var h = startLoopSound('spin', 0.55);
     if (!h) return null;
     setTimeout(function() { h.fadeStop(800); }, duration - 800);
@@ -363,14 +358,23 @@ function log(msg, type) {
    УТИЛИТЫ
    ============================================================ */
 
-/* Находит скин-цель, ближайший к target-цене */
-function findTargetByPrice(targetPrice) {
+/* Находит скин-цель, ближайший к заданной цене. Исключает source если он передан. */
+function findTargetByPrice(targetPrice, excludeSkin) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
+        if (excludeSkin && s.id === excludeSkin.id) return;
         var d = Math.abs(s.price - targetPrice);
         if (d < bestDiff) { bestDiff = d; best = s; }
     });
     return best;
+}
+
+/* Считает реальный шанс от цены */
+function calcRealChance(sourcePrice, targetPrice) {
+    var chance = (sourcePrice / targetPrice) * 100;
+    if (chance > 95) chance = 95;
+    if (chance < 0.01) chance = 0.01;
+    return chance;
 }
 
 function addXP(n) {
@@ -385,7 +389,7 @@ function addXP(n) {
     }
 }
 
-/* ============ UI ============ */
+/* ============ DOM CACHE ============ */
 var DOM = {};
 function cacheDom() {
     ['balance','profit','invCount','invValue','statTotalWon','statTotalLost',
@@ -394,7 +398,7 @@ function cacheDom() {
      'sourcePriceLabel','targetPriceLabel','sourceSlot','targetSlot',
      'sourceRemoveBtn','targetRemoveBtn','circlePercent','circleStatus',
      'presetContainer','invPanelCount','invPanelList','targetsCount',
-     'itemsPanelGrid','invSearch','itemsSearch']
+     'itemsPanelGrid','invSearch','itemsSearch','upgradeBtn']
     .forEach(function(id){ DOM[id] = $(id); });
     DOM.shopBalance = $('shopBalance');
 }
@@ -480,7 +484,7 @@ function closeResult() {
 }
 
 /* ============================================================
-   UPGRADE — SOURCE / TARGET SLOTS
+   UPGRADE — CIRCLE
    ============================================================ */
 var CIRCLE_RADIUS = 100;
 var CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
@@ -496,7 +500,11 @@ function drawChanceSector(chance) {
     else color = '#ff3b3b';
     $('chanceSector').style.color = color;
 }
-function setNeedleAngle(deg) { $('circleNeedle').style.transform = 'rotate(' + deg + 'deg)'; }
+
+function setNeedleAngle(deg) {
+    $('circleNeedle').style.transform = 'rotate(' + deg + 'deg)';
+}
+
 function updateCircleChance(chance, statusText, statusClass) {
     drawChanceSector(chance);
     $('circlePercent').textContent = Math.round(chance) + '%';
@@ -511,7 +519,7 @@ function updateCircleChance(chance, statusText, statusClass) {
     $('circlePercent').style.color = color;
 }
 
-/* Рендер левого слота (источник) */
+/* Рендер слота "источник" */
 function renderSourceSlot() {
     var slot = $('sourceSlot');
     if (state.upgradeSource) {
@@ -534,7 +542,7 @@ function renderSourceSlot() {
     }
 }
 
-/* Рендер правого слота (цель) */
+/* Рендер слота "цель" */
 function renderTargetSlot() {
     var slot = $('targetSlot');
     if (state.upgradeTarget) {
@@ -557,36 +565,73 @@ function renderTargetSlot() {
     }
 }
 
-/* Обновить круг при выборе пресета */
+/* Обновление круга — всегда берёт РЕАЛЬНЫЙ шанс от цены цели */
 function updateCircleFromPreset() {
-    if (state.selectedPreset === null || !state.upgradeSource || !state.upgradeTarget) {
+    if (!state.upgradeSource || !state.upgradeTarget) {
         updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
         setNeedleAngle(0);
-        $('upgradeBtn').disabled = true;
+        DOM.upgradeBtn.disabled = true;
         return;
     }
-    var preset = PRESETS[state.selectedPreset];
-    var chance = preset.chance;
-    var status = chance >= 60 ? 'высокий шанс' :
-                 chance >= 30 ? 'средний шанс' :
-                 chance >= 15 ? 'риск' : 'ХАЙ РИСК';
-    var statusClass = chance >= 60 ? 'win' : chance >= 15 ? '' : 'lose';
-    updateCircleChance(chance, status.toUpperCase(), statusClass);
+
+    /* ФИКС: реальный шанс всегда = source/target × 100 */
+    var chance = calcRealChance(state.upgradeSource.price, state.upgradeTarget.price);
+    state.upgradeTarget._realChance = chance;
+
+    var status, statusClass;
+    if (chance >= 60) { status = 'ВЫСОКИЙ ШАНС'; statusClass = 'win'; }
+    else if (chance >= 30) { status = 'СРЕДНИЙ ШАНС'; statusClass = ''; }
+    else if (chance >= 10) { status = 'РИСК'; statusClass = ''; }
+    else if (chance >= 1) { status = 'ХАЙ РИСК'; statusClass = 'lose'; }
+    else { status = 'ПОЧТИ НЕВОЗМОЖНО'; statusClass = 'lose'; }
+
+    updateCircleChance(chance, status, statusClass);
     setNeedleAngle(0);
-    $('upgradeBtn').disabled = false;
+    DOM.upgradeBtn.disabled = false;
 }
 
-/* Рендер пресетов */
+/* Рендер пресетов — теперь с РЕАЛЬНЫМ шансом для текущего источника */
 function renderPresets() {
     var container = $('presetContainer');
     var frag = document.createDocumentFragment();
-    var hasTarget = !!(state.upgradeSource && state.upgradeTarget);
+    var hasSource = !!state.upgradeSource;
+
     PRESETS.forEach(function(p, idx) {
         var btn = document.createElement('button');
         btn.className = 'upg-preset-btn';
-        btn.disabled = !hasTarget;
+        btn.disabled = !hasSource;
         btn.dataset.idx = idx;
-        btn.innerHTML = '<span class="upg-preset-mult">' + p.label + '</span><span class="upg-preset-chance">' + p.chance + '%</span>';
+
+        var displayChance = p.kind === 'mult' ? null : p.chance;
+        var displayLabel = p.label;
+
+        /* Если есть источник — считаем РЕАЛЬНЫЙ шанс для этого пресета */
+        if (hasSource) {
+            var sourcePrice = state.upgradeSource.price;
+            var desiredTargetPrice = (p.kind === 'mult')
+                ? sourcePrice * p.mult
+                : sourcePrice / (p.chance / 100);
+            var target = findTargetByPrice(desiredTargetPrice, state.upgradeSource);
+
+            if (target) {
+                var realChance = calcRealChance(sourcePrice, target.price);
+                displayChance = realChance;
+            }
+        }
+
+        var displayText;
+        if (displayChance === null) {
+            displayText = '—';
+        } else if (displayChance >= 10) {
+            displayText = Math.round(displayChance) + '%';
+        } else {
+            displayText = displayChance.toFixed(2) + '%';
+        }
+
+        btn.innerHTML =
+            '<span class="upg-preset-mult">' + displayLabel + '</span>' +
+            '<span class="upg-preset-chance">' + displayText + '</span>';
+
         if (state.selectedPreset === idx) btn.classList.add('active');
         btn.addEventListener('click', function() { selectPreset(idx); });
         frag.appendChild(btn);
@@ -597,41 +642,41 @@ function renderPresets() {
 /* Выбор пресета */
 function selectPreset(idx) {
     if (!state.upgradeSource) { log('❌ Сначала выбери предмет', 'lose'); return; }
-    if (!state.upgradeTarget) { log('❌ Сначала выбери цель', 'lose'); return; }
     unlockAudio(); sClick();
-    state.selectedPreset = idx;
-    var p = PRESETS[idx];
 
-    /* Для множителей — пересчитываем ЦЕЛЬ. Для фикс. шанса — цель уже подобрана */
+    var p = PRESETS[idx];
+    var sourcePrice = state.upgradeSource.price;
+
+    /* Определяем желаемую цену цели */
+    var desiredTargetPrice;
     if (p.kind === 'mult') {
-        var targetPrice = state.upgradeSource.price * p.mult;
-        var target = findTargetByPrice(targetPrice);
-        if (!target || target.price <= state.upgradeSource.price) {
-            log('❌ Нет подходящей цели для x' + p.mult, 'lose');
-            state.selectedPreset = null;
-            return;
-        }
-        state.upgradeTarget = target;
-        /* Обновляем реальный шанс если цель не идеально подходит */
-        var realChance = Math.min(95, (state.upgradeSource.price / target.price) * 100);
-        state.upgradeTarget._realChance = realChance;
-        state.upgradeTarget._presetChance = p.chance;
+        desiredTargetPrice = sourcePrice * p.mult;
     } else {
-        /* fixed chance — цель уже стоит, шанс = p.chance */
-        if (state.upgradeTarget.price <= state.upgradeSource.price) {
-            log('❌ Цель дешевле источника', 'lose');
-            state.selectedPreset = null;
-            return;
-        }
-        state.upgradeTarget._realChance = p.chance;
+        desiredTargetPrice = sourcePrice / (p.chance / 100);
     }
+
+    /* Ищем ближайший скин (не тот же что источник) */
+    var target = findTargetByPrice(desiredTargetPrice, state.upgradeSource);
+
+    if (!target || target.price <= sourcePrice) {
+        log('❌ Нет подходящей цели для этого пресета', 'lose');
+        return;
+    }
+
+    /* Устанавливаем цель */
+    state.upgradeTarget = target;
+    state.selectedPreset = idx;
+
+    /* Реальный шанс считается АВТОМАТИЧЕСКИ из цены цели */
+    state.upgradeTarget._realChance = calcRealChance(sourcePrice, target.price);
+
     renderTargetSlot();
     renderPresets();
     updateCircleFromPreset();
 }
 
 /* ============================================================
-   INVENTORY PANEL (слева снизу)
+   INVENTORY PANEL
    ============================================================ */
 function renderInvPanel() {
     var list = $('invPanelList');
@@ -641,7 +686,7 @@ function renderInvPanel() {
     if (filter !== 'all') sorted = sorted.filter(function(s) { return s.rarity === filter; });
     if (search) sorted = sorted.filter(function(s) { return s.name.toLowerCase().indexOf(search) >= 0; });
 
-    $('invPanelCount').textContent = state.inventory.length + '/' + state.inventory.length;
+    $('invPanelCount').textContent = state.inventory.length + ' шт.';
 
     if (sorted.length === 0) {
         list.innerHTML = '<div class="upg-inv-empty">Инвентарь пуст</div>';
@@ -673,7 +718,7 @@ function renderInvPanel() {
 }
 
 /* ============================================================
-   ITEMS PANEL (справа снизу) — цели для апгрейда
+   ITEMS PANEL (цели)
    ============================================================ */
 function renderItemsPanel() {
     var grid = $('itemsPanelGrid');
@@ -698,9 +743,16 @@ function renderItemsPanel() {
             '<div class="upg-target-name">' + skin.name + '</div>' +
             '<div class="upg-target-price">' + formatUah(skin.price) + '</div>';
         el.addEventListener('click', function() {
+            if (!state.upgradeSource) {
+                log('❌ Сначала выбери свой предмет', 'lose');
+                return;
+            }
             unlockAudio(); sClick();
             state.upgradeTarget = skin;
+            /* Сбрасываем пресет — реальный шанс посчитается автоматически */
             state.selectedPreset = null;
+            state.upgradeTarget._realChance = calcRealChance(state.upgradeSource.price, skin.price);
+
             renderTargetSlot();
             renderPresets();
             updateCircleFromPreset();
@@ -711,7 +763,7 @@ function renderItemsPanel() {
 }
 
 /* ============================================================
-   АНИМАЦИЯ АПГРЕЙДА
+   АНИМАЦИЯ
    ============================================================ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
@@ -719,17 +771,15 @@ function playUpgradeAnimation(chance, willWin) {
         var sectorEnd = chance * 3.6;
         var finalAngle;
         if (willWin) {
-            /* Попадание внутрь сектора */
+            /* Попадание внутри сектора */
             var margin = Math.min(sectorEnd * 0.15, 8);
             finalAngle = Math.max(margin, Math.random() * (sectorEnd - margin));
         } else {
-            /* ПРОМАХ — психологический приём "почти выиграл" */
+            /* Промaх. 70% — почти выиграл (за 0.5-2° до порога) */
             var roll = Math.random();
             if (roll < 0.7) {
-                /* 70% провалов — почти добежал (за 2-5 градусов до порога) */
-                finalAngle = sectorEnd + 2 + Math.random() * 3;
+                finalAngle = sectorEnd + 0.5 + Math.random() * 1.5;
             } else {
-                /* 30% — совсем мимо */
                 var farStart = sectorEnd + 20;
                 var farEnd = 355;
                 finalAngle = farStart + Math.random() * (farEnd - farStart);
@@ -739,9 +789,9 @@ function playUpgradeAnimation(chance, willWin) {
         var totalRotation = fullSpins * 360 + finalAngle;
         var start = performance.now();
         var sound = startUpgradeSound(duration);
+
         function animate(now) {
             var t = Math.min(1, (now - start) / duration);
-            /* Easing: быстрый разгон, плавное торможение */
             var eased = 1 - Math.pow(1 - t, 4);
             setNeedleAngle(totalRotation * eased);
             if (t < 1) requestAnimationFrame(animate);
@@ -764,18 +814,21 @@ function playUpgradeAnimation(chance, willWin) {
 }
 
 /* ============================================================
-   КНОПКА АПГРЕЙД
+   КНОПКА АПГРЕЙД — ФИНАЛЬНЫЙ ФИКС
    ============================================================ */
 $('upgradeBtn').addEventListener('click', async function() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
-    if (state.selectedPreset === null) return;
     if (state.upgrading) return;
     unlockAudio();
+
     var btn = $('upgradeBtn');
     btn.style.pointerEvents = 'none';
 
-    var preset = PRESETS[state.selectedPreset];
-    var chance = preset.chance;
+    /* ФИКС: используем РЕАЛЬНЫЙ шанс от цены цели */
+    var chance = state.upgradeTarget._realChance;
+    if (chance === undefined) {
+        chance = calcRealChance(state.upgradeSource.price, state.upgradeTarget.price);
+    }
 
     /* ЧЕСТНЫЙ РАНДОМ */
     var roll = Math.random() * 100;
@@ -783,7 +836,6 @@ $('upgradeBtn').addEventListener('click', async function() {
 
     state.upgrading = true;
     state.upgrades++;
-
     btn.disabled = true;
 
     var sourceSkin = state.upgradeSource;
@@ -800,7 +852,6 @@ $('upgradeBtn').addEventListener('click', async function() {
     if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
 
     if (success) {
-        /* Игрок получает цельный скин */
         state.inventory.push(targetSkin);
         state.totalWon += targetValue;
         state.profit += targetValue - sourceValue;
@@ -812,12 +863,11 @@ $('upgradeBtn').addEventListener('click', async function() {
             value: '+' + formatUah(targetValue), canSell: true,
             sellCallback: function() {
                 var i = state.inventory.indexOf(targetSkin);
-                if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); }
+                if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); }
             }
         });
         log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
     } else {
-        /* ПРОВАЛ — источник исчез */
         state.totalLost += sourceValue;
         state.profit -= sourceValue;
         state.housePlayerLost += sourceValue;
@@ -851,12 +901,11 @@ $('upgradeBtn').addEventListener('click', async function() {
 });
 
 /* ============================================================
-   СЛОТЫ — открытие панелей выбора
+   КЛИКИ ПО СЛОТАМ
    ============================================================ */
 $('sourceSlot').addEventListener('click', function() {
     if (state.upgradeSource) return;
     unlockAudio(); sClick();
-    /* Скроллим к панели инвентаря */
     var panel = document.querySelector('.upg-inv-panel');
     if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
@@ -880,7 +929,7 @@ $('sourceRemoveBtn').addEventListener('click', function(e) {
     renderPresets();
     updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
     setNeedleAngle(0);
-    $('upgradeBtn').disabled = true;
+    DOM.upgradeBtn.disabled = true;
 });
 
 $('targetRemoveBtn').addEventListener('click', function(e) {
@@ -890,9 +939,7 @@ $('targetRemoveBtn').addEventListener('click', function(e) {
     state.selectedPreset = null;
     renderTargetSlot();
     renderPresets();
-    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
-    setNeedleAngle(0);
-    $('upgradeBtn').disabled = true;
+    updateCircleFromPreset();
 });
 
 /* ============================================================
@@ -905,7 +952,6 @@ function initPanelFilters(containerId, filterKey, callback) {
     all.className = 'upg-inv-filter active';
     all.textContent = 'Все';
     all.dataset.filter = 'all';
-    all.style.color = '';
     container.appendChild(all);
     Object.entries(RARITIES).forEach(function(kv) {
         var b = document.createElement('button');
@@ -979,6 +1025,7 @@ function renderShop() {
     }
     grid.replaceChildren(frag);
 }
+
 function openBuyModal(skin, price) {
     unlockAudio(); sClick();
     pendingPurchase = { skin: skin, price: price };
@@ -996,7 +1043,7 @@ var pendingPurchase = null;
 var invFilter = 'all';
 function renderInventory() {
     var inv = $('inventory');
-    if (state.inventory.length === 0) { inv.innerHTML = '<div class="empty-inv">Инвентарь пуст!<br><br>Купи скины в магазине или выиграй в апгрейде.</div>'; return; }
+    if (state.inventory.length === 0) { inv.innerHTML = '<div class="empty-inv">Инвентарь пуст!<br><br>Купи скины в магазине.</div>'; return; }
     var sorted = state.inventory.slice().sort(function(a,b) { return b.price - a.price; });
     if (invFilter !== 'all') sorted = sorted.filter(function(s) { return s.rarity === invFilter; });
     if (sorted.length === 0) { inv.innerHTML = '<div class="empty-inv">Ничего не найдено</div>'; return; }
@@ -1013,6 +1060,7 @@ function renderInventory() {
     });
     inv.replaceChildren(frag);
 }
+
 function sellSkin(skin) {
     var idx = state.inventory.indexOf(skin); if (idx < 0) return;
     state.inventory.splice(idx, 1); state.balance += skin.price;
@@ -1036,7 +1084,7 @@ $('soundBtn').addEventListener('click', function() {
 
 $('resetAllBtn').addEventListener('click', function() {
     if (!confirm('Сбросить весь прогресс?')) return;
-    localStorage.removeItem('rastrgrade_v23');
+    localStorage.removeItem('rastrgrade_v24');
     location.reload();
 });
 
@@ -1100,6 +1148,7 @@ document.querySelectorAll('.nav-tab').forEach(function(tab) {
         $('page-' + tab.dataset.page).classList.add('active');
         if (tab.dataset.page === 'shop') { _shopVisibleCount = 20; renderShop(); }
         if (tab.dataset.page === 'inventory') renderInventory();
+        if (tab.dataset.page === 'upgrade') { renderInvPanel(); renderItemsPanel(); }
     });
 });
 
