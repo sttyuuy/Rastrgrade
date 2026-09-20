@@ -1,8 +1,10 @@
 /* ============================================================
-   RASTRGRADE v27 — UPGRADE ONLY
+   RASTRGRADE v28 — UPGRADE ONLY
+   Фиксы:
+   - Регистрация работает гарантированно (обработчики навешиваются сразу)
    - Чистый рандом в апгрейде
-   - Кнопки скорости кручения (медленно/быстро)
-   - Регистрация + вход (localStorage)
+   - Скорость кручения (медленно/быстро)
+   - Стартовый баланс 50₴
    ============================================================ */
 
 /* ============ КУРС ВАЛЮТ ============ */
@@ -148,7 +150,6 @@ function saveAccounts(accounts) {
 }
 
 function simpleHash(str) {
-    /* Простой хеш для пароля (не крипто, но достаточно для клиентского приложения) */
     var h = 0;
     for (var i = 0; i < str.length; i++) {
         h = ((h << 5) - h) + str.charCodeAt(i);
@@ -208,7 +209,7 @@ var state = {
 };
 
 function saveKey() {
-    return 'rastrgrade_v27_' + userKey();
+    return 'rastrgrade_v28_' + userKey();
 }
 
 function save() {
@@ -419,6 +420,7 @@ preloadSounds();
 function log(msg, type) {
     type = type || 'info';
     var wrap = $('toastWrap');
+    if (!wrap) return;
     while (wrap.children.length >= 5) {
         wrap.removeChild(wrap.firstChild);
     }
@@ -475,7 +477,7 @@ function resetUpgradeSlots() {
     renderPresets();
     updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
     setNeedleAngle(0);
-    DOM.upgradeBtn.disabled = true;
+    if (DOM.upgradeBtn) DOM.upgradeBtn.disabled = true;
 }
 
 /* ============ DOM CACHE ============ */
@@ -487,13 +489,17 @@ function cacheDom() {
      'sourcePriceLabel','targetPriceLabel','sourceSlot','targetSlot',
      'sourceRemoveBtn','targetRemoveBtn','circlePercent','circleStatus',
      'presetContainer','invPanelCount','invPanelList','targetsCount',
-     'itemsPanelGrid','invSearch','itemsSearch','upgradeBtn']
+     'itemsPanelGrid','invSearch','itemsSearch','upgradeBtn',
+     'speedSlowBtn','speedFastBtn','userBadge',
+     'authModal','authUsername','authPassword','authSubmitBtn',
+     'authTabRegister','authTabLogin','authCloseBtn','authError']
     .forEach(function(id){ DOM[id] = $(id); });
     DOM.shopBalance = $('shopBalance');
 }
 cacheDom();
 
 function updateUI() {
+    if (!DOM.balance) return;
     DOM.balance.textContent = formatUah(state.balance);
     DOM.shopBalance.textContent = formatUah(state.balance);
     var p = DOM.profit;
@@ -610,6 +616,7 @@ function updateCircleChance(chance, statusText, statusClass) {
 
 function renderSourceSlot() {
     var slot = $('sourceSlot');
+    if (!slot) return;
     if (state.upgradeSource) {
         slot.className = 'upg-item-slot filled ' + state.upgradeSource.rarity;
         slot.innerHTML =
@@ -632,6 +639,7 @@ function renderSourceSlot() {
 
 function renderTargetSlot() {
     var slot = $('targetSlot');
+    if (!slot) return;
     if (state.upgradeTarget) {
         slot.className = 'upg-item-slot filled ' + state.upgradeTarget.rarity;
         slot.innerHTML =
@@ -676,6 +684,7 @@ function updateCircleFromPreset() {
 
 function renderPresets() {
     var container = $('presetContainer');
+    if (!container) return;
     var frag = document.createDocumentFragment();
     var hasSource = !!state.upgradeSource;
 
@@ -741,6 +750,7 @@ function selectPreset(idx) {
    ============================================================ */
 function renderInvPanel() {
     var list = $('invPanelList');
+    if (!list) return;
     var filter = state.invPanelFilter;
     var search = ($('invSearch').value || '').toLowerCase();
     var sorted = state.inventory.slice().sort(function(a,b) { return b.price - a.price; });
@@ -780,6 +790,7 @@ function renderInvPanel() {
 
 function renderItemsPanel() {
     var grid = $('itemsPanelGrid');
+    if (!grid) return;
     var filter = state.itemsPanelFilter;
     var search = ($('itemsSearch').value || '').toLowerCase();
     var items = SKINS.slice();
@@ -824,18 +835,15 @@ function renderItemsPanel() {
    ============================================================ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
-        /* ФИКС: скорость по кнопке */
         var duration = state.spinSpeed === 'fast' ? 2000 : 4000;
 
         var sectorEnd = chance * 3.6;
         var finalAngle;
 
         if (willWin) {
-            /* Победа: стрелка внутри сектора */
             var margin = Math.min(sectorEnd * 0.15, 8);
             finalAngle = Math.max(margin, Math.random() * (sectorEnd - margin));
         } else {
-            /* ФИКС: ЧИСТЫЙ РАНДОМ для промaха — стрелка в любой точке вне сектора */
             var outsideStart = sectorEnd + 3;
             var outsideEnd = 357;
             if (outsideStart >= outsideEnd) {
@@ -873,10 +881,7 @@ function playUpgradeAnimation(chance, willWin) {
     });
 }
 
-/* ============================================================
-   КНОПКА АПГРЕЙД
-   ============================================================ */
-$('upgradeBtn').addEventListener('click', async function() {
+function handleUpgrade() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
     if (state.upgrading) return;
 
@@ -896,7 +901,6 @@ $('upgradeBtn').addEventListener('click', async function() {
         chance = calcRealChance(state.upgradeSource.price, state.upgradeTarget.price);
     }
 
-    /* ЧИСТЫЙ РАНДОМ */
     var roll = Math.random() * 100;
     var success = roll < chance;
 
@@ -911,97 +915,65 @@ $('upgradeBtn').addEventListener('click', async function() {
 
     addXP(20);
 
-    await playUpgradeAnimation(chance, success);
+    playUpgradeAnimation(chance, success).then(function() {
+        var srcIdx = state.inventory.indexOf(sourceSkin);
+        if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
 
-    var srcIdx = state.inventory.indexOf(sourceSkin);
-    if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
+        if (success) {
+            state.inventory.push(targetSkin);
+            state.totalWon += targetValue;
+            state.profit += targetValue - sourceValue;
+            state.houseCasinoWon += targetValue;
+            if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
+            sWin(targetSkin.rarity);
+            showResult({
+                type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
+                value: '+' + formatUah(targetValue), canSell: true,
+                sellCallback: function() {
+                    var i = state.inventory.indexOf(targetSkin);
+                    if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); }
+                }
+            });
+            log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
+        } else {
+            state.totalLost += sourceValue;
+            state.profit -= sourceValue;
+            state.housePlayerLost += sourceValue;
+            sLose();
+            showResult({
+                type: 'result-lose', icon: '💀', title: '❌ ПРОВАЛ',
+                skin: null,
+                value: 'Потеряно: ' + formatUah(sourceValue),
+                canSell: false
+            });
+            log('⚡ ' + sourceSkin.name + ' → провал ❌', 'lose');
+        }
 
-    if (success) {
-        state.inventory.push(targetSkin);
-        state.totalWon += targetValue;
-        state.profit += targetValue - sourceValue;
-        state.houseCasinoWon += targetValue;
-        if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
-        sWin(targetSkin.rarity);
-        showResult({
-            type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
-            value: '+' + formatUah(targetValue), canSell: true,
-            sellCallback: function() {
-                var i = state.inventory.indexOf(targetSkin);
-                if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); }
-            }
-        });
-        log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
-    } else {
-        state.totalLost += sourceValue;
-        state.profit -= sourceValue;
-        state.housePlayerLost += sourceValue;
-        sLose();
-        showResult({
-            type: 'result-lose', icon: '💀', title: '❌ ПРОВАЛ',
-            skin: null,
-            value: 'Потеряно: ' + formatUah(sourceValue),
-            canSell: false
-        });
-        log('⚡ ' + sourceSkin.name + ' → провал ❌', 'lose');
-    }
+        state.upgradeSource = null;
+        state.upgradeTarget = null;
+        state.selectedPreset = null;
+        state.upgrading = false;
+        btn.style.pointerEvents = '';
+        btn.disabled = true;
 
-    state.upgradeSource = null;
-    state.upgradeTarget = null;
-    state.selectedPreset = null;
-    state.upgrading = false;
-    btn.style.pointerEvents = '';
-    btn.disabled = true;
-
-    renderSourceSlot();
-    renderTargetSlot();
-    renderInvPanel();
-    renderItemsPanel();
-    renderPresets();
-    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
-    setNeedleAngle(0);
-    updateUI();
-    renderInventory();
-});
-
-/* ============================================================
-   КЛИКИ ПО СЛОТАМ
-   ============================================================ */
-$('sourceSlot').addEventListener('click', function() {
-    if (state.upgradeSource) return;
-    unlockAudio(); sClick();
-    var panel = document.querySelector('.upg-inv-panel');
-    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-});
-
-$('targetSlot').addEventListener('click', function() {
-    if (state.upgradeTarget) return;
-    unlockAudio(); sClick();
-    var panel = document.querySelector('.upg-items-panel');
-    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-});
-
-$('sourceRemoveBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    unlockAudio(); sClick();
-    resetUpgradeSlots();
-});
-
-$('targetRemoveBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    unlockAudio(); sClick();
-    state.upgradeTarget = null;
-    state.selectedPreset = null;
-    renderTargetSlot();
-    renderPresets();
-    updateCircleFromPreset();
-});
+        renderSourceSlot();
+        renderTargetSlot();
+        renderInvPanel();
+        renderItemsPanel();
+        renderPresets();
+        updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+        setNeedleAngle(0);
+        updateUI();
+        renderInventory();
+    });
+}
 
 /* ============================================================
    ФИЛЬТРЫ ПАНЕЛЕЙ
    ============================================================ */
 function initPanelFilters(containerId, filterKey, callback) {
     var container = $(containerId);
+    if (!container) return;
     container.innerHTML = '';
     var all = document.createElement('button');
     all.className = 'upg-inv-filter active';
@@ -1027,18 +999,13 @@ function initPanelFilters(containerId, filterKey, callback) {
     });
 }
 
-initPanelFilters('invPanelFilters', 'invPanelFilter', renderInvPanel);
-initPanelFilters('itemsPanelFilters', 'itemsPanelFilter', renderItemsPanel);
-
-$('invSearch').addEventListener('input', function() { renderInvPanel(); });
-$('itemsSearch').addEventListener('input', function() { renderItemsPanel(); });
-
 /* ============================================================
    МАГАЗИН
    ============================================================ */
 var _shopVisibleCount = 20;
 function renderShop() {
     var grid = $('shopGrid');
+    if (!grid) return;
     var items = SKINS.slice();
     if (state.shopFilter !== 'all') items = items.filter(function(s) { return s.rarity === state.shopFilter; });
     var rarityOrder = {common:0,uncommon:1,rare:2,epic:3,legendary:4,mythical:5};
@@ -1098,6 +1065,7 @@ var pendingPurchase = null;
 var invFilter = 'all';
 function renderInventory() {
     var inv = $('inventory');
+    if (!inv) return;
     if (state.inventory.length === 0) { inv.innerHTML = '<div class="empty-inv">Инвентарь пуст!<br><br>Купи скины в магазине.</div>'; return; }
     var sorted = state.inventory.slice().sort(function(a,b) { return b.price - a.price; });
     if (invFilter !== 'all') sorted = sorted.filter(function(s) { return s.rarity === invFilter; });
@@ -1132,8 +1100,12 @@ function sellSkin(skin) {
 /* ============================================================
    РЕГИСТРАЦИЯ / ВХОД
    ============================================================ */
+var authMode = 'register';
+
 function openAuthModal() {
-    $('authModal').classList.add('show');
+    var modal = $('authModal');
+    if (!modal) return;
+    modal.classList.add('show');
     $('authError').textContent = '';
     $('authUsername').value = '';
     $('authPassword').value = '';
@@ -1141,16 +1113,17 @@ function openAuthModal() {
 }
 
 function closeAuthModal() {
-    $('authModal').classList.remove('show');
+    var modal = $('authModal');
+    if (!modal) return;
+    modal.classList.remove('show');
 }
-
-var authMode = 'register';
 
 function switchAuthTab(mode) {
     authMode = mode;
     var regBtn = $('authTabRegister');
     var logBtn = $('authTabLogin');
     var submitBtn = $('authSubmitBtn');
+    if (!regBtn || !logBtn || !submitBtn) return;
     if (mode === 'register') {
         regBtn.classList.add('active');
         logBtn.classList.remove('active');
@@ -1164,8 +1137,8 @@ function switchAuthTab(mode) {
 }
 
 function doAuth() {
-    var u = $('authUsername').value;
-    var p = $('authPassword').value;
+    var u = ($('authUsername').value || '');
+    var p = ($('authPassword').value || '');
     var result;
     if (authMode === 'register') {
         result = registerUser(u, p);
@@ -1198,12 +1171,11 @@ function logout() {
 
 function updateUserBadge() {
     var badge = $('userBadge');
+    if (!badge) return;
     if (currentUser) {
-        badge.textContent = '👤 ' + currentUser;
-        badge.style.display = 'flex';
+        badge.title = 'Аккаунт: ' + currentUser + ' (нажми чтобы выйти)';
     } else {
-        badge.textContent = '👤 ВОЙТИ';
-        badge.style.display = 'flex';
+        badge.title = 'Войти';
     }
 }
 
@@ -1238,171 +1210,267 @@ function updateSpeedButtons() {
 }
 
 /* ============================================================
-   ОБРАБОТЧИКИ
+   НАВЕШИВАНИЕ ОБРАБОТЧИКОВ
    ============================================================ */
-var savedUser = null;
-try { savedUser = localStorage.getItem('rastrgrade_current_user'); } catch(e) {}
-if (savedUser) {
-    var accs = getAccounts();
-    if (accs[savedUser.toLowerCase()]) currentUser = accs[savedUser.toLowerCase()].username;
-}
+function attachHandlers() {
+    /* Кнопки авторизации */
+    var userBadge = $('userBadge');
+    if (userBadge) userBadge.addEventListener('click', function() {
+        if (currentUser) logout();
+        else openAuthModal();
+    });
 
-if (!currentUser) {
-    resetStateToDefault();
-    renderAll();
-    updateUserBadge();
-    openAuthModal();
-} else {
-    load();
-    renderAll();
-    updateUserBadge();
-}
+    var authCloseBtn = $('authCloseBtn');
+    if (authCloseBtn) authCloseBtn.addEventListener('click', function() {
+        if (!currentUser) {
+            log('⚠️ Нужно войти или зарегистрироваться', 'lose');
+            return;
+        }
+        closeAuthModal();
+    });
 
-$('userBadge').addEventListener('click', function() {
-    if (currentUser) {
-        logout();
-    } else {
-        openAuthModal();
-    }
-});
+    var tabReg = $('authTabRegister');
+    if (tabReg) tabReg.addEventListener('click', function() { switchAuthTab('register'); });
 
-$('authCloseBtn').addEventListener('click', function() {
-    if (!currentUser) {
-        log('⚠️ Нужно войти или зарегистрироваться', 'lose');
-        return;
-    }
-    closeAuthModal();
-});
+    var tabLog = $('authTabLogin');
+    if (tabLog) tabLog.addEventListener('click', function() { switchAuthTab('login'); });
 
-$('authTabRegister').addEventListener('click', function() { switchAuthTab('register'); });
-$('authTabLogin').addEventListener('click', function() { switchAuthTab('login'); });
-$('authSubmitBtn').addEventListener('click', doAuth);
+    var submitBtn = $('authSubmitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', doAuth);
 
-$('authPassword').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') doAuth();
-});
+    var passInput = $('authPassword');
+    if (passInput) passInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') doAuth();
+    });
 
-$('speedSlowBtn').addEventListener('click', function() {
-    unlockAudio(); sClick();
-    state.spinSpeed = 'slow';
-    updateSpeedButtons();
-    save();
-});
-
-$('speedFastBtn').addEventListener('click', function() {
-    unlockAudio(); sClick();
-    state.spinSpeed = 'fast';
-    updateSpeedButtons();
-    save();
-});
-
-$('resultContinue').addEventListener('click', closeResult);
-
-$('soundBtn').addEventListener('click', function() {
-    state.soundOn = !state.soundOn;
-    $('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
-    if (state.soundOn) { unlockAudio(); sClick(); }
-    save();
-});
-
-$('resetAllBtn').addEventListener('click', function() {
-    if (!confirm('Сбросить весь прогресс этого аккаунта?')) return;
-    try { localStorage.removeItem(saveKey()); } catch(e) {}
-    resetStateToDefault();
-    state.balance = 50;
-    save();
-    renderAll();
-    log('🗑️ Прогресс сброшен', 'info');
-});
-
-$('buyCancel').addEventListener('click', function() {
-    sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null;
-});
-
-$('buyConfirm').addEventListener('click', function() {
-    if (!pendingPurchase) return;
-    var skin = pendingPurchase.skin; var price = pendingPurchase.price;
-    if (state.balance < price) { log('❌ Недостаточно средств', 'lose'); sLose(); return; }
-    state.balance -= price;
-    state.inventory.push(skin);
-    state.purchases++;
-    state.totalLost += price; state.profit -= price;
-    state.housePlayerLost += price;
-    addXP(10); sBuy();
-    log('🛒 Куплено: ' + skin.name + ' за ' + formatUah(price), 'win');
-    $('buyModal').classList.remove('show'); pendingPurchase = null;
-    updateUI(); renderShop(); renderInventory(); renderInvPanel();
-});
-
-$('sellAllBtn').addEventListener('click', function() {
-    if (state.inventory.length === 0) return;
-    var total = state.inventory.reduce(function(s, i) { return s + i.price; }, 0);
-    state.balance += total;
-    state.inventory = [];
-
-    state.upgradeSource = null;
-    state.upgradeTarget = null;
-    state.selectedPreset = null;
-    renderSourceSlot();
-    renderTargetSlot();
-    renderPresets();
-    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
-    setNeedleAngle(0);
-    DOM.upgradeBtn.disabled = true;
-
-    updateUI(); renderInventory(); renderInvPanel(); sBuy();
-    log('💰 Продано: +' + formatUah(total), 'win');
-});
-
-$('shopSort').addEventListener('change', function(e) {
-    state.shopSort = e.target.value; _shopVisibleCount = 20;
-    renderShop(); save(); sClick();
-});
-
-document.querySelectorAll('.shop-filter').forEach(function(btn) {
-    btn.addEventListener('click', function() {
+    /* Скорость */
+    var speedSlow = $('speedSlowBtn');
+    if (speedSlow) speedSlow.addEventListener('click', function() {
         unlockAudio(); sClick();
+        state.spinSpeed = 'slow';
+        updateSpeedButtons();
+        save();
+    });
+
+    var speedFast = $('speedFastBtn');
+    if (speedFast) speedFast.addEventListener('click', function() {
+        unlockAudio(); sClick();
+        state.spinSpeed = 'fast';
+        updateSpeedButtons();
+        save();
+    });
+
+    /* Результат */
+    var resultContinue = $('resultContinue');
+    if (resultContinue) resultContinue.addEventListener('click', closeResult);
+
+    /* Звук */
+    var soundBtn = $('soundBtn');
+    if (soundBtn) soundBtn.addEventListener('click', function() {
+        state.soundOn = !state.soundOn;
+        $('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
+        if (state.soundOn) { unlockAudio(); sClick(); }
+        save();
+    });
+
+    /* Сброс */
+    var resetAllBtn = $('resetAllBtn');
+    if (resetAllBtn) resetAllBtn.addEventListener('click', function() {
+        if (!confirm('Сбросить весь прогресс этого аккаунта?')) return;
+        try { localStorage.removeItem(saveKey()); } catch(e) {}
+        resetStateToDefault();
+        state.balance = 50;
+        save();
+        renderAll();
+        log('🗑️ Прогресс сброшен', 'info');
+    });
+
+    /* Покупка */
+    var buyCancel = $('buyCancel');
+    if (buyCancel) buyCancel.addEventListener('click', function() {
+        sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null;
+    });
+
+    var buyConfirm = $('buyConfirm');
+    if (buyConfirm) buyConfirm.addEventListener('click', function() {
+        if (!pendingPurchase) return;
+        var skin = pendingPurchase.skin; var price = pendingPurchase.price;
+        if (state.balance < price) { log('❌ Недостаточно средств', 'lose'); sLose(); return; }
+        state.balance -= price;
+        state.inventory.push(skin);
+        state.purchases++;
+        state.totalLost += price; state.profit -= price;
+        state.housePlayerLost += price;
+        addXP(10); sBuy();
+        log('🛒 Куплено: ' + skin.name + ' за ' + formatUah(price), 'win');
+        $('buyModal').classList.remove('show'); pendingPurchase = null;
+        updateUI(); renderShop(); renderInventory(); renderInvPanel();
+    });
+
+    /* Продажа всего */
+    var sellAllBtn = $('sellAllBtn');
+    if (sellAllBtn) sellAllBtn.addEventListener('click', function() {
+        if (state.inventory.length === 0) return;
+        var total = state.inventory.reduce(function(s, i) { return s + i.price; }, 0);
+        state.balance += total;
+        state.inventory = [];
+
+        state.upgradeSource = null;
+        state.upgradeTarget = null;
+        state.selectedPreset = null;
+        renderSourceSlot();
+        renderTargetSlot();
+        renderPresets();
+        updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+        setNeedleAngle(0);
+        if (DOM.upgradeBtn) DOM.upgradeBtn.disabled = true;
+
+        updateUI(); renderInventory(); renderInvPanel(); sBuy();
+        log('💰 Продано: +' + formatUah(total), 'win');
+    });
+
+    /* Апгрейд */
+    var upgradeBtn = $('upgradeBtn');
+    if (upgradeBtn) upgradeBtn.addEventListener('click', handleUpgrade);
+
+    /* Слоты */
+    var sourceSlot = $('sourceSlot');
+    if (sourceSlot) sourceSlot.addEventListener('click', function() {
+        if (state.upgradeSource) return;
+        unlockAudio(); sClick();
+        var panel = document.querySelector('.upg-inv-panel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    var targetSlot = $('targetSlot');
+    if (targetSlot) targetSlot.addEventListener('click', function() {
+        if (state.upgradeTarget) return;
+        unlockAudio(); sClick();
+        var panel = document.querySelector('.upg-items-panel');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    var sourceRemoveBtn = $('sourceRemoveBtn');
+    if (sourceRemoveBtn) sourceRemoveBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        unlockAudio(); sClick();
+        resetUpgradeSlots();
+    });
+
+    var targetRemoveBtn = $('targetRemoveBtn');
+    if (targetRemoveBtn) targetRemoveBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        unlockAudio(); sClick();
+        state.upgradeTarget = null;
+        state.selectedPreset = null;
+        renderTargetSlot();
+        renderPresets();
+        updateCircleFromPreset();
+    });
+
+    /* Поиск */
+    var invSearch = $('invSearch');
+    if (invSearch) invSearch.addEventListener('input', renderInvPanel);
+    var itemsSearch = $('itemsSearch');
+    if (itemsSearch) itemsSearch.addEventListener('input', renderItemsPanel);
+
+    /* Сорт магазина */
+    var shopSort = $('shopSort');
+    if (shopSort) shopSort.addEventListener('change', function(e) {
+        state.shopSort = e.target.value; _shopVisibleCount = 20;
+        renderShop(); save(); sClick();
+    });
+
+    /* Фильтры магазина */
+    document.querySelectorAll('.shop-filter').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            unlockAudio(); sClick();
+            document.querySelectorAll('.shop-filter').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active'); state.shopFilter = btn.dataset.rarity;
+            _shopVisibleCount = 20;
+            renderShop(); save();
+        });
+    });
+
+    /* Фильтры инвентаря */
+    document.querySelectorAll('.inv-filter').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            unlockAudio(); sClick();
+            document.querySelectorAll('.inv-filter').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active'); invFilter = btn.dataset.rarity; renderInventory();
+        });
+    });
+
+    /* Навигация */
+    document.querySelectorAll('.nav-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            unlockAudio(); sClick();
+            stopAllLoopSounds();
+            document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+            tab.classList.add('active');
+            $('page-' + tab.dataset.page).classList.add('active');
+            if (tab.dataset.page === 'shop') { _shopVisibleCount = 20; renderShop(); }
+            if (tab.dataset.page === 'inventory') renderInventory();
+            if (tab.dataset.page === 'upgrade') { renderInvPanel(); renderItemsPanel(); }
+        });
+    });
+
+    /* Скрытие вкладки — стоп звуков */
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAllLoopSounds();
+        }
+    });
+
+    /* Разблокировка звука */
+    document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+    /* Восстанавливаем пользователя */
+    var savedUser = null;
+    try { savedUser = localStorage.getItem('rastrgrade_current_user'); } catch(e) {}
+    if (savedUser) {
+        var accs = getAccounts();
+        if (accs[savedUser.toLowerCase()]) currentUser = accs[savedUser.toLowerCase()].username;
+    }
+
+    /* Инициализация панелей */
+    initPanelFilters('invPanelFilters', 'invPanelFilter', renderInvPanel);
+    initPanelFilters('itemsPanelFilters', 'itemsPanelFilter', renderItemsPanel);
+
+    /* Ставим активный фильтр магазина и сорт */
+    var shopFilterBtn = document.querySelector('.shop-filter[data-rarity="' + state.shopFilter + '"]');
+    if (shopFilterBtn) {
         document.querySelectorAll('.shop-filter').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active'); state.shopFilter = btn.dataset.rarity;
-        _shopVisibleCount = 20;
-        renderShop(); save();
-    });
-});
-
-document.querySelectorAll('.inv-filter').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        unlockAudio(); sClick();
-        document.querySelectorAll('.inv-filter').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active'); invFilter = btn.dataset.rarity; renderInventory();
-    });
-});
-
-document.querySelectorAll('.nav-tab').forEach(function(tab) {
-    tab.addEventListener('click', function() {
-        unlockAudio(); sClick();
-        stopAllLoopSounds();
-        document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
-        document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-        tab.classList.add('active');
-        $('page-' + tab.dataset.page).classList.add('active');
-        if (tab.dataset.page === 'shop') { _shopVisibleCount = 20; renderShop(); }
-        if (tab.dataset.page === 'inventory') renderInventory();
-        if (tab.dataset.page === 'upgrade') { renderInvPanel(); renderItemsPanel(); }
-    });
-});
-
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        stopAllLoopSounds();
+        shopFilterBtn.classList.add('active');
     }
-});
+    if ($('shopSort')) $('shopSort').value = state.shopSort;
+    if ($('soundIcon')) $('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
 
-var shopFilterBtn = document.querySelector('.shop-filter[data-rarity="' + state.shopFilter + '"]');
-if (shopFilterBtn) {
-    document.querySelectorAll('.shop-filter').forEach(function(b) { b.classList.remove('active'); });
-    shopFilterBtn.classList.add('active');
+    /* Навешиваем обработчики */
+    attachHandlers();
+
+    /* Загружаем данные / открываем авторизацию */
+    if (!currentUser) {
+        resetStateToDefault();
+        renderAll();
+        updateUserBadge();
+        openAuthModal();
+    } else {
+        load();
+        renderAll();
+        updateUserBadge();
+    }
 }
-$('shopSort').value = state.shopSort;
-$('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
 
-document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
+/* Ждём загрузки DOM */
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
