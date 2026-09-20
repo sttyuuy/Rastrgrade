@@ -1,10 +1,8 @@
 /* ============================================================
-   RASTRGRADE v26 — UPGRADE ONLY
-   Фиксы:
-   - Стартовый баланс 50₴ (было 5₴)
-   - Слот апгрейда очищается при продаже скина
-   - Проверка что source реально в инвентаре перед апгрейдом
-   - Пресеты только множители (x1.5...x500)
+   RASTRGRADE v27 — UPGRADE ONLY
+   - Чистый рандом в апгрейде
+   - Кнопки скорости кручения (медленно/быстро)
+   - Регистрация + вход (localStorage)
    ============================================================ */
 
 /* ============ КУРС ВАЛЮТ ============ */
@@ -103,9 +101,6 @@ const RARITIES = {
     mythical:  { name:'МИФИЧЕСКИЙ',  color:'#ff0044' }
 };
 
-/* ============================================================
-   ПРЕСЕТЫ — ТОЛЬКО МНОЖИТЕЛИ
-   ============================================================ */
 const PRESETS = [
     { mult: 1.5, label: 'x1.5' },
     { mult: 2,   label: 'x2'   },
@@ -134,6 +129,66 @@ function resolveSkin(item) {
     return SKIN_BY_ID[item.id] || item;
 }
 
+/* ============================================================
+   АККАУНТЫ
+   ============================================================ */
+var currentUser = null;
+
+function getAccounts() {
+    try {
+        var raw = localStorage.getItem('rastrgrade_accounts');
+        return raw ? JSON.parse(raw) : {};
+    } catch(e) { return {}; }
+}
+
+function saveAccounts(accounts) {
+    try {
+        localStorage.setItem('rastrgrade_accounts', JSON.stringify(accounts));
+    } catch(e) {}
+}
+
+function simpleHash(str) {
+    /* Простой хеш для пароля (не крипто, но достаточно для клиентского приложения) */
+    var h = 0;
+    for (var i = 0; i < str.length; i++) {
+        h = ((h << 5) - h) + str.charCodeAt(i);
+        h = h & h;
+    }
+    return 'h' + Math.abs(h).toString(36);
+}
+
+function registerUser(username, password) {
+    username = (username || '').trim();
+    if (username.length < 3) return { ok: false, error: 'Имя минимум 3 символа' };
+    if (password.length < 4) return { ok: false, error: 'Пароль минимум 4 символа' };
+
+    var accounts = getAccounts();
+    var key = username.toLowerCase();
+    if (accounts[key]) return { ok: false, error: 'Такой аккаунт уже существует' };
+
+    accounts[key] = {
+        username: username,
+        passwordHash: simpleHash(password),
+        created: Date.now()
+    };
+    saveAccounts(accounts);
+    return { ok: true, username: username };
+}
+
+function loginUser(username, password) {
+    username = (username || '').trim();
+    var accounts = getAccounts();
+    var key = username.toLowerCase();
+    var acc = accounts[key];
+    if (!acc) return { ok: false, error: 'Аккаунт не найден' };
+    if (acc.passwordHash !== simpleHash(password)) return { ok: false, error: 'Неверный пароль' };
+    return { ok: true, username: acc.username };
+}
+
+function userKey() {
+    return currentUser ? currentUser.toLowerCase() : '_guest';
+}
+
 /* ============ STATE ============ */
 var state = {
     balance: 0,
@@ -144,6 +199,7 @@ var state = {
     upgradeSource: null,
     upgradeTarget: null,
     selectedPreset: null,
+    spinSpeed: 'slow',
     housePlayerLost: 0, houseCasinoWon: 0,
     xp: 0, level: 1,
     soundOn: true,
@@ -151,7 +207,12 @@ var state = {
     invPanelFilter: 'all', itemsPanelFilter: 'all'
 };
 
+function saveKey() {
+    return 'rastrgrade_v27_' + userKey();
+}
+
 function save() {
+    if (!currentUser) return;
     try {
         var save_data = {
             balance: state.balance,
@@ -165,17 +226,21 @@ function save() {
             housePlayerLost: state.housePlayerLost, houseCasinoWon: state.houseCasinoWon,
             xp: state.xp, level: state.level,
             soundOn: state.soundOn,
-            shopFilter: state.shopFilter, shopSort: state.shopSort
+            shopFilter: state.shopFilter, shopSort: state.shopSort,
+            spinSpeed: state.spinSpeed
         };
-        localStorage.setItem('rastrgrade_v26', JSON.stringify(save_data));
+        localStorage.setItem(saveKey(), JSON.stringify(save_data));
     } catch(e) {}
 }
 
 function load() {
+    if (!currentUser) {
+        resetStateToDefault();
+        return;
+    }
     try {
-        var raw = localStorage.getItem('rastrgrade_v26');
+        var raw = localStorage.getItem(saveKey());
         if (!raw) {
-            /* ФИКС: стартовый баланс 50₴ */
             state.balance = 50;
             save();
             return;
@@ -186,10 +251,23 @@ function load() {
         if (state.bestDrop) state.bestDrop = resolveSkin(state.bestDrop);
         if (state.bestUpgrade) state.bestUpgrade = resolveSkin(state.bestUpgrade);
     } catch(e) {
-        /* ФИКС: стартовый баланс 50₴ при ошибке */
         state.balance = 50;
         save();
     }
+}
+
+function resetStateToDefault() {
+    state.balance = 0;
+    state.inventory = [];
+    state.profit = 0;
+    state.totalWon = 0; state.totalLost = 0; state.upgrades = 0; state.purchases = 0;
+    state.bestDrop = null; state.bestUpgrade = null;
+    state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
+    state.spinSpeed = 'slow';
+    state.housePlayerLost = 0; state.houseCasinoWon = 0;
+    state.xp = 0; state.level = 1;
+    state.shopFilter = 'all'; state.shopSort = 'price-asc';
+    state.invPanelFilter = 'all'; state.itemsPanelFilter = 'all';
 }
 
 function $(id){ return document.getElementById(id); }
@@ -359,8 +437,6 @@ function log(msg, type) {
 /* ============================================================
    УТИЛИТЫ
    ============================================================ */
-
-/* Ищет скин, ближайший по цене к targetPrice. Исключает sourceSkin */
 function findTargetByPrice(targetPrice, sourceSkin) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
@@ -371,7 +447,6 @@ function findTargetByPrice(targetPrice, sourceSkin) {
     return best;
 }
 
-/* Реальный шанс всегда = (source / target) × 100 */
 function calcRealChance(sourcePrice, targetPrice) {
     var chance = (sourcePrice / targetPrice) * 100;
     if (chance > 95) chance = 95;
@@ -391,7 +466,6 @@ function addXP(n) {
     }
 }
 
-/* ФИКС: сбрасывает слоты апгрейда если source продан */
 function resetUpgradeSlots() {
     state.upgradeSource = null;
     state.upgradeTarget = null;
@@ -534,7 +608,6 @@ function updateCircleChance(chance, statusText, statusClass) {
     $('circlePercent').style.color = color;
 }
 
-/* Рендер слота "источник" */
 function renderSourceSlot() {
     var slot = $('sourceSlot');
     if (state.upgradeSource) {
@@ -557,7 +630,6 @@ function renderSourceSlot() {
     }
 }
 
-/* Рендер слота "цель" */
 function renderTargetSlot() {
     var slot = $('targetSlot');
     if (state.upgradeTarget) {
@@ -580,7 +652,6 @@ function renderTargetSlot() {
     }
 }
 
-/* Обновление круга — реальный шанс */
 function updateCircleFromPreset() {
     if (!state.upgradeSource || !state.upgradeTarget) {
         updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
@@ -603,7 +674,6 @@ function updateCircleFromPreset() {
     DOM.upgradeBtn.disabled = false;
 }
 
-/* Рендер пресетов — с реальным шансом */
 function renderPresets() {
     var container = $('presetContainer');
     var frag = document.createDocumentFragment();
@@ -642,7 +712,6 @@ function renderPresets() {
     container.replaceChildren(frag);
 }
 
-/* Выбор пресета — только множители */
 function selectPreset(idx) {
     if (!state.upgradeSource) { log('❌ Сначала выбери предмет', 'lose'); return; }
     unlockAudio(); sClick();
@@ -709,9 +778,6 @@ function renderInvPanel() {
     list.replaceChildren(frag);
 }
 
-/* ============================================================
-   ITEMS PANEL
-   ============================================================ */
 function renderItemsPanel() {
     var grid = $('itemsPanelGrid');
     var filter = state.itemsPanelFilter;
@@ -754,27 +820,32 @@ function renderItemsPanel() {
 }
 
 /* ============================================================
-   АНИМАЦИЯ
+   АНИМАЦИЯ — ЧИСТЫЙ РАНДОМ
    ============================================================ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
-        var duration = 4000;
+        /* ФИКС: скорость по кнопке */
+        var duration = state.spinSpeed === 'fast' ? 2000 : 4000;
+
         var sectorEnd = chance * 3.6;
         var finalAngle;
+
         if (willWin) {
+            /* Победа: стрелка внутри сектора */
             var margin = Math.min(sectorEnd * 0.15, 8);
             finalAngle = Math.max(margin, Math.random() * (sectorEnd - margin));
         } else {
-            var roll = Math.random();
-            if (roll < 0.7) {
-                finalAngle = sectorEnd + 0.5 + Math.random() * 1.5;
+            /* ФИКС: ЧИСТЫЙ РАНДОМ для промaха — стрелка в любой точке вне сектора */
+            var outsideStart = sectorEnd + 3;
+            var outsideEnd = 357;
+            if (outsideStart >= outsideEnd) {
+                finalAngle = (sectorEnd + 3 + Math.random() * 3) % 360;
             } else {
-                var farStart = sectorEnd + 20;
-                var farEnd = 355;
-                finalAngle = farStart + Math.random() * (farEnd - farStart);
+                finalAngle = outsideStart + Math.random() * (outsideEnd - outsideStart);
             }
         }
-        var fullSpins = 8 + Math.floor(Math.random() * 4);
+
+        var fullSpins = state.spinSpeed === 'fast' ? 5 + Math.floor(Math.random() * 3) : 8 + Math.floor(Math.random() * 4);
         var totalRotation = fullSpins * 360 + finalAngle;
         var start = performance.now();
         var sound = startUpgradeSound(duration);
@@ -809,7 +880,6 @@ $('upgradeBtn').addEventListener('click', async function() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
     if (state.upgrading) return;
 
-    /* ФИКС: проверяем что source реально в инвентаре */
     if (state.inventory.indexOf(state.upgradeSource) < 0) {
         resetUpgradeSlots();
         log('❌ Предмет больше не в инвентаре', 'lose');
@@ -826,6 +896,7 @@ $('upgradeBtn').addEventListener('click', async function() {
         chance = calcRealChance(state.upgradeSource.price, state.upgradeTarget.price);
     }
 
+    /* ЧИСТЫЙ РАНДОМ */
     var roll = Math.random() * 100;
     var success = roll < chance;
 
@@ -1045,13 +1116,11 @@ function renderInventory() {
     inv.replaceChildren(frag);
 }
 
-/* ФИКС: sellSkin очищает слот апгрейда если этот скин там стоял */
 function sellSkin(skin) {
     var idx = state.inventory.indexOf(skin); if (idx < 0) return;
     state.inventory.splice(idx, 1);
     state.balance += skin.price;
 
-    /* Если этот скин стоит в слоте апгрейда — очищаем слот */
     if (state.upgradeSource === skin) {
         resetUpgradeSlots();
     }
@@ -1061,9 +1130,171 @@ function sellSkin(skin) {
 }
 
 /* ============================================================
+   РЕГИСТРАЦИЯ / ВХОД
+   ============================================================ */
+function openAuthModal() {
+    $('authModal').classList.add('show');
+    $('authError').textContent = '';
+    $('authUsername').value = '';
+    $('authPassword').value = '';
+    switchAuthTab('register');
+}
+
+function closeAuthModal() {
+    $('authModal').classList.remove('show');
+}
+
+var authMode = 'register';
+
+function switchAuthTab(mode) {
+    authMode = mode;
+    var regBtn = $('authTabRegister');
+    var logBtn = $('authTabLogin');
+    var submitBtn = $('authSubmitBtn');
+    if (mode === 'register') {
+        regBtn.classList.add('active');
+        logBtn.classList.remove('active');
+        submitBtn.textContent = 'ЗАРЕГИСТРИРОВАТЬСЯ';
+    } else {
+        regBtn.classList.remove('active');
+        logBtn.classList.add('active');
+        submitBtn.textContent = 'ВОЙТИ';
+    }
+    $('authError').textContent = '';
+}
+
+function doAuth() {
+    var u = $('authUsername').value;
+    var p = $('authPassword').value;
+    var result;
+    if (authMode === 'register') {
+        result = registerUser(u, p);
+    } else {
+        result = loginUser(u, p);
+    }
+    if (!result.ok) {
+        $('authError').textContent = result.error;
+        return;
+    }
+    currentUser = result.username;
+    try { localStorage.setItem('rastrgrade_current_user', currentUser); } catch(e) {}
+    closeAuthModal();
+    resetStateToDefault();
+    load();
+    renderAll();
+    updateUserBadge();
+    log('👤 Добро пожаловать, ' + currentUser + '!', 'win');
+}
+
+function logout() {
+    if (!confirm('Выйти из аккаунта?')) return;
+    currentUser = null;
+    try { localStorage.removeItem('rastrgrade_current_user'); } catch(e) {}
+    resetStateToDefault();
+    renderAll();
+    updateUserBadge();
+    openAuthModal();
+}
+
+function updateUserBadge() {
+    var badge = $('userBadge');
+    if (currentUser) {
+        badge.textContent = '👤 ' + currentUser;
+        badge.style.display = 'flex';
+    } else {
+        badge.textContent = '👤 ВОЙТИ';
+        badge.style.display = 'flex';
+    }
+}
+
+function renderAll() {
+    renderSourceSlot();
+    renderTargetSlot();
+    renderPresets();
+    renderInvPanel();
+    renderItemsPanel();
+    renderShop();
+    updateUI();
+    renderInventory();
+    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+    setNeedleAngle(0);
+    updateSpeedButtons();
+}
+
+/* ============================================================
+   СКОРОСТЬ КРУЧЕНИЯ
+   ============================================================ */
+function updateSpeedButtons() {
+    var slowBtn = $('speedSlowBtn');
+    var fastBtn = $('speedFastBtn');
+    if (!slowBtn || !fastBtn) return;
+    if (state.spinSpeed === 'fast') {
+        slowBtn.classList.remove('active');
+        fastBtn.classList.add('active');
+    } else {
+        slowBtn.classList.add('active');
+        fastBtn.classList.remove('active');
+    }
+}
+
+/* ============================================================
    ОБРАБОТЧИКИ
    ============================================================ */
-load();
+var savedUser = null;
+try { savedUser = localStorage.getItem('rastrgrade_current_user'); } catch(e) {}
+if (savedUser) {
+    var accs = getAccounts();
+    if (accs[savedUser.toLowerCase()]) currentUser = accs[savedUser.toLowerCase()].username;
+}
+
+if (!currentUser) {
+    resetStateToDefault();
+    renderAll();
+    updateUserBadge();
+    openAuthModal();
+} else {
+    load();
+    renderAll();
+    updateUserBadge();
+}
+
+$('userBadge').addEventListener('click', function() {
+    if (currentUser) {
+        logout();
+    } else {
+        openAuthModal();
+    }
+});
+
+$('authCloseBtn').addEventListener('click', function() {
+    if (!currentUser) {
+        log('⚠️ Нужно войти или зарегистрироваться', 'lose');
+        return;
+    }
+    closeAuthModal();
+});
+
+$('authTabRegister').addEventListener('click', function() { switchAuthTab('register'); });
+$('authTabLogin').addEventListener('click', function() { switchAuthTab('login'); });
+$('authSubmitBtn').addEventListener('click', doAuth);
+
+$('authPassword').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') doAuth();
+});
+
+$('speedSlowBtn').addEventListener('click', function() {
+    unlockAudio(); sClick();
+    state.spinSpeed = 'slow';
+    updateSpeedButtons();
+    save();
+});
+
+$('speedFastBtn').addEventListener('click', function() {
+    unlockAudio(); sClick();
+    state.spinSpeed = 'fast';
+    updateSpeedButtons();
+    save();
+});
 
 $('resultContinue').addEventListener('click', closeResult);
 
@@ -1075,9 +1306,13 @@ $('soundBtn').addEventListener('click', function() {
 });
 
 $('resetAllBtn').addEventListener('click', function() {
-    if (!confirm('Сбросить весь прогресс?')) return;
-    localStorage.removeItem('rastrgrade_v26');
-    location.reload();
+    if (!confirm('Сбросить весь прогресс этого аккаунта?')) return;
+    try { localStorage.removeItem(saveKey()); } catch(e) {}
+    resetStateToDefault();
+    state.balance = 50;
+    save();
+    renderAll();
+    log('🗑️ Прогресс сброшен', 'info');
 });
 
 $('buyCancel').addEventListener('click', function() {
@@ -1099,14 +1334,12 @@ $('buyConfirm').addEventListener('click', function() {
     updateUI(); renderShop(); renderInventory(); renderInvPanel();
 });
 
-/* ФИКС: продажа всего очищает слоты апгрейда */
 $('sellAllBtn').addEventListener('click', function() {
     if (state.inventory.length === 0) return;
     var total = state.inventory.reduce(function(s, i) { return s + i.price; }, 0);
     state.balance += total;
     state.inventory = [];
 
-    /* Полный сброс апгрейда */
     state.upgradeSource = null;
     state.upgradeTarget = null;
     state.selectedPreset = null;
@@ -1171,17 +1404,5 @@ if (shopFilterBtn) {
 }
 $('shopSort').value = state.shopSort;
 $('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
-
-/* ============ INITIAL RENDER ============ */
-renderSourceSlot();
-renderTargetSlot();
-renderPresets();
-renderInvPanel();
-renderItemsPanel();
-renderShop();
-updateUI();
-renderInventory();
-updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
-setNeedleAngle(0);
 
 document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
