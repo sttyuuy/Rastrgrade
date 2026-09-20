@@ -1,7 +1,10 @@
 /* ============================================================
-   RASTRGRADE v25 — UPGRADE ONLY
-   Убраны пресеты 35/50/75, оставлены только множители x1.5...x500
-   Шанс ВСЕГДА = (source / target) × 100 — честный
+   RASTRGRADE v26 — UPGRADE ONLY
+   Фиксы:
+   - Стартовый баланс 50₴ (было 5₴)
+   - Слот апгрейда очищается при продаже скина
+   - Проверка что source реально в инвентаре перед апгрейдом
+   - Пресеты только множители (x1.5...x500)
    ============================================================ */
 
 /* ============ КУРС ВАЛЮТ ============ */
@@ -164,15 +167,16 @@ function save() {
             soundOn: state.soundOn,
             shopFilter: state.shopFilter, shopSort: state.shopSort
         };
-        localStorage.setItem('rastrgrade_v25', JSON.stringify(save_data));
+        localStorage.setItem('rastrgrade_v26', JSON.stringify(save_data));
     } catch(e) {}
 }
 
 function load() {
     try {
-        var raw = localStorage.getItem('rastrgrade_v25');
+        var raw = localStorage.getItem('rastrgrade_v26');
         if (!raw) {
-            state.balance = 5;
+            /* ФИКС: стартовый баланс 50₴ */
+            state.balance = 50;
             save();
             return;
         }
@@ -182,7 +186,8 @@ function load() {
         if (state.bestDrop) state.bestDrop = resolveSkin(state.bestDrop);
         if (state.bestUpgrade) state.bestUpgrade = resolveSkin(state.bestUpgrade);
     } catch(e) {
-        state.balance = 5;
+        /* ФИКС: стартовый баланс 50₴ при ошибке */
+        state.balance = 50;
         save();
     }
 }
@@ -384,6 +389,19 @@ function addXP(n) {
         log('⬆️ Уровень ' + state.level + '! +' + formatUah(reward), 'win');
         sLevelUp();
     }
+}
+
+/* ФИКС: сбрасывает слоты апгрейда если source продан */
+function resetUpgradeSlots() {
+    state.upgradeSource = null;
+    state.upgradeTarget = null;
+    state.selectedPreset = null;
+    renderSourceSlot();
+    renderTargetSlot();
+    renderPresets();
+    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+    setNeedleAngle(0);
+    DOM.upgradeBtn.disabled = true;
 }
 
 /* ============ DOM CACHE ============ */
@@ -790,6 +808,14 @@ function playUpgradeAnimation(chance, willWin) {
 $('upgradeBtn').addEventListener('click', async function() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
     if (state.upgrading) return;
+
+    /* ФИКС: проверяем что source реально в инвентаре */
+    if (state.inventory.indexOf(state.upgradeSource) < 0) {
+        resetUpgradeSlots();
+        log('❌ Предмет больше не в инвентаре', 'lose');
+        return;
+    }
+
     unlockAudio();
 
     var btn = $('upgradeBtn');
@@ -887,16 +913,7 @@ $('targetSlot').addEventListener('click', function() {
 $('sourceRemoveBtn').addEventListener('click', function(e) {
     e.stopPropagation();
     unlockAudio(); sClick();
-    state.upgradeSource = null;
-    state.upgradeTarget = null;
-    state.selectedPreset = null;
-    renderSourceSlot();
-    renderTargetSlot();
-    renderInvPanel();
-    renderPresets();
-    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
-    setNeedleAngle(0);
-    DOM.upgradeBtn.disabled = true;
+    resetUpgradeSlots();
 });
 
 $('targetRemoveBtn').addEventListener('click', function(e) {
@@ -1028,9 +1045,17 @@ function renderInventory() {
     inv.replaceChildren(frag);
 }
 
+/* ФИКС: sellSkin очищает слот апгрейда если этот скин там стоял */
 function sellSkin(skin) {
     var idx = state.inventory.indexOf(skin); if (idx < 0) return;
-    state.inventory.splice(idx, 1); state.balance += skin.price;
+    state.inventory.splice(idx, 1);
+    state.balance += skin.price;
+
+    /* Если этот скин стоит в слоте апгрейда — очищаем слот */
+    if (state.upgradeSource === skin) {
+        resetUpgradeSlots();
+    }
+
     updateUI(); renderInventory(); renderInvPanel(); sClick();
     log('💰 Продано: ' + skin.name + ' +' + formatUah(skin.price), 'info');
 }
@@ -1051,7 +1076,7 @@ $('soundBtn').addEventListener('click', function() {
 
 $('resetAllBtn').addEventListener('click', function() {
     if (!confirm('Сбросить весь прогресс?')) return;
-    localStorage.removeItem('rastrgrade_v25');
+    localStorage.removeItem('rastrgrade_v26');
     location.reload();
 });
 
@@ -1074,10 +1099,24 @@ $('buyConfirm').addEventListener('click', function() {
     updateUI(); renderShop(); renderInventory(); renderInvPanel();
 });
 
+/* ФИКС: продажа всего очищает слоты апгрейда */
 $('sellAllBtn').addEventListener('click', function() {
     if (state.inventory.length === 0) return;
     var total = state.inventory.reduce(function(s, i) { return s + i.price; }, 0);
-    state.balance += total; state.inventory = [];
+    state.balance += total;
+    state.inventory = [];
+
+    /* Полный сброс апгрейда */
+    state.upgradeSource = null;
+    state.upgradeTarget = null;
+    state.selectedPreset = null;
+    renderSourceSlot();
+    renderTargetSlot();
+    renderPresets();
+    updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
+    setNeedleAngle(0);
+    DOM.upgradeBtn.disabled = true;
+
     updateUI(); renderInventory(); renderInvPanel(); sBuy();
     log('💰 Продано: +' + formatUah(total), 'win');
 });
