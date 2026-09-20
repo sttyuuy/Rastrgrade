@@ -1,168 +1,297 @@
-/* ============================================================
-   СПИД-КНОПКИ (v27)
-   ============================================================ */
-.upg-speed-row {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    max-width: 300px;
-    justify-content: center;
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RASTRGRADE v27</title>
+<meta name="theme-color" content="#050508">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-.upg-speed-btn {
-    flex: 1;
-    background: rgba(0,0,0,0.4);
-    border: 2px solid var(--border);
-    color: var(--text-dim);
-    padding: 10px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<div class="bg-glow bg-glow-3"></div>
+<div class="noise"></div>
+<div class="scanlines"></div>
 
-.upg-speed-btn:hover {
-    border-color: var(--accent);
-    color: var(--text);
-}
+<header class="hud-header">
+    <div class="hud-left">
+        <div class="logo">
+            <span class="logo-icon">⚡</span>
+            <span class="logo-rust">RASTR</span><span class="logo-grade">GRADE</span>
+            <span class="logo-version">v27</span>
+        </div>
+        <div class="level-box">
+            <div class="level-badge" id="levelBadge">1</div>
+            <div class="level-info">
+                <div class="level-name" id="levelName">НОВИЧОК</div>
+                <div class="level-bar"><div class="level-bar-fill" id="levelBarFill"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="hud-right">
+        <div class="hud-stat">
+            <div class="hud-stat-icon">💰</div>
+            <div>
+                <div class="hud-stat-label">Баланс</div>
+                <div class="hud-stat-value gold" id="balance">50 ₴</div>
+            </div>
+        </div>
+        <div class="hud-stat">
+            <div class="hud-stat-icon">📈</div>
+            <div>
+                <div class="hud-stat-label">Профит</div>
+                <div class="hud-stat-value" id="profit">0 ₴</div>
+            </div>
+        </div>
+        <button class="hud-btn" id="userBadge" title="Аккаунт">
+            <span>👤</span>
+        </button>
+        <button class="hud-btn" id="soundBtn" title="Звук">
+            <span id="soundIcon">🔊</span>
+        </button>
+    </div>
+</header>
 
-.upg-speed-btn.active {
-    border-color: var(--accent);
-    background: rgba(255,107,26,0.15);
-    color: var(--accent);
-    box-shadow: 0 0 15px rgba(255,107,26,0.3);
-}
+<nav class="nav-tabs">
+    <button class="nav-tab active" data-page="upgrade"><span class="nav-tab-icon">⚡</span><span class="nav-tab-text">Апгрейд</span></button>
+    <button class="nav-tab" data-page="shop"><span class="nav-tab-icon">🛒</span><span class="nav-tab-text">Магазин</span></button>
+    <button class="nav-tab" data-page="inventory"><span class="nav-tab-icon">🎒</span><span class="nav-tab-text">Инвентарь</span></button>
+    <button class="nav-tab" data-page="stats"><span class="nav-tab-icon">📊</span><span class="nav-tab-text">Стата</span></button>
+</nav>
 
-.upg-speed-label {
-    font-size: 0.7rem;
-}
+<main class="main">
 
-/* ============================================================
-   МОДАЛКА АВТОРИЗАЦИИ (v27)
-   ============================================================ */
-.auth-inner {
-    max-width: 420px;
-    text-align: center;
-    padding: 32px 28px;
-}
+    <section class="page active" id="page-upgrade">
+        <div class="upg-wrap">
 
-.auth-icon {
-    font-size: 4rem;
-    margin-bottom: 12px;
-    filter: drop-shadow(0 0 20px var(--accent));
-}
+            <div class="upg-top">
+                <div class="upg-panel upg-panel-left">
+                    <div class="upg-panel-head">
+                        <span class="upg-panel-label">ПРЕДМЕТ</span>
+                        <span class="upg-panel-price" id="sourcePriceLabel">—</span>
+                    </div>
+                    <div class="upg-item-slot" id="sourceSlot">
+                        <div class="upg-item-empty">
+                            <div class="upg-item-empty-icon">+</div>
+                            <div class="upg-item-empty-text">Выбрать предмет</div>
+                        </div>
+                    </div>
+                    <button class="upg-btn-remove" id="sourceRemoveBtn" style="display:none">✕ Убрать</button>
+                </div>
 
-.auth-title {
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    font-size: 1.4rem;
-    color: #fff;
-    margin-bottom: 22px;
-    font-weight: 700;
-}
+                <div class="upg-center">
+                    <div class="upg-circle-wrap">
+                        <svg class="upg-circle-svg" viewBox="0 0 240 240">
+                            <defs>
+                                <linearGradient id="chanceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ff3b3b"/>
+                                    <stop offset="50%" stop-color="#f5c542"/>
+                                    <stop offset="100%" stop-color="#7ed321"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="upg-circle-bg" cx="120" cy="120" r="100"/>
+                            <circle class="upg-circle-sector" cx="120" cy="120" r="100"
+                                    stroke-dasharray="0 628.32" id="chanceSector"/>
+                        </svg>
+                        <div class="upg-needle" id="circleNeedle">
+                            <div class="upg-needle-head"></div>
+                            <div class="upg-needle-body"></div>
+                        </div>
+                        <div class="upg-circle-center">
+                            <div class="upg-percent" id="circlePercent">—</div>
+                            <div class="upg-status" id="circleStatus">ВЫБЕРИ ПРЕДМЕТ</div>
+                        </div>
+                    </div>
+                    <div class="upg-speed-row">
+                        <button class="upg-speed-btn active" id="speedSlowBtn">
+                            <span>🐢</span>
+                            <span class="upg-speed-label">МЕДЛЕННО</span>
+                        </button>
+                        <button class="upg-speed-btn" id="speedFastBtn">
+                            <span>🐇</span>
+                            <span class="upg-speed-label">БЫСТРО</span>
+                        </button>
+                    </div>
+                    <button class="upg-action-btn" id="upgradeBtn" disabled>АПГРЕЙД</button>
+                </div>
 
-.auth-tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 20px;
-    background: rgba(0,0,0,0.4);
-    padding: 4px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-}
+                <div class="upg-panel upg-panel-right">
+                    <div class="upg-panel-head">
+                        <span class="upg-panel-label">ЦЕЛЬ</span>
+                        <span class="upg-panel-price" id="targetPriceLabel">—</span>
+                    </div>
+                    <div class="upg-item-slot" id="targetSlot">
+                        <div class="upg-item-empty">
+                            <div class="upg-item-empty-icon">?</div>
+                            <div class="upg-item-empty-text">Цель</div>
+                        </div>
+                    </div>
+                    <button class="upg-btn-remove" id="targetRemoveBtn" style="display:none">✕ Убрать</button>
+                </div>
+            </div>
 
-.auth-tab {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    padding: 10px 12px;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
+            <div class="upg-presets-row" id="presetContainer"></div>
 
-.auth-tab:hover {
-    color: var(--text);
-}
+            <div class="upg-bottom">
+                <div class="upg-inv-panel">
+                    <div class="upg-inv-head">
+                        <span class="upg-inv-title">🎒 МОЙ ИНВЕНТАРЬ</span>
+                        <span class="upg-inv-count" id="invPanelCount">0 шт.</span>
+                    </div>
+                    <div class="upg-inv-search">
+                        <input type="text" class="upg-inv-input" id="invSearch" placeholder="Поиск...">
+                    </div>
+                    <div class="upg-inv-filters" id="invPanelFilters"></div>
+                    <div class="upg-inv-list" id="invPanelList">
+                        <div class="upg-inv-empty">Инвентарь пуст</div>
+                    </div>
+                </div>
 
-.auth-tab.active {
-    background: linear-gradient(135deg, rgba(255,107,26,0.3), rgba(255,107,26,0.1));
-    color: var(--accent);
-    box-shadow: 0 0 15px rgba(255,107,26,0.3);
-}
+                <div class="upg-items-panel">
+                    <div class="upg-items-head">
+                        <span class="upg-items-title">🎯 ПРЕДМЕТЫ ДЛЯ АПГРЕЙДА</span>
+                        <span class="upg-items-count" id="targetsCount">0</span>
+                    </div>
+                    <div class="upg-items-search">
+                        <input type="text" class="upg-items-input" id="itemsSearch" placeholder="Поиск цели...">
+                    </div>
+                    <div class="upg-items-filters" id="itemsPanelFilters"></div>
+                    <div class="upg-items-grid" id="itemsPanelGrid"></div>
+                </div>
+            </div>
 
-.auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
-}
+        </div>
+    </section>
 
-.auth-input {
-    width: 100%;
-    background: rgba(0,0,0,0.5);
-    border: 2px solid var(--border);
-    color: var(--text);
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
-}
+    <section class="page" id="page-shop">
+        <div class="card">
+            <div class="card-head">
+                <h2 class="card-title"><span class="card-title-icon">🛒</span> Магазин скинов</h2>
+                <div class="card-sub">Цены в гривнах по курсу НБУ</div>
+            </div>
+            <div class="shop-info-bar">
+                <div class="shop-info-text"><span style="font-size:1.5rem">💰</span><span>Твой баланс:</span></div>
+                <div class="shop-info-value" id="shopBalance">50 ₴</div>
+            </div>
+            <div class="shop-filters">
+                <button class="shop-filter active" data-rarity="all">Все</button>
+                <button class="shop-filter" data-rarity="common" style="color:#7a7a8a">Обычные</button>
+                <button class="shop-filter" data-rarity="uncommon" style="color:#4aa8ff">Необычные</button>
+                <button class="shop-filter" data-rarity="rare" style="color:#a55cff">Редкие</button>
+                <button class="shop-filter" data-rarity="epic" style="color:#ff3d9a">Эпические</button>
+                <button class="shop-filter" data-rarity="legendary" style="color:#f5c542">Легендарные</button>
+                <button class="shop-filter" data-rarity="mythical" style="color:#ff0044">Мифические</button>
+                <select class="shop-sort" id="shopSort">
+                    <option value="price-asc">Цена ↑</option>
+                    <option value="price-desc">Цена ↓</option>
+                    <option value="rarity">Редкость</option>
+                    <option value="name">Имя</option>
+                </select>
+            </div>
+            <div class="shop-grid" id="shopGrid"></div>
+        </div>
+    </section>
 
-.auth-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 15px rgba(255,107,26,0.2);
-}
+    <section class="page" id="page-inventory">
+        <div class="card">
+            <div class="card-head">
+                <h2 class="card-title"><span class="card-title-icon">🎒</span> Инвентарь</h2>
+                <div class="card-sub">Предметов: <span id="invCount" class="gold">0</span> • Стоимость: <span id="invValue" class="gold">0 ₴</span></div>
+            </div>
+            <div class="inv-filters">
+                <button class="inv-filter active" data-rarity="all">Все</button>
+                <button class="inv-filter" data-rarity="common" style="color:#7a7a8a">Обычные</button>
+                <button class="inv-filter" data-rarity="uncommon" style="color:#4aa8ff">Необычные</button>
+                <button class="inv-filter" data-rarity="rare" style="color:#a55cff">Редкие</button>
+                <button class="inv-filter" data-rarity="epic" style="color:#ff3d9a">Эпические</button>
+                <button class="inv-filter" data-rarity="legendary" style="color:#f5c542">Легендарные</button>
+                <button class="inv-filter" data-rarity="mythical" style="color:#ff0044">Мифические</button>
+                <button class="btn-mini" id="sellAllBtn" style="margin-left:auto">💰 Продать всё</button>
+            </div>
+            <div class="inv-grid" id="inventory"></div>
+        </div>
+    </section>
 
-.auth-error {
-    color: var(--red);
-    font-size: 0.8rem;
-    min-height: 18px;
-    text-align: left;
-    padding-left: 4px;
-}
+    <section class="page" id="page-stats">
+        <div class="card">
+            <div class="card-head">
+                <h2 class="card-title"><span class="card-title-icon">📊</span> Статистика</h2>
+                <div class="card-sub">Курс: 1 USD = 44.60 ₴</div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-card-icon">💵</div><div class="stat-card-value" id="statTotalWon">0</div><div class="stat-card-label">Выиграно</div></div>
+                <div class="stat-card"><div class="stat-card-icon">💸</div><div class="stat-card-value red" id="statTotalLost">0</div><div class="stat-card-label">Потрачено</div></div>
+                <div class="stat-card"><div class="stat-card-icon">⚡</div><div class="stat-card-value" id="statUpgrades">0</div><div class="stat-card-label">Апгрейдов</div></div>
+                <div class="stat-card"><div class="stat-card-icon">🛒</div><div class="stat-card-value" id="statPurchases">0</div><div class="stat-card-label">Покупок</div></div>
+                <div class="stat-card"><div class="stat-card-icon">🏆</div><div class="stat-card-value" id="statBestDrop">—</div><div class="stat-card-label">Лучший дроп</div></div>
+                <div class="stat-card"><div class="stat-card-icon">🎯</div><div class="stat-card-value" id="statBestUpgrade">—</div><div class="stat-card-label">Лучшая цель</div></div>
+            </div>
+            <div class="house-balance">
+                <div class="house-balance-title">📉 Твой баланс</div>
+                <div class="house-balance-row">
+                    <span>Потрачено: <span class="red" id="housePlayer">0 ₴</span></span>
+                    <span>Получено: <span class="green" id="houseCasino">0 ₴</span></span>
+                </div>
+            </div>
+            <button class="btn-secondary" id="resetAllBtn" style="margin-top:20px">🗑️ СБРОСИТЬ ВСЁ</button>
+        </div>
+    </section>
 
-.auth-form .btn-primary {
-    width: 100%;
-    margin-top: 4px;
-}
+</main>
 
-.auth-hint {
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    font-style: italic;
-    margin-top: 12px;
-    letter-spacing: 0.5px;
-}
+<div class="modal" id="resultModal">
+    <div class="modal-inner result-inner" id="resultInner">
+        <div class="result-particles" id="resultParticles"></div>
+        <div class="result-icon" id="resultIcon">🎁</div>
+        <h2 class="result-title" id="resultTitle">ПОБЕДА</h2>
+        <div class="result-skin" id="resultSkin"></div>
+        <div class="result-value" id="resultValue">+0 ₴</div>
+        <div class="result-actions">
+            <button class="btn-primary" id="resultContinue">ПРОДОЛЖИТЬ</button>
+            <button class="btn-secondary" id="resultSell" style="display:none">💰 ПРОДАТЬ</button>
+        </div>
+    </div>
+</div>
 
-/* Мобильная адаптация */
-@media (max-width: 480px) {
-    .auth-inner {
-        padding: 24px 20px;
-    }
-    .auth-title {
-        font-size: 1.2rem;
-    }
-    .upg-speed-row {
-        max-width: 100%;
-    }
-    .upg-speed-label {
-        display: none;
-    }
-}
+<div class="modal" id="buyModal">
+    <div class="modal-inner buy-inner" id="buyInner">
+        <div class="buy-icon-slot" id="buyIcon"><div class="skin-icon">🎁</div></div>
+        <h2 class="buy-title" id="buyTitle">Покупка</h2>
+        <div class="buy-sub" id="buySub">Подтвердить покупку?</div>
+        <div class="buy-price" id="buyPrice">0 ₴</div>
+        <div class="buy-actions">
+            <button class="btn-primary" id="buyConfirm">КУПИТЬ</button>
+            <button class="btn-secondary" id="buyCancel">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="authModal">
+    <div class="modal-inner auth-inner">
+        <div class="auth-icon">👤</div>
+        <h2 class="auth-title">АККАУНТ</h2>
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="authTabRegister">Регистрация</button>
+            <button class="auth-tab" id="authTabLogin">Вход</button>
+        </div>
+        <div class="auth-form">
+            <input type="text" class="auth-input" id="authUsername" placeholder="Имя (мин. 3 символа)" autocomplete="username">
+            <input type="password" class="auth-input" id="authPassword" placeholder="Пароль (мин. 4 символа)" autocomplete="current-password">
+            <div class="auth-error" id="authError"></div>
+            <button class="btn-primary" id="authSubmitBtn">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+        </div>
+        <div class="auth-hint">Прогресс сохраняется на этом устройстве автоматически</div>
+    </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
