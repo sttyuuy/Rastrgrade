@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RASTRGRADE v29</title>
+<title>RASTRGRADE v30</title>
 <meta name="theme-color" content="#050508">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,6 +20,12 @@
     onAuthStateChanged,
     signOut
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCS5TrO7fwBMVPIk9dPCaIm8D4WNVk1Mc8",
@@ -32,14 +38,18 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
   const googleProvider = new GoogleAuthProvider();
 
-  /* Отдаём наружу для script.js */
   window.fbAuth = auth;
+  window.fbDb = db;
   window.fbGoogleProvider = googleProvider;
   window.fbSignInWithPopup = signInWithPopup;
   window.fbOnAuthStateChanged = onAuthStateChanged;
   window.fbSignOut = signOut;
+  window.fbDoc = doc;
+  window.fbGetDoc = getDoc;
+  window.fbSetDoc = setDoc;
 
   window.fbReady = true;
   window.dispatchEvent(new Event('fb-ready'));
@@ -59,7 +69,7 @@
         <div class="logo">
             <span class="logo-icon">⚡</span>
             <span class="logo-rust">RASTR</span><span class="logo-grade">GRADE</span>
-            <span class="logo-version">v29</span>
+            <span class="logo-version">v30</span>
         </div>
         <div class="level-box">
             <div class="level-badge" id="levelBadge">1</div>
@@ -307,12 +317,14 @@
     </div>
 </div>
 
-<!-- МОДАЛКА АВТОРИЗАЦИИ — теперь только Google -->
 <div class="modal" id="authModal">
     <div class="modal-inner auth-inner">
         <div class="auth-icon">👤</div>
         <h2 class="auth-title">ВХОД</h2>
-        <div class="auth-hint-top">Войди через Google, чтобы сохранить прогресс в облаке и играть с любого устройства</div>
+        <div class="auth-hint-top">
+            🎮 Первый раз? Аккаунт создастся автоматически.<br>
+            🔑 Уже играл? Твой прогресс загрузится с облака.
+        </div>
         <button class="auth-google-btn" id="googleLoginBtn">
             <svg class="auth-google-icon" viewBox="0 0 48 48" width="24" height="24">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -320,10 +332,10 @@
                 <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
             </svg>
-            <span>Войти через Google</span>
+            <span>Продолжить через Google</span>
         </button>
         <div class="auth-error" id="authError"></div>
-        <div class="auth-hint">Прогресс автоматически сохраняется в облаке Firebase</div>
+        <div class="auth-hint">Прогресс автоматически синхронизируется с облаком Firebase</div>
     </div>
 </div>
 
