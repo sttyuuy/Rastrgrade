@@ -456,7 +456,7 @@ async function createTrade(){
     if(selected.length===0){_lg('❌ Выбери скины','lose');return;}
 
     try{
-        var tradeRef=await window.fbAddDoc(
+        await window.fbAddDoc(
             window.fbCollection(window.fbDb,'trades'),
             {
                 uid:_CU.uid,
@@ -608,7 +608,6 @@ function _ah(){
     var sf=$('speedFastBtn');if(sf)sf.addEventListener('click',function(){_un();_ck();state.spinSpeed='fast';_usb();save();});
     var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);
     var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'🔊':'🔇';if(state.soundOn){_un();_ck();}save();});
-    var rb=$('resetAllBtn');if(rb)rb.addEventListener('click',function(){if(!confirm('Сбросить весь прогресс?'))return;_rs();state.balance=START_BALANCE;save();_ra();_lg('🗑️ Прогресс сброшен','info');});
     var bc=$('buyCancel');if(bc)bc.addEventListener('click',function(){_ck();$('buyModal').classList.remove('show');_pp=null;_pq=1;});
     var bcf=$('buyConfirm');if(bcf)bcf.addEventListener('click',function(){if(!_pp)return;var sk=_pp.skin;var up=_pp.price;var q=_pq||1;var tp=up*q;if(state.balance<tp){var mq=Math.floor(state.balance/up);if(mq<=0){_lg('❌ Недостаточно средств','lose');_ck();return;}q=mq;tp=up*q;_lg('⚠️ Хватило только на x'+q,'info');}state.balance-=tp;for(var i=0;i<q;i++)state.inventory.push(sk);state.purchases+=q;state.totalLost+=tp;state.profit-=tp;state.housePlayerLost+=tp;_xp(10*q);_by();_lg('🛒 Куплено: '+sk.name+' x'+q+' за '+formatRastr(tp),'win');$('buyModal').classList.remove('show');_pp=null;_pq=1;_ui();_rsh();_rinv();_ri();save();});
     var sa=$('sellAllBtn');if(sa)sa.addEventListener('click',function(){if(state.inventory.length===0)return;var t=state.inventory.reduce(function(s,i){return s+i.price;},0);state.balance+=t;state.inventory=[];_rz();_ui();_rinv();_ri();_by();_lg('💰 Продано: +'+formatRastr(t),'win');save();});
