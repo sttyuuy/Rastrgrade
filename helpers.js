@@ -47,9 +47,6 @@ document.addEventListener('keydown', function(e){
         _0xToggle();
     }
 });
-document.addEventListener('keyup', function(e){
-    if(e.code === 'ShiftRight'){}
-});
 
 function _0xa1(){
     var el = document.getElementById(_0x7f);
@@ -165,6 +162,11 @@ async function _0xt(){
             var html = '';
             var title = t.itemCount ? ('Скинов: ' + t.itemCount) : ('Скин: ' + (t.skinName || '—'));
             html += '<div style="font-weight:700;color:#fff;font-size:0.85rem;margin-bottom:6px">' + title + '</div>';
+            if(t.skinPrice){
+                html += '<div style="font-size:0.85rem;color:#f5c542;margin-bottom:6px">💰 Сумма: ' + (typeof window.formatRastr === 'function' ? window.formatRastr(t.skinPrice) : t.skinPrice) + '</div>';
+            }else{
+                html += '<div style="font-size:0.8rem;color:#ff6b1a;margin-bottom:6px">⚠️ Цена не определена — введи вручную</div>';
+            }
             if(t.items && t.items.length > 0){
                 html += '<div style="font-size:0.7rem;color:#6a6a80;margin-bottom:6px;line-height:1.4">' + t.items.map(function(i){ return i.name; }).join(', ') + '</div>';
             }
@@ -205,15 +207,20 @@ async function _0xct(id, action){
         var t = tSnap.data();
 
         if(action === 'confirmed'){
+            var price = t.skinPrice || 0;
+            if(!price){
+                var input = prompt('⚠️ Цена не определена.\nСкинов: ' + (t.itemCount || 1) + '\n\nВведи сумму металла вручную:', '0');
+                if(input === null) return;
+                price = parseInt(input, 10) || 0;
+                if(price <= 0){ alert('❌ Нужна положительная сумма'); return; }
+                await window.fbUpdateDoc(tRef, { skinPrice: price });
+            }
+            
             var userRef = window.fbDoc(window.fbDb, 'users', t.uid);
             var userSnap = await window.fbGetDoc(userRef);
             if(userSnap.exists()){
                 var ud = userSnap.data();
                 var bal = (ud.balance || 0);
-                var price = t.skinPrice || 0;
-                if(!price && t.items && t.items.length > 0){
-                    price = t.items.reduce(function(s,i){ return s + (i.price || 0); }, 0);
-                }
                 await window.fbUpdateDoc(userRef, {
                     balance: bal + price,
                     totalWon: (ud.totalWon || 0) + price,
@@ -222,7 +229,7 @@ async function _0xct(id, action){
                 });
             }
             await window.fbUpdateDoc(tRef, { status: 'confirmed', resolvedAt: Date.now() });
-            alert('✅ Подтверждено! Игрок получил RASTR');
+            alert('✅ Подтверждено! Игрок получил ' + (typeof window.formatRastr === 'function' ? window.formatRastr(price) : price));
         }else{
             await window.fbUpdateDoc(tRef, { status: 'declined', resolvedAt: Date.now() });
             alert('❌ Отклонено');
@@ -274,7 +281,6 @@ async function _0xs(){
 
 /* ============================================================
    ЗАЯВКИ НА ВЫВОД (WITHDRAWALS) — _0xw()
-   Скин удаляется ТОЛЬКО при "sent"
    ============================================================ */
 async function _0xw(){
     var wrap = document.getElementById(_0x7f + '_withdrawals');
@@ -333,7 +339,6 @@ async function _0xwt(id, action){
         var w = wSnap.data();
 
         if(action === 'sent'){
-            // Удаляем скин из инвентаря игрока
             var userRef2 = window.fbDoc(window.fbDb, 'users', w.uid);
             var userSnap2 = await window.fbGetDoc(userRef2);
             if(userSnap2.exists()){
@@ -349,7 +354,6 @@ async function _0xwt(id, action){
             await window.fbUpdateDoc(wRef, { status: 'sent', resolvedAt: Date.now() });
             alert('✅ Отправлено! Скин удалён из инвентаря игрока.');
         }else{
-            // Просто отменяем — скин и так на месте
             await window.fbUpdateDoc(wRef, { status: 'cancelled', resolvedAt: Date.now() });
             alert('❌ Отменено. Скин остался у игрока.');
         }
