@@ -1,4 +1,8 @@
-
+/* ============================================================
+   RASTRGRADE v36 — Google Auth + Firestore
+   Апгрейд топ→топ+бонус, клік замість програшу, масова покупка
+   Залежить від: skins.js
+   ============================================================ */
 
 function getShopPrice(skin) { return Math.ceil(skin.price * 1.15); }
 
@@ -21,13 +25,6 @@ const LEVELS = [
     {lvl:7,xp:250000,name:'ГУРУ'},{lvl:8,xp:500000,name:'ЛЕГЕНДА'},
     {lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}
 ];
-
-var SKIN_BY_ID = {};
-SKINS.forEach(function(s){ SKIN_BY_ID[s.id] = s; });
-function resolveSkin(item) {
-    if (!item) return null;
-    return SKIN_BY_ID[item.id] || item;
-}
 
 /* ============================================================
    FIREBASE
@@ -137,15 +134,8 @@ function updateUserBadge() {
     else { badge.title = 'Войти'; icon.textContent = '👤'; }
 }
 
-function openAuthModal() {
-    var m = document.getElementById('authModal');
-    if (m) m.classList.add('show');
-}
-
-function closeAuthModal() {
-    var m = document.getElementById('authModal');
-    if (m) m.classList.remove('show');
-}
+function openAuthModal() { var m = document.getElementById('authModal'); if (m) m.classList.add('show'); }
+function closeAuthModal() { var m = document.getElementById('authModal'); if (m) m.classList.remove('show'); }
 
 /* ============================================================
    STATE
@@ -155,6 +145,7 @@ var state = {
     totalWon: 0, totalLost: 0, upgrades: 0, purchases: 0,
     bestDrop: null, bestUpgrade: null,
     upgradeSource: null, upgradeTarget: null, selectedPreset: null,
+    bonusSkin: null,   // ФИКС: выбранный бонус при апгрейде топ-скина
     spinSpeed: 'slow',
     housePlayerLost: 0, houseCasinoWon: 0,
     xp: 0, level: 1,
@@ -168,6 +159,7 @@ function resetStateToDefault() {
     state.totalWon = 0; state.totalLost = 0; state.upgrades = 0; state.purchases = 0;
     state.bestDrop = null; state.bestUpgrade = null;
     state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
+    state.bonusSkin = null;
     state.spinSpeed = 'slow';
     state.housePlayerLost = 0; state.houseCasinoWon = 0;
     state.xp = 0; state.level = 1;
@@ -184,7 +176,6 @@ const SOUND_FILES = {
     spin: 'spin.mp3', win_common: 'win_common.mp3', win_legendary: 'win_legendary.mp3',
     lose: 'lose.mp3', click: 'click.mp3', buy: 'buy.mp3', levelup: 'levelup.mp3'
 };
-
 var SOUNDS = {};
 var audioReady = false;
 
@@ -198,7 +189,6 @@ function preloadSounds() {
         SOUNDS[key] = a;
     });
 }
-
 function unlockAudio() {
     if (audioReady) return;
     audioReady = true;
@@ -209,10 +199,8 @@ function unlockAudio() {
         s.play().then(function(){ s.pause(); s.currentTime = 0; s.volume = 0.7; }).catch(function(){});
     });
 }
-
 var _soundQueue = [];
 var _soundPlaying = false;
-
 function _playNextQueued() {
     if (_soundPlaying || _soundQueue.length === 0) return;
     var next = _soundQueue.shift();
@@ -224,11 +212,9 @@ function _playNextQueued() {
         setTimeout(function(){ _soundPlaying = false; _playNextQueued(); }, next.duration);
     }).catch(function(){ _soundPlaying = false; _playNextQueued(); });
 }
-
 function playSound(name, vol) {
     if (!state.soundOn) return;
-    var src = SOUNDS[name];
-    if (!src) return;
+    var src = SOUNDS[name]; if (!src) return;
     try {
         var c = src.cloneNode();
         var duration = (src.duration || 1) * 1000;
@@ -236,7 +222,6 @@ function playSound(name, vol) {
         _playNextQueued();
     } catch(e) {}
 }
-
 function sClick(){ playSound('click', 0.6); }
 function sWin(r){
     if (r === 'legendary' || r === 'mythical') playSound('win_legendary', 0.9);
@@ -247,11 +232,9 @@ function sBuy(){ playSound('buy', 0.8); }
 function sLevelUp(){ playSound('levelup', 0.9); }
 
 var _loopAudio = {};
-
 function startLoopSound(name, vol) {
     if (!state.soundOn) return null;
-    var src = SOUNDS[name];
-    if (!src) return null;
+    var src = SOUNDS[name]; if (!src) return null;
     if (_loopAudio[name]) { try { _loopAudio[name].pause(); } catch(e){} }
     var c = src.cloneNode();
     c.volume = vol || 0.6;
@@ -274,13 +257,11 @@ function startLoopSound(name, vol) {
         }
     };
 }
-
 function stopAllLoopSounds() {
     Object.keys(_loopAudio).forEach(function(k){
         if (_loopAudio[k]) { try { _loopAudio[k].pause(); } catch(e){} _loopAudio[k] = null; }
     });
 }
-
 function startUpgradeSound(duration) {
     duration = duration || 4000;
     var h = startLoopSound('spin', 0.55);
@@ -288,14 +269,12 @@ function startUpgradeSound(duration) {
     setTimeout(function() { h.fadeStop(800); }, duration - 800);
     return h;
 }
-
 preloadSounds();
 
 /* ============ ЛОГ ============ */
 function log(msg, type) {
     type = type || 'info';
-    var wrap = $('toastWrap');
-    if (!wrap) return;
+    var wrap = $('toastWrap'); if (!wrap) return;
     while (wrap.children.length >= 5) wrap.removeChild(wrap.firstChild);
     var el = document.createElement('div');
     el.className = 'toast ' + type;
@@ -320,14 +299,12 @@ function findTargetByPrice(targetPrice, sourceSkin) {
     });
     return best;
 }
-
 function calcRealChance(sourcePrice, targetPrice) {
     var chance = (sourcePrice / targetPrice) * 100;
     if (chance > 95) chance = 95;
     if (chance < 0.01) chance = 0.01;
     return chance;
 }
-
 function addXP(n) {
     state.xp += n;
     var prev = state.level;
@@ -339,9 +316,9 @@ function addXP(n) {
         sLevelUp();
     }
 }
-
 function resetUpgradeSlots() {
     state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
+    state.bonusSkin = null;
     renderSourceSlot(); renderTargetSlot(); renderPresets();
     updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
     setNeedleAngle(0);
@@ -410,7 +387,7 @@ function showResult(o) {
         $('resultSkin').innerHTML = '';
     }
     $('resultTitle').textContent = o.title;
-    $('resultValue').textContent = o.value;
+    $('resultValue').innerHTML = o.value;
     var sellBtn = $('resultSell');
     if (o.canSell && o.skin) {
         sellBtn.style.display = 'inline-block';
@@ -433,7 +410,6 @@ function showResult(o) {
     }
     $('resultModal').classList.add('show');
 }
-
 function closeResult() { sClick(); $('resultModal').classList.remove('show'); }
 
 /* ============ UPGRADE ============ */
@@ -451,9 +427,7 @@ function drawChanceSector(chance) {
     else color = '#ff3b3b';
     $('chanceSector').style.color = color;
 }
-
 function setNeedleAngle(deg) { $('circleNeedle').style.transform = 'rotate(' + deg + 'deg)'; }
-
 function updateCircleChance(chance, statusText, statusClass) {
     drawChanceSector(chance);
     $('circlePercent').textContent = Math.round(chance) + '%';
@@ -569,8 +543,7 @@ function selectPreset(idx) {
 
 /* ============ INVENTORY PANEL ============ */
 function renderInvPanel() {
-    var list = $('invPanelList');
-    if (!list) return;
+    var list = $('invPanelList'); if (!list) return;
     var filter = state.invPanelFilter;
     var search = ($('invSearch').value || '').toLowerCase();
     var sorted = state.inventory.slice().sort(function(a,b) { return b.price - a.price; });
@@ -588,6 +561,7 @@ function renderInvPanel() {
             unlockAudio(); sClick();
             state.upgradeSource = skin;
             state.upgradeTarget = null; state.selectedPreset = null;
+            state.bonusSkin = null;
             renderSourceSlot(); renderTargetSlot(); renderInvPanel(); renderPresets(); updateCircleFromPreset();
         });
         frag.appendChild(el);
@@ -595,9 +569,14 @@ function renderInvPanel() {
     list.replaceChildren(frag);
 }
 
+/* ============ ФИКС: апгрейд топ→топ+выбранный бонус ============ */
+function isTopSkin(skin) {
+    var maxPrice = Math.max.apply(null, SKINS.map(function(s){return s.price;}));
+    return skin.price >= maxPrice * 0.9;
+}
+
 function renderItemsPanel() {
-    var grid = $('itemsPanelGrid');
-    if (!grid) return;
+    var grid = $('itemsPanelGrid'); if (!grid) return;
     var filter = state.itemsPanelFilter;
     var search = ($('itemsSearch').value || '').toLowerCase();
     var items = SKINS.slice();
@@ -612,8 +591,28 @@ function renderItemsPanel() {
         el.innerHTML = renderSkinIcon(skin) + '<div class="upg-target-name">' + skin.name + '</div><div class="upg-target-price">' + formatRastr(skin.price) + '</div>';
         el.addEventListener('click', function() {
             if (!state.upgradeSource) { log('❌ Сначала выбери свой предмет', 'lose'); sClick(); return; }
-            if (skin.id === state.upgradeSource.id) { log('❌ Нельзя апгрейдить предмет в самого себя', 'lose'); sClick(); return; }
-            if (skin.price <= state.upgradeSource.price) { log('❌ Цель должна быть дороже твоего предмета', 'lose'); sClick(); return; }
+
+            // ФИКС: если source — топ-скин, разрешаем выбрать его же как цель (топ→топ)
+            var sourceIsTop = isTopSkin(state.upgradeSource);
+
+            if (skin.id === state.upgradeSource.id) {
+                if (sourceIsTop) {
+                    // Разрешаем топ→топ апгрейд, нужно выбрать бонус
+                    unlockAudio(); sClick();
+                    state.upgradeTarget = skin;
+                    state.selectedPreset = null;
+                    state.upgradeTarget._realChance = 50; // 50% шанс для топ→топ
+                    openBonusPicker();
+                    renderTargetSlot(); renderPresets(); updateCircleFromPreset();
+                    return;
+                } else {
+                    log('❌ Нельзя апгрейдить предмет в самого себя', 'lose'); sClick(); return;
+                }
+            }
+
+            if (skin.price <= state.upgradeSource.price) {
+                log('❌ Цель должна быть дороже твоего предмета', 'lose'); sClick(); return;
+            }
             unlockAudio(); sClick();
             state.upgradeTarget = skin; state.selectedPreset = null;
             state.upgradeTarget._realChance = calcRealChance(state.upgradeSource.price, skin.price);
@@ -622,6 +621,29 @@ function renderItemsPanel() {
         frag.appendChild(el);
     });
     grid.replaceChildren(frag);
+}
+
+/* ============ BONUS PICKER (для топ→топ) ============ */
+function openBonusPicker() {
+    var bonusSkin = prompt('🎁 Введи название бонусного скина (или оставь пустым для случайного):\n\nПримеры: Камень, Факел, Бинты, Револьвер', '');
+    if (bonusSkin === null) {
+        state.bonusSkin = null;
+        return;
+    }
+    if (!bonusSkin.trim()) {
+        // случайный из дешёвых
+        var cheap = SKINS.filter(function(s){ return s.price < state.upgradeSource.price * 0.1; });
+        state.bonusSkin = cheap[Math.floor(Math.random() * cheap.length)] || SKINS[0];
+    } else {
+        var found = SKINS.find(function(s){ return s.name.toLowerCase().indexOf(bonusSkin.toLowerCase()) >= 0; });
+        if (found) {
+            state.bonusSkin = found;
+            log('🎁 Бонус: ' + found.name, 'info');
+        } else {
+            log('❌ Не найдено: ' + bonusSkin, 'lose');
+            state.bonusSkin = null;
+        }
+    }
 }
 
 /* ============ ANIMATION ============ */
@@ -661,16 +683,30 @@ function playUpgradeAnimation(chance, willWin) {
     });
 }
 
-/* ============ ФИКС: апгрейд топ→топ+бонус ============ */
+/* ============ HANDLE UPGRADE ============ */
 function handleUpgrade() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
     if (state.upgrading) return;
     if (state.inventory.indexOf(state.upgradeSource) < 0) { resetUpgradeSlots(); log('❌ Предмет больше не в инвентаре', 'lose'); return; }
-    if (state.upgradeTarget.id === state.upgradeSource.id || state.upgradeTarget.price <= state.upgradeSource.price) {
-        log('❌ Недопустимая цель апгрейда', 'lose');
-        resetUpgradeSlots();
-        return;
+
+    var sourceIsTop = isTopSkin(state.upgradeSource);
+    var isTopToTop = sourceIsTop && state.upgradeTarget.id === state.upgradeSource.id;
+
+    if (!isTopToTop) {
+        if (state.upgradeTarget.id === state.upgradeSource.id || state.upgradeTarget.price <= state.upgradeSource.price) {
+            log('❌ Недопустимая цель апгрейда', 'lose');
+            resetUpgradeSlots();
+            return;
+        }
+    } else {
+        if (!state.bonusSkin) {
+            log('❌ Выбери бонусный скин', 'lose');
+            sClick();
+            openBonusPicker();
+            return;
+        }
     }
+
     unlockAudio();
     var btn = $('upgradeBtn');
     btn.style.pointerEvents = 'none';
@@ -683,47 +719,49 @@ function handleUpgrade() {
     btn.disabled = true;
     var sourceSkin = state.upgradeSource;
     var targetSkin = state.upgradeTarget;
+    var bonusSkin = state.bonusSkin;
     var sourceValue = sourceSkin.price;
     var targetValue = targetSkin.price;
-
-    // ФИКС: если source — самый крутой скин, даём бонус
-    var maxPrice = Math.max.apply(null, SKINS.map(function(s){return s.price;}));
-    var isTopSkin = sourceValue >= maxPrice * 0.95;
 
     addXP(20);
 
     playUpgradeAnimation(chance, success).then(function() {
         var srcIdx = state.inventory.indexOf(sourceSkin);
         if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
+
         if (success) {
-            state.inventory.push(targetSkin);
-            state.totalWon += targetValue;
-            state.profit += targetValue - sourceValue;
-            state.houseCasinoWon += targetValue;
-            if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
-            sWin(targetSkin.rarity);
-
-            // БОНУС: если апгрейдили топ-скин, даём ещё один случайный
-            var bonusMsg = '';
-            if (isTopSkin) {
-                var bonusPool = SKINS.filter(function(s){ return s.price < sourceValue && s.rarity !== 'mythical'; });
-                var bonusSkin = bonusPool[Math.floor(Math.random() * bonusPool.length)];
-                if (bonusSkin) {
-                    state.inventory.push(bonusSkin);
-                    bonusMsg = ' 🎁 БОНУС: +' + bonusSkin.name;
-                }
+            if (isTopToTop) {
+                // ТОП → ТОП: получаешь тот же топ + выбранный бонус
+                state.inventory.push(targetSkin);
+                state.inventory.push(bonusSkin);
+                state.totalWon += targetValue + bonusSkin.price;
+                state.profit += targetValue + bonusSkin.price - sourceValue;
+                state.houseCasinoWon += targetValue + bonusSkin.price;
+                sWin('mythical');
+                showResult({
+                    type: 'result-jackpot', icon: '🎁', title: '🔥 ТОП → ТОП',
+                    skin: targetSkin,
+                    value: '+' + formatRastr(targetValue) + '<br><span style="color:#f5c542;font-size:0.95rem">🎁 БОНУС: ' + bonusSkin.name + ' (+' + formatRastr(bonusSkin.price) + ')</span>',
+                    canSell: false
+                });
+                log('🔥 ТОП→ТОП: ' + targetSkin.name + ' + 🎁 ' + bonusSkin.name, 'jackpot');
+            } else {
+                state.inventory.push(targetSkin);
+                state.totalWon += targetValue;
+                state.profit += targetValue - sourceValue;
+                state.houseCasinoWon += targetValue;
+                if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
+                sWin(targetSkin.rarity);
+                showResult({
+                    type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
+                    value: '+' + formatRastr(targetValue), canSell: true,
+                    sellCallback: function() {
+                        var i = state.inventory.indexOf(targetSkin);
+                        if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); save(); }
+                    }
+                });
+                log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
             }
-
-            showResult({
-                type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
-                value: '+' + formatRastr(targetValue) + (bonusMsg ? '<br><span style="font-size:0.9rem;color:#f5c542">' + bonusMsg + '</span>' : ''),
-                canSell: true,
-                sellCallback: function() {
-                    var i = state.inventory.indexOf(targetSkin);
-                    if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); save(); }
-                }
-            });
-            log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅' + bonusMsg, 'win');
         } else {
             state.totalLost += sourceValue;
             state.profit -= sourceValue;
@@ -736,6 +774,7 @@ function handleUpgrade() {
             log('⚡ ' + sourceSkin.name + ' → провал ❌', 'lose');
         }
         state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
+        state.bonusSkin = null;
         state.upgrading = false;
         btn.style.pointerEvents = '';
         btn.disabled = true;
@@ -746,9 +785,9 @@ function handleUpgrade() {
     });
 }
 
+/* ============ FILTERS ============ */
 function initPanelFilters(containerId, filterKey, callback) {
-    var container = $(containerId);
-    if (!container) return;
+    var container = $(containerId); if (!container) return;
     container.innerHTML = '';
     var all = document.createElement('button');
     all.className = 'upg-inv-filter active';
@@ -780,8 +819,7 @@ var pendingPurchase = null;
 var pendingQuantity = 1;
 
 function renderShop() {
-    var grid = $('shopGrid');
-    if (!grid) return;
+    var grid = $('shopGrid'); if (!grid) return;
     var items = SKINS.slice();
     if (state.shopFilter !== 'all') items = items.filter(function(s) { return s.rarity === state.shopFilter; });
     var rarityOrder = {common:0, rare:1, legendary:2, mythical:3};
@@ -800,7 +838,7 @@ function renderShop() {
         el.innerHTML = renderSkinIcon(skin) + '<div class="name">' + skin.name + '</div><div class="rarity-label" style="color:' + RARITIES[skin.rarity].color + '">' + RARITIES[skin.rarity].name + '</div><div class="price-row"><span style="font-size:0.9rem">⚙️</span><span class="price">' + formatRastr(shopPrice) + '</span></div><button class="buy-btn" ' + (canAfford ? '' : 'disabled') + '>' + (canAfford ? 'КУПИТЬ' : 'НЕ ХВАТАЕТ') + '</button>';
         el.querySelector('.buy-btn').addEventListener('click', function(e) {
             e.stopPropagation();
-            if (!canAfford) { log('❌ Недостаточно средств', 'lose'); sLose(); return; }
+            if (!canAfford) { log('❌ Недостаточно средств', 'lose'); sClick(); return; }
             openBuyModal(skin, shopPrice);
         });
         frag.appendChild(el);
@@ -824,8 +862,7 @@ function openBuyModal(skin, price) {
     $('buyTitle').textContent = skin.name;
     $('buySub').textContent = RARITIES[skin.rarity].name + ' · Выбери количество:';
     $('buyPrice').textContent = formatRastr(price);
-    var inner = $('buyInner');
-    if (!inner) return;
+    var inner = $('buyInner'); if (!inner) return;
     var qtyRow = inner.querySelector('.buy-qty-row');
     if (!qtyRow) {
         qtyRow = document.createElement('div');
@@ -859,8 +896,7 @@ function openBuyModal(skin, price) {
 /* ============ INVENTORY PAGE ============ */
 var invFilter = 'all';
 function renderInventory() {
-    var inv = $('inventory');
-    if (!inv) return;
+    var inv = $('inventory'); if (!inv) return;
     if (state.inventory.length === 0) { inv.innerHTML = '<div class="empty-inv">Инвентарь пуст!<br><br>Купи скины в магазине.</div>'; return; }
     var sorted = state.inventory.slice().sort(function(a,b) { return b.price - a.price; });
     if (invFilter !== 'all') sorted = sorted.filter(function(s) { return s.rarity === invFilter; });
@@ -987,7 +1023,7 @@ function attachHandlers() {
     var targetRemoveBtn = $('targetRemoveBtn');
     if (targetRemoveBtn) targetRemoveBtn.addEventListener('click', function(e) {
         e.stopPropagation(); unlockAudio(); sClick();
-        state.upgradeTarget = null; state.selectedPreset = null;
+        state.upgradeTarget = null; state.selectedPreset = null; state.bonusSkin = null;
         renderTargetSlot(); renderPresets(); updateCircleFromPreset();
     });
 
