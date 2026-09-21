@@ -14,7 +14,7 @@ var _ndl=null;
 
 var _MF='https://api.yrsproject.ru/public/image/Resize?shortname=metal.fragments&x=64&y=64';
 var _MF_ICON='<img src="'+_MF+'" style="width:22px;height:22px;vertical-align:middle;display:inline-block" alt="">';
-var _MF_ICON_BIG='<img src="'+_MF+'" style="width:32px;height:32px;vertical-align:middle;display:inline-block" alt="">';
+
 
 function _fb(){
     if(!window.fbReady){setTimeout(_fb,100);return;}
