@@ -1,8 +1,3 @@
-/* ============================================================
-   RASTRGRADE v35 — Google Auth + Firestore
-   Апгрейд топ→топ+бонус, клік замість програшу, масова покупка
-   Залежить від: skins.js (SKINS, RARITIES, renderSkinIcon)
-   ============================================================ */
 
 
 function getShopPrice(skin) { return Math.ceil(skin.price * 1.15); }
