@@ -4,10 +4,7 @@
    Залежить від: skins.js (SKINS, RARITIES, renderSkinIcon)
    ============================================================ */
 
-const USD_TO_UAH = 44.60; // залишено для сумісності, не використовується
-const NUM_FMT = new Intl.NumberFormat('ru');
 
-function formatRastr(v) { return NUM_FMT.format(Math.round(v * 100) / 100) + ' ⚙️'; }
 function getShopPrice(skin) { return Math.ceil(skin.price * 1.15); }
 
 const PRESETS = [
