@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RASTRGRADE v30</title>
+<title>RASTRGRADE v31</title>
 <meta name="theme-color" content="#050508">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 
-<!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
@@ -69,7 +68,7 @@
         <div class="logo">
             <span class="logo-icon">⚡</span>
             <span class="logo-rust">RASTR</span><span class="logo-grade">GRADE</span>
-            <span class="logo-version">v30</span>
+            <span class="logo-version">v31</span>
         </div>
         <div class="level-box">
             <div class="level-badge" id="levelBadge">1</div>
@@ -84,7 +83,7 @@
             <div class="hud-stat-icon">💰</div>
             <div>
                 <div class="hud-stat-label">Баланс</div>
-                <div class="hud-stat-value gold" id="balance">50 ₴</div>
+                <div class="hud-stat-value gold" id="balance">50 000 000 000 ₴</div>
             </div>
         </div>
         <div class="hud-stat">
@@ -114,7 +113,6 @@
 
     <section class="page active" id="page-upgrade">
         <div class="upg-wrap">
-
             <div class="upg-top">
                 <div class="upg-panel upg-panel-left">
                     <div class="upg-panel-head">
@@ -210,7 +208,6 @@
                     <div class="upg-items-grid" id="itemsPanelGrid"></div>
                 </div>
             </div>
-
         </div>
     </section>
 
@@ -222,7 +219,7 @@
             </div>
             <div class="shop-info-bar">
                 <div class="shop-info-text"><span style="font-size:1.5rem">💰</span><span>Твой баланс:</span></div>
-                <div class="shop-info-value" id="shopBalance">50 ₴</div>
+                <div class="shop-info-value" id="shopBalance">50 000 000 000 ₴</div>
             </div>
             <div class="shop-filters">
                 <button class="shop-filter active" data-rarity="all">Все</button>
@@ -287,7 +284,6 @@
             <button class="btn-secondary" id="resetAllBtn" style="margin-top:20px">🗑️ СБРОСИТЬ ВСЁ</button>
         </div>
     </section>
-
 </main>
 
 <div class="modal" id="resultModal">
