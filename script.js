@@ -364,22 +364,30 @@ function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.s
 function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
 
 /* ============================================================
-   ВЫВОД СКИНОВ (WITHDRAW)
+   ВЫВОД СКИНОВ (WITHDRAW) — с Steam-ссылкой + скін не зникає
    ============================================================ */
 async function _withdraw(skin){
     if(!_CU){_lg('❌ Войди в аккаунт','lose');return;}
     var steamUrl = _steamId ? 'https://steamcommunity.com/profiles/'+_steamId : '';
     if(!steamUrl){
-        var url = prompt('📤 Вставь свою Steam Trade-ссылку:\n(Например: https://steamcommunity.com/tradeoffer/new/?partner=...&token=...)','');
-        if(!url || url.indexOf('steamcommunity.com')<0){_lg('❌ Нужна Steam Trade-ссылка','lose');return;}
+        var url = prompt('📤 Вставь свою Steam Trade-ссылку:\n\nЕсли не знаешь где взять — нажми ОК, и мы перекинем тебя на твою трейд-ссылку в Steam.','');
+        if(url === null) return;
+        if(!url || url.indexOf('steamcommunity.com')<0){
+            if(_CU && _CU.uid && /^[0-9]+$/.test(_CU.uid)){
+                window.open('https://steamcommunity.com/profiles/'+_CU.uid+'/tradeoffers/privacy','_blank');
+            }else{
+                window.open('https://steamcommunity.com/my/tradeoffers/privacy','_blank');
+            }
+            _lg('🔗 Открыли Steam. Скопируй свою трейд-ссылку и нажми ВИВЕСТИ снова.','info');
+            return;
+        }
         steamUrl = url;
     }
     if(!confirm('Вивести "'+skin.name+'" в Steam?\n\nСкин будет заморожен до отправки трейда.')) return;
     try{
         var idx = state.inventory.indexOf(skin);
         if(idx < 0){_lg('❌ Скин не найден','lose');return;}
-        state.inventory.splice(idx, 1);
-        await _sc();
+        // НЕ удаляем скин — он останется до подтверждения админом
         await window.fbAddDoc(
             window.fbCollection(window.fbDb, 'withdrawals'),
             {
@@ -400,8 +408,6 @@ async function _withdraw(skin){
     }catch(e){
         console.error('Withdraw error:',e);
         _lg('❌ Ошибка: '+e.message,'lose');
-        state.inventory.push(skin);
-        await _sc();
     }
 }
 
@@ -530,7 +536,7 @@ function processInventory(data){
             marketable:desc.marketable===1,
             type:desc.type||''
         };
-    }).filter(function(i){return i.tradable&&i.icon.indexOf('undefined')<0;});
+    }).filter(function(i){return i.icon && i.icon.indexOf('undefined')<0;});
     if(_steamInv.length===0){
         if(emptyEl)emptyEl.style.display='block';
         return;
