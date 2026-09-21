@@ -1,5 +1,5 @@
 /* ============================================================
-   RASTRGRADE v30 — FULL STYLE
+   RASTRGRADE v31 — FULL STYLE
    ============================================================ */
 
 :root {
@@ -332,7 +332,6 @@ body::before {
 .legendary { border-color: var(--r-legendary); }
 .mythical { border-color: var(--r-mythical); }
 
-/* UPGRADE */
 .upg-wrap { display: flex; flex-direction: column; gap: 16px; }
 
 .upg-top {
@@ -837,7 +836,6 @@ body::before {
     margin-top: 2px;
 }
 
-/* SHOP */
 .shop-filters { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
 .shop-filter {
     background: transparent;
@@ -934,7 +932,6 @@ body::before {
 .shop-info-bar .shop-info-text { font-size: 0.85rem; color: var(--text-dim); display: flex; align-items: center; gap: 10px; }
 .shop-info-bar .shop-info-value { font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; color: var(--gold); font-weight: 700; }
 
-/* INVENTORY */
 .inv-filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .inv-filter {
     background: transparent;
@@ -999,7 +996,6 @@ body::before {
 }
 .btn-mini:hover { background: var(--gold); color: #000; }
 
-/* STATS */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -1042,7 +1038,6 @@ body::before {
 .green { color: var(--green); }
 .red { color: var(--red); }
 
-/* MODALS */
 .modal {
     position: fixed;
     inset: 0;
@@ -1131,7 +1126,6 @@ body::before {
 .buy-price { font-family: 'Share Tech Mono', monospace; font-size: 2rem; color: var(--gold); font-weight: 700; margin-bottom: 20px; }
 .buy-actions { display: flex; gap: 10px; justify-content: center; }
 
-/* AUTH */
 .auth-inner { max-width: 420px; text-align: center; padding: 32px 28px; }
 .auth-icon { font-size: 4rem; margin-bottom: 12px; filter: drop-shadow(0 0 20px var(--accent)); }
 .auth-title { text-transform: uppercase; letter-spacing: 3px; font-size: 1.4rem; color: #fff; margin-bottom: 20px; font-weight: 700; }
@@ -1160,7 +1154,6 @@ body::before {
 .auth-error { color: var(--red); font-size: 0.8rem; min-height: 18px; text-align: left; padding-left: 4px; margin-bottom: 8px; }
 .auth-hint { font-size: 0.7rem; color: var(--text-dim); font-style: italic; margin-top: 12px; letter-spacing: 0.5px; }
 
-/* TOAST */
 .toast-wrap {
     position: fixed;
     bottom: 20px;
