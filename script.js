@@ -1,690 +1,344 @@
-(function(){
-'use strict';
-function _a1(s){return Math.ceil(s.price*1.15);}
-var _P=[{mult:1.5,label:'x1.5'},{mult:2,label:'x2'},{mult:3,label:'x3'},{mult:5,label:'x5'},{mult:10,label:'x10'},{mult:20,label:'x20'},{mult:50,label:'x50'},{mult:100,label:'x100'},{mult:500,label:'x500'}];
-var _L=[{lvl:1,xp:0,name:'НОВИЧОК'},{lvl:2,xp:1000,name:'ЛЮБИТЕЛЬ'},{lvl:3,xp:5000,name:'ИГРОК'},{lvl:4,xp:15000,name:'ПРОФИ'},{lvl:5,xp:40000,name:'ЭКСПЕРТ'},{lvl:6,xp:100000,name:'МАСТЕР'},{lvl:7,xp:250000,name:'ГУРУ'},{lvl:8,xp:500000,name:'ЛЕГЕНДА'},{lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}];
-var _MX=Math.max.apply(null,SKINS.map(function(s){return s.price;}));
-var _CU=null,_CT=null;
-var _UDN='';var _UPA='';
-var _steamId='';
-var _steamAppId='730';
-var _steamInv=[];
-var _steamSelected={};
+const _0xS='5';const START_BALANCE=parseInt(_0xS,10);
+const _0xU2R=0.95;function usdToRastr(_0xa){return Math.round(_0xa*_0xU2R*100)/100;}
+const NUM_FMT=new Intl.NumberFormat('ru');function formatRastr(_0xa){return NUM_FMT.format(Math.round(_0xa*100)/100)+' ⚙️';}
+function getSkinIconUrl(_0xa,_0xb){_0xb=_0xb||128;return 'https://api.yrsproject.ru/public/image/Resize?shortname='+_0xa+'&x='+_0xb+'&y='+_0xb;}
+const _0xI={k:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 54l6-6 32-32 6 6-32 32-6 6z"/><path d="M44 18l8-8 6 6-8 8z"/></svg>',a:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="28" y="6" width="6" height="52" rx="2"/><path d="M34 8l22 10-22 10z"/></svg>',r:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="4" y="26" width="52" height="6" rx="2"/><rect x="16" y="32" width="8" height="16" rx="1"/><rect x="46" y="20" width="6" height="12" rx="1"/></svg>',p:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="12" y="24" width="40" height="10" rx="2"/><path d="M24 34l6 16h10l-4-16z"/></svg>',ar:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 6l20 10v14c0 14-10 22-20 28-10-6-20-14-20-28V16z"/></svg>',h:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M12 34a20 20 0 0140 0v14H12z"/></svg>',m:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="16" width="48" height="36" rx="4" fill="none" stroke="currentColor" stroke-width="4"/><path d="M28 24v20M18 34h20" stroke="currentColor" stroke-width="4"/></svg>',b:'<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="18"/><path d="M46 22l6-6M44 14l4 4"/></svg>',g:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 6l24 18-24 34L8 24z"/></svg>',c:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 48h48l4-28-14 12L32 12 18 32 4 20z"/></svg>',t:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M20 8h24v14c0 8-6 12-12 12s-12-4-12-12z"/><rect x="28" y="34" width="8" height="14"/><rect x="20" y="48" width="24" height="8" rx="2"/></svg>',cr:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 32h48M32 12v40" stroke="currentColor" stroke-width="4"/></svg>',mk:'<svg viewBox="0 0 64 64" fill="currentColor"><ellipse cx="32" cy="34" rx="20" ry="16"/><circle cx="24" cy="34" r="4" fill="black"/><circle cx="40" cy="34" r="4" fill="black"/></svg>',rk:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 4c8 8 12 20 12 32l-12 8-12-8c0-12 4-24 12-32z"/></svg>',tr:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="28" width="40" height="8" rx="2"/><rect x="20" y="36" width="6" height="16"/></svg>',d:'<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="currentColor">?</text></svg>'};
+const _0xS_C={};Object.keys(_0xI).forEach(function(_0xk){_0xS_C[_0xk]=_0xI[_0xk];});
+function renderSkinIcon(_0xs){if(_0xs.shortname){var _0xu=getSkinIconUrl(_0xs.shortname,128);return '<div class="skin-icon"><img src="'+_0xu+'" alt="'+_0xs.name+'" loading="lazy" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\''+_0xS_C[_0xs.svg||'d'].replace(/'/g,"\\'")+'\'"></div>';}var _0xk=_0xs.svg||'d';return '<div class="skin-icon">'+(_0xS_C[_0xk]||_0xS_C.d)+'</div>';}
+const RARITIES={common:{name:'Обычный',color:'#4aa8ff'},rare:{name:'Редкий',color:'#a55cff'},legendary:{name:'Легендарный',color:'#ff3b3b'},mythical:{name:'МИФИЧЕСКИЙ',color:'#f5c542'}};
 
-function _fb(){
-    if(!window.fbReady){setTimeout(_fb,100);return;}
-    window.fbOnAuthStateChanged(window.fbAuth,async function(u){
-        if(u){
-            _CU={uid:u.uid,email:u.email,displayName:u.displayName,photoURL:u.photoURL};
-            _ca();_rs();await _lc();_ra();_ub();
-            renderMyTrades();
-            checkExpiredTrades();
-            var isSteam=_CU.uid && _CU.uid.length>10 && /^[0-9]+$/.test(_CU.uid);
-            if(isSteam){
-                _steamId=_CU.uid;
-                var tc=document.getElementById('tradeContent');
-                var tn=document.getElementById('tradeNotLogged');
-                if(tc)tc.style.display='block';
-                if(tn)tn.style.display='none';
-                loadSteamInventory(_steamAppId);
-            }else{
-                var tc2=document.getElementById('tradeContent');
-                var tn2=document.getElementById('tradeNotLogged');
-                if(tc2)tc2.style.display='none';
-                if(tn2)tn2.style.display='block';
-            }
-            _lg('👤 Добро пожаловать!','win');
-        }else{
-            _CU=null;_UDN='';_UPA='';_steamId='';_steamInv=[];_steamSelected={};
-            _rs();_ra();_ub();_oa();
-            var tc3=document.getElementById('tradeContent');
-            var tn3=document.getElementById('tradeNotLogged');
-            if(tc3)tc3.style.display='none';
-            if(tn3)tn3.style.display='block';
-        }
-    });
-    var g=document.getElementById('googleLoginBtn');
-    if(g)g.addEventListener('click',async function(){
-        try{await window.fbSignInWithPopup(window.fbAuth,window.fbGoogleProvider);}
-        catch(e){
-            console.error(e);
-            var er=document.getElementById('authError');
-            if(er){
-                if(e.code==='auth/popup-blocked')er.textContent='Браузер заблокировал окно.';
-                else if(e.code==='auth/unauthorized-domain')er.textContent='Домен не добавлен в Firebase.';
-                else er.textContent='Ошибка: '+(e.message||e.code);
-            }
-        }
-    });
-}
-
-async function _lc(){
-    if(!_CU||!window.fbDb)return;
-    try{
-        var r=window.fbDoc(window.fbDb,'users',_CU.uid);
-        var s=await window.fbGetDoc(r);
-        if(s.exists()){
-            var d=s.data();
-            Object.keys(d).forEach(function(k){state[k]=d[k];});
-            state.inventory=(state.inventory||[]).map(resolveSkin).filter(Boolean);
-            if(state.bestDrop)state.bestDrop=resolveSkin(state.bestDrop);
-            if(state.bestUpgrade)state.bestUpgrade=resolveSkin(state.bestUpgrade);
-            if(d.displayName)_UDN=d.displayName;
-            if(d.photoURL)_UPA=d.photoURL;
-        }else{
-            state.balance=START_BALANCE;
-            await _sc();
-        }
-    }catch(e){console.error(e);state.balance=START_BALANCE;}
-}
-
-async function _sc(){
-    if(!_CU||!window.fbDb)return;
-    try{
-        var d={
-            balance:state.balance,
-            inventory:state.inventory.map(function(i){return{id:i.id,rarity:i.rarity};}),
-            profit:state.profit,
-            totalWon:state.totalWon,totalLost:state.totalLost,
-            upgrades:state.upgrades,purchases:state.purchases,
-            bestDrop:state.bestDrop?{id:state.bestDrop.id,rarity:state.bestDrop.rarity}:null,
-            bestUpgrade:state.bestUpgrade?{id:state.bestUpgrade.id,rarity:state.bestUpgrade.rarity}:null,
-            housePlayerLost:state.housePlayerLost,houseCasinoWon:state.houseCasinoWon,
-            xp:state.xp,level:state.level,
-            soundOn:state.soundOn,
-            shopFilter:state.shopFilter,shopSort:state.shopSort,
-            spinSpeed:state.spinSpeed,
-            updatedAt:Date.now()
-        };
-        var r=window.fbDoc(window.fbDb,'users',_CU.uid);
-        await window.fbSetDoc(r,d);
-    }catch(e){console.error(e);}
-}
-
-function save(){if(!_CU)return;if(_CT)clearTimeout(_CT);_CT=setTimeout(_sc,800);}
-function _ol(){var m=document.getElementById('logoutModal');if(m)m.classList.add('show');}
-function _cl(){var m=document.getElementById('logoutModal');if(m)m.classList.remove('show');}
-async function _lo(){_cl();try{await _sc();await window.fbSignOut(window.fbAuth);_lg('👋 Вы вышли','info');}catch(e){console.error(e);}}
-
-function _ub(){
-    var b=document.getElementById('userBadge');
-    var i=document.getElementById('userBadgeIcon');
-    if(!b||!i)return;
-    if(_CU){
-        b.title='Выйти';
-        if(_UPA){i.innerHTML='<img src="'+_UPA+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
-        else{i.textContent='🚪';}
-    }else{b.title='Войти';i.textContent='👤';}
-}
-function _oa(){var m=document.getElementById('authModal');if(m)m.classList.add('show');}
-function _ca(){var m=document.getElementById('authModal');if(m)m.classList.remove('show');}
-
-var state={
-    balance:0,inventory:[],profit:0,
-    totalWon:0,totalLost:0,upgrades:0,purchases:0,
-    bestDrop:null,bestUpgrade:null,
-    upgradeSource:null,upgradeTarget:null,selectedPreset:null,
-    spinSpeed:'slow',
-    housePlayerLost:0,houseCasinoWon:0,
-    xp:0,level:1,
-    soundOn:true,
-    shopFilter:'all',shopSort:'price-asc',
-    invPanelFilter:'all',itemsPanelFilter:'all',
-    upgrading:false
-};
-
-function _rs(){
-    state.balance=0;state.inventory=[];state.profit=0;
-    state.totalWon=0;state.totalLost=0;state.upgrades=0;state.purchases=0;
-    state.bestDrop=null;state.bestUpgrade=null;
-    state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;
-    state.spinSpeed='slow';
-    state.housePlayerLost=0;state.houseCasinoWon=0;
-    state.xp=0;state.level=1;
-    state.shopFilter='all';state.shopSort='price-asc';
-    state.invPanelFilter='all';state.itemsPanelFilter='all';
-    state.upgrading=false;
-}
-function $(i){return document.getElementById(i);}
-
-var _SF={spin:'spin.mp3',win_common:'win_common.mp3',win_legendary:'win_legendary.mp3',lose:'lose.mp3',click:'click.mp3',buy:'buy.mp3',levelup:'levelup.mp3'};
-var _SD={};var _AU=false;
-function _pl(){Object.keys(_SF).forEach(function(k){var a=new Audio();a.src=_SF[k];a.preload='auto';a.volume=0.7;a.load();_SD[k]=a;});}
-function _un(){if(_AU)return;_AU=true;Object.keys(_SD).forEach(function(k){var s=_SD[k];if(!s)return;s.volume=0;s.play().then(function(){s.pause();s.currentTime=0;s.volume=0.7;}).catch(function(){});});}
-function _sn(n,v){if(!state.soundOn)return;var s=_SD[n];if(!s)return;try{var c=s.cloneNode();c.volume=v||0.7;c.play().catch(function(){});}catch(e){}}
-function _ck(){_sn('click',0.6);}
-function _wn(r){if(r==='legendary'||r==='mythical')_sn('win_legendary',0.9);else _sn('win_common',0.8);}
-function _ls(){_sn('lose',0.8);}
-function _by(){_sn('buy',0.8);}
-function _lu(){_sn('levelup',0.9);}
-var _LP={};
-function _sp(n,v){
-    if(!state.soundOn)return null;
-    var s=_SD[n];if(!s)return null;
-    if(_LP[n]){try{_LP[n].pause();}catch(e){}}
-    var c=s.cloneNode();c.volume=v||0.6;c.loop=true;c.play().catch(function(){});
-    _LP[n]=c;
-    return{
-        stop:function(){if(_LP[n]){try{_LP[n].pause();}catch(e){}_LP[n]=null;}},
-        fadeStop:function(d){
-            d=d||800;var a=_LP[n];if(!a)return;
-            var sv=a.volume;var st=performance.now();
-            var iv=setInterval(function(){
-                var t=(performance.now()-st)/d;
-                if(t>=1){clearInterval(iv);try{a.pause();}catch(e){}_LP[n]=null;return;}
-                a.volume=Math.max(0,sv*(1-t));
-            },50);
-        }
-    };
-}
-function _sl(){Object.keys(_LP).forEach(function(k){if(_LP[k]){try{_LP[k].pause();}catch(e){}_LP[k]=null;}});}
-function _us(d){d=d||4000;var h=_sp('spin',0.55);if(!h)return null;setTimeout(function(){h.fadeStop(800);},d-800);return h;}
-_pl();
-
-function _lg(m,t){
-    t=t||'info';
-    var w=$('toastWrap');if(!w)return;
-    while(w.children.length>=5)w.removeChild(w.firstChild);
-    var e=document.createElement('div');
-    e.className='toast '+t;
-    e.innerHTML='<span class="toast-icon">'+(t==='win'?'✅':t==='lose'?'❌':t==='jackpot'?'🔥':'ℹ️')+'</span><span>'+m+'</span>';
-    w.appendChild(e);
-    setTimeout(function(){
-        e.style.transition='all 0.4s';
-        e.style.opacity='0';
-        e.style.transform='translateX(120%)';
-        setTimeout(function(){e.remove();},400);
-    },3500);
-}
-function _tg(tp,ss){var b=null,bd=Infinity;SKINS.forEach(function(s){if(ss&&s.id===ss.id)return;if(ss&&s.price<=ss.price)return;var d=Math.abs(s.price-tp);if(d<bd){bd=d;b=s;}});return b;}
-function _ch(sp,tp){var c=(sp/tp)*100;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
-function _xp(n){state.xp+=n;var p=state.level;for(var i=_L.length-1;i>=0;i--){if(state.xp>=_L[i].xp){state.level=_L[i].lvl;break;}}if(state.level>p){for(var l=p+1;l<=state.level;l++){var r=l*usdToRastr(11);state.balance+=r;_lg('⬆️ Уровень '+l+'! +'+formatRastr(r),'win');}_lu();}}
-function _rz(){state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);if(DOM.upgradeBtn)DOM.upgradeBtn.disabled=true;}
-
-var DOM={};
-function _cd(){['balance','profit','invCount','invValue','statTotalWon','statTotalLost','statUpgrades','statPurchases','statBestDrop','statBestUpgrade','housePlayer','houseCasino','levelBadge','levelName','levelBarFill','sourcePriceLabel','targetPriceLabel','sourceSlot','targetSlot','sourceRemoveBtn','targetRemoveBtn','circlePercent','circleStatus','presetContainer','invPanelCount','invPanelList','targetsCount','itemsPanelGrid','invSearch','itemsSearch','upgradeBtn','speedSlowBtn','speedFastBtn','userBadge'].forEach(function(i){DOM[i]=$(i);});DOM.shopBalance=$('shopBalance');}
-_cd();
-
-function _ui(){
-    if(!DOM.balance)return;
-    DOM.balance.textContent=formatRastr(state.balance);
-    if(DOM.shopBalance)DOM.shopBalance.textContent=formatRastr(state.balance);
-    var p=DOM.profit;
-    p.textContent=(state.profit>=0?'+':'')+formatRastr(state.profit);
-    p.className='hud-stat-value '+(state.profit>=0?'green':'red');
-    DOM.invCount.textContent=state.inventory.length;
-    DOM.invValue.textContent=formatRastr(state.inventory.reduce(function(s,i){return s+i.price;},0));
-    DOM.statTotalWon.textContent=formatRastr(state.totalWon);
-    DOM.statTotalLost.textContent=formatRastr(state.totalLost);
-    DOM.statUpgrades.textContent=state.upgrades;
-    DOM.statPurchases.textContent=state.purchases;
-    DOM.statBestDrop.textContent=state.bestDrop?state.bestDrop.name+' '+formatRastr(state.bestDrop.price):'—';
-    DOM.statBestUpgrade.textContent=state.bestUpgrade?state.bestUpgrade.name+' '+formatRastr(state.bestUpgrade.price):'—';
-    DOM.housePlayer.textContent=formatRastr(state.housePlayerLost);
-    DOM.houseCasino.textContent=formatRastr(state.houseCasinoWon);
-    DOM.levelBadge.textContent=state.level;
-    var li=_L.findIndex(function(l){return l.lvl===state.level;});
-    var l=_L[li];var n=_L[li+1];
-    DOM.levelName.textContent=l.name;
-    if(n){var pr=(state.xp-l.xp)/(n.xp-l.xp)*100;DOM.levelBarFill.style.width=Math.min(100,Math.max(0,pr))+'%';}
-    else DOM.levelBarFill.style.width='100%';
-    save();
-}
-
-function _sr(o){
-    var inn=$('resultInner');
-    inn.className='modal-inner result-inner '+o.type;
-    if(o.skin){
-        $('resultIcon').innerHTML='';$('resultIcon').style.display='none';
-        $('resultSkin').innerHTML='<div class="item '+o.skin.rarity+'" style="margin:0 auto;display:inline-flex;border:none;background:transparent;min-width:auto;height:auto;padding:0">'+renderSkinIcon(o.skin)+'<div style="margin-top:12px"><div class="name" style="font-size:0.85rem">'+o.skin.name+'</div><div class="price" style="font-size:1rem;margin-top:6px">'+formatRastr(o.skin.price)+'</div></div></div>';
-    }else{
-        $('resultIcon').textContent=o.icon;$('resultIcon').style.display='block';$('resultSkin').innerHTML='';
-    }
-    $('resultTitle').textContent=o.title;
-    $('resultValue').innerHTML=o.value;
-    var sb=$('resultSell');
-    if(o.canSell&&o.skin){sb.style.display='inline-block';sb.onclick=function(){if(o.sellCallback)o.sellCallback();_cr();};}
-    else sb.style.display='none';
-    if(o.type==='result-win'||o.type==='result-jackpot'){
-        var w=$('resultParticles');w.innerHTML='';
-        var cs=o.type==='result-jackpot'?['#f5c542','#ffdd88','#ff6b1a']:['#00e676','#4aa8ff','#a55cff'];
-        for(var i=0;i<20;i++){
-            var p=document.createElement('div');p.className='particle';
-            var a=Math.random()*Math.PI*2;var d=120+Math.random()*180;
-            p.style.setProperty('--dx',Math.cos(a)*d+'px');
-            p.style.setProperty('--dy',Math.sin(a)*d+'px');
-            p.style.background=cs[Math.floor(Math.random()*cs.length)];
-            p.style.left='50%';p.style.top='50%';
-            p.style.animationDelay=(Math.random()*0.4)+'s';
-            w.appendChild(p);
-        }
-    }
-    $('resultModal').classList.add('show');
-}
-function _cr(){_ck();$('resultModal').classList.remove('show');}
-
-var _CR=100;var _CC=2*Math.PI*_CR;
-function _dc(c){c=Math.max(0,Math.min(100,c));var l=(c/100)*_CC;$('chanceSector').setAttribute('stroke-dasharray',l+' '+_CC);var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';$('chanceSector').style.color=co;}
-function _na(d){$('circleNeedle').style.transform='rotate('+d+'deg)';}
-function _cc(c,t,k){_dc(c);$('circlePercent').textContent=Math.round(c)+'%';var s=$('circleStatus');s.textContent=t||'';s.className='upg-status '+(k||'');var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';$('circlePercent').style.color=co;}
-function _rs1(){var s=$('sourceSlot');if(!s)return;if(state.upgradeSource){s.className='upg-item-slot filled '+state.upgradeSource.rarity;s.innerHTML=renderSkinIcon(state.upgradeSource)+'<div class="upg-item-name">'+state.upgradeSource.name+'</div><div class="upg-item-rarity" style="color:'+RARITIES[state.upgradeSource.rarity].color+'">'+RARITIES[state.upgradeSource.rarity].name+'</div>';$('sourcePriceLabel').textContent=formatRastr(state.upgradeSource.price);$('sourceRemoveBtn').style.display='block';}else{s.className='upg-item-slot';s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">+</div><div class="upg-item-empty-text">Выбрать предмет</div></div>';$('sourcePriceLabel').textContent='—';$('sourceRemoveBtn').style.display='none';}}
-function _rt1(){var s=$('targetSlot');if(!s)return;if(state.upgradeTarget){s.className='upg-item-slot filled '+state.upgradeTarget.rarity;s.innerHTML=renderSkinIcon(state.upgradeTarget)+'<div class="upg-item-name">'+state.upgradeTarget.name+'</div><div class="upg-item-rarity" style="color:'+RARITIES[state.upgradeTarget.rarity].color+'">'+RARITIES[state.upgradeTarget.rarity].name+'</div>';$('targetPriceLabel').textContent=formatRastr(state.upgradeTarget.price);$('targetRemoveBtn').style.display='block';}else{s.className='upg-item-slot';s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">?</div><div class="upg-item-empty-text">Цель</div></div>';$('targetPriceLabel').textContent='—';$('targetRemoveBtn').style.display='none';}}
-function _uc(){if(!state.upgradeSource||!state.upgradeTarget){_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);DOM.upgradeBtn.disabled=true;return;}var c=_ch(state.upgradeSource.price,state.upgradeTarget.price);state.upgradeTarget._realChance=c;var s,sc;if(c>=60){s='ВЫСОКИЙ ШАНС';sc='win';}else if(c>=30){s='СРЕДНИЙ ШАНС';sc='';}else if(c>=10){s='РИСК';sc='';}else if(c>=1){s='ХАЙ РИСК';sc='lose';}else{s='ПОЧТИ НЕВОЗМОЖНО';sc='lose';}_cc(c,s,sc);_na(0);DOM.upgradeBtn.disabled=false;}
-function _rp1(){var cn=$('presetContainer');if(!cn)return;var f=document.createDocumentFragment();var hs=!!state.upgradeSource;_P.forEach(function(p,i){var b=document.createElement('button');b.className='upg-preset-btn';b.disabled=!hs;b.dataset.idx=i;var dt='—';if(hs){var sp=state.upgradeSource.price;var tp=sp*p.mult;var t=_tg(tp,state.upgradeSource);if(t&&t.price>sp){var rc=_ch(sp,t.price);if(rc>=10)dt=Math.round(rc)+'%';else dt=rc.toFixed(2)+'%';}}b.innerHTML='<span class="upg-preset-mult">'+p.label+'</span><span class="upg-preset-chance">'+dt+'</span>';if(state.selectedPreset===i)b.classList.add('active');b.addEventListener('click',function(e){e.stopPropagation();_sp2(i);});f.appendChild(b);});cn.replaceChildren(f);}
-function _sp2(i){if(!state.upgradeSource){_lg('❌ Сначала выбери предмет','lose');_ck();return;}_un();_ck();if(state.upgradeSource.price>=_MX*0.99){_lg('❌ Это максимальный скин — апгрейд невозможен','lose');return;}var p=_P[i];var sp=state.upgradeSource.price;var tp=sp*p.mult;var t=_tg(tp,state.upgradeSource);if(!t||t.price<=sp){_lg('❌ Нет подходящей цели дороже твоего предмета','lose');return;}if(t.price>_MX){_lg('❌ Нет цели дороже макс скина','lose');return;}state.upgradeTarget=t;state.selectedPreset=i;state.upgradeTarget._realChance=_ch(sp,t.price);_rt1();_rp1();_uc();}
-function _ri(){var l=$('invPanelList');if(!l)return;var f=state.invPanelFilter;var s=($('invSearch').value||'').toLowerCase();var sr=state.inventory.slice().sort(function(a,b){return b.price-a.price;});if(f!=='all')sr=sr.filter(function(x){return x.rarity===f;});if(s)sr=sr.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('invPanelCount').textContent=state.inventory.length+' шт.';if(sr.length===0){l.innerHTML='<div class="upg-inv-empty">Инвентарь пуст</div>';return;}var fr=document.createDocumentFragment();sr.forEach(function(sk){var e=document.createElement('div');e.className='upg-inv-item '+sk.rarity;if(state.upgradeSource&&state.upgradeSource===sk)e.classList.add('used');e.innerHTML=renderSkinIcon(sk)+'<div class="upg-inv-name">'+sk.name+'</div><div class="upg-inv-price">'+formatRastr(sk.price)+'</div>';e.addEventListener('click',function(){_un();_ck();state.upgradeSource=sk;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_ri();_rp1();_uc();});fr.appendChild(e);});l.replaceChildren(fr);}
-function _rt2(){var g=$('itemsPanelGrid');if(!g)return;var f=state.itemsPanelFilter;var s=($('itemsSearch').value||'').toLowerCase();var it=SKINS.slice();if(f!=='all')it=it.filter(function(x){return x.rarity===f;});if(s)it=it.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('targetsCount').textContent=it.length;if(it.length===0){g.innerHTML='<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();it.forEach(function(sk){var e=document.createElement('div');e.className='upg-target-item '+sk.rarity;if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(sk.price)+'</div>';e.addEventListener('click',function(){if(!state.upgradeSource){_lg('❌ Сначала выбери свой предмет','lose');_ck();return;}if(sk.id===state.upgradeSource.id){_lg('❌ Нельзя апгрейдить в самого себя','lose');_ck();return;}if(sk.price<=state.upgradeSource.price){_lg('❌ Цель должна быть дороже','lose');_ck();return;}if(sk.price>_MX){_lg('❌ Нет цели дороже макс скина','lose');_ck();return;}_un();_ck();state.upgradeTarget=sk;state.selectedPreset=null;state.upgradeTarget._realChance=_ch(state.upgradeSource.price,sk.price);_rt1();_rp1();_uc();});fr.appendChild(e);});g.replaceChildren(fr);}
-function _pa(c,w){return new Promise(function(res){var d=state.spinSpeed==='fast'?2000:4000;var se=c*3.6;var fa;if(w){var m=Math.min(se*0.15,8);fa=Math.max(m,Math.random()*(se-m));}else{var os=se+3;var oe=357;if(os>=oe)fa=(se+3+Math.random()*3)%360;else fa=os+Math.random()*(oe-os);}var fs=state.spinSpeed==='fast'?5+Math.floor(Math.random()*3):8+Math.floor(Math.random()*4);var tr=fs*360+fa;var st=performance.now();var sd=_us(d);function an(now){var t=Math.min(1,(now-st)/d);var ez=1-Math.pow(1-t,4);_na(tr*ez);if(t<1)requestAnimationFrame(an);else{_na(fa);if(sd)sd.stop();var s=$('circleStatus');if(w){s.textContent='✅ ПОБЕДА';s.className='upg-status win';}else{s.textContent='❌ ПРОВАЛ';s.className='upg-status lose';}setTimeout(res,900);}}requestAnimationFrame(an);});}
-function _hu(){
-    if(!state.upgradeSource||!state.upgradeTarget)return;
-    if(state.upgrading)return;
-    if(state.inventory.indexOf(state.upgradeSource)<0){_rz();_lg('❌ Предмет больше не в инвентаре','lose');return;}
-    if(state.upgradeSource.price>=_MX*0.99){_lg('❌ Это максимальный скин — апгрейд невозможен','lose');_rz();return;}
-    if(state.upgradeTarget.id===state.upgradeSource.id||state.upgradeTarget.price<=state.upgradeSource.price){_lg('❌ Недопустимая цель','lose');_rz();return;}
-    _un();
-    var b=$('upgradeBtn');b.style.pointerEvents='none';
-    var c=state.upgradeTarget._realChance;if(c===undefined)c=_ch(state.upgradeSource.price,state.upgradeTarget.price);
-    var r=Math.random()*100;var ok=r<c;
-    state.upgrading=true;state.upgrades++;b.disabled=true;
-    var ss=state.upgradeSource;var ts=state.upgradeTarget;var sv=ss.price;var tv=ts.price;
-    _xp(20);
-    _pa(c,ok).then(function(){
-        var i=state.inventory.indexOf(ss);if(i>=0)state.inventory.splice(i,1);
-        if(ok){
-            state.inventory.push(ts);state.totalWon+=tv;state.profit+=tv-sv;state.houseCasinoWon+=tv;
-            if(!state.bestUpgrade||tv>state.bestUpgrade.price)state.bestUpgrade=ts;
-            _wn(ts.rarity);
-            _sr({type:'result-win',icon:'🏆',title:'✅ УСПЕХ',skin:ts,value:'+'+formatRastr(tv),canSell:true,sellCallback:function(){var j=state.inventory.indexOf(ts);if(j>=0){state.inventory.splice(j,1);state.balance+=ts.price;_ui();_rinv();_ri();save();}}});
-            _lg('⚡ '+ss.name+' → '+ts.name+' ✅','win');
-        }else{
-            state.totalLost+=sv;state.profit-=sv;state.housePlayerLost+=sv;_ls();
-            _sr({type:'result-lose',icon:'💀',title:'❌ ПРОВАЛ',skin:null,value:'Потеряно: '+formatRastr(sv),canSell:false});
-            _lg('⚡ '+ss.name+' → провал ❌','lose');
-        }
-        state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;state.upgrading=false;
-        b.style.pointerEvents='';b.disabled=true;
-        _rs1();_rt1();_ri();_rt2();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_ui();_rinv();save();
-    });
-}
-function _ipf(cid,fk,cb){var cn=$(cid);if(!cn)return;cn.innerHTML='';var a=document.createElement('button');a.className='upg-inv-filter active';a.textContent='Все';a.dataset.filter='all';cn.appendChild(a);Object.entries(RARITIES).forEach(function(kv){var b=document.createElement('button');b.className='upg-inv-filter';b.textContent=kv[1].name;b.dataset.filter=kv[0];b.style.color=kv[1].color;cn.appendChild(b);});cn.querySelectorAll('.upg-inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();cn.querySelectorAll('.upg-inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state[fk]=b.dataset.filter;cb();});});}
-var _sv=20;var _pp=null;var _pq=1;
-function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return a.price-b.price;});else if(state.shopSort==='price-desc')it.sort(function(a,b){return b.price-a.price;});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span style="font-size:0.9rem">⚙️</span><span class="price">'+formatRastr(p)+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
-function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').textContent=formatRastr(p);var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').textContent=formatRastr(p*q);_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
-var _ivf='all';
-function _rinv(){var iv=$('inventory');if(!iv)return;if(state.inventory.length===0){iv.innerHTML='<div class="empty-inv">Инвентарь пуст!<br><br>Купи скины в магазине.</div>';return;}var sr=state.inventory.slice().sort(function(a,b){return b.price-a.price;});if(_ivf!=='all')sr=sr.filter(function(x){return x.rarity===_ivf;});if(sr.length===0){iv.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();sr.forEach(function(sk){var e=document.createElement('div');e.className='inv-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="price">'+formatRastr(sk.price)+'</div><button class="sell-btn">Продать</button>';e.querySelector('.sell-btn').addEventListener('click',function(ev){ev.stopPropagation();_ssk(sk);});fr.appendChild(e);});iv.replaceChildren(fr);}
-function _ssk(sk){var i=state.inventory.indexOf(sk);if(i<0)return;state.inventory.splice(i,1);state.balance+=sk.price;if(state.upgradeSource===sk)_rz();_ui();_rinv();_ri();_ck();_lg('💰 Продано: '+sk.name+' +'+formatRastr(sk.price),'info');save();}
-function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();}
-function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
-
-/* ============================================================
-   СИСТЕМА ОБМЕНА СКИНОВ (Steam Inventory)
-   ============================================================ */
-
-async function loadSteamInventory(appId){
-    _steamAppId=appId;
-    var loadEl=$('invLoading');
-    var errEl=$('invError');
-    var emptyEl=$('invEmpty');
-    var grid=$('steamInvGrid');
-    var summary=$('tradeSummary');
-    if(!grid)return;
-
-    grid.innerHTML='';
-    if(errEl)errEl.style.display='none';
-    if(emptyEl)emptyEl.style.display='none';
-    if(loadEl)loadEl.style.display='block';
-    if(summary)summary.style.display='none';
-    _steamInv=[];
-    _steamSelected={};
-    updateTradeSummary();
-
-    try{
-        var url='/api/inventory?steamid='+_steamId+'&appid='+appId;
-        var r=await fetch(url);
-        var data=await r.json();
-
-        if(loadEl)loadEl.style.display='none';
-
-        if(data.error){
-            if(errEl){
-                errEl.style.display='block';
-                if(data.private){
-                    errEl.innerHTML='<div style="font-size:2.5rem;margin-bottom:12px">🔒</div><div style="color:var(--text-dim);line-height:1.6">Инвентарь приватный.<br>Зайди в Steam → Настройки → Конфиденциальность → <b>Инвентарь: Открытый</b>.</div>';
-                }else{
-                    errEl.innerHTML='<div style="color:var(--red)">Ошибка: '+data.error+'</div>';
-                }
-            }
-            return;
-        }
-
-        if(!data.assets||data.assets.length===0){
-            if(emptyEl)emptyEl.style.display='block';
-            return;
-        }
-
-        var descMap={};
-        data.descriptions.forEach(function(d){descMap[d.classid+'_'+d.instanceid]=d;});
-
-        _steamInv=data.assets.map(function(a){
-            var desc=descMap[a.classid+'_'+a.instanceid]||{};
-            return{
-                assetid:a.assetid,
-                classid:a.classid,
-                instanceid:a.instanceid,
-                name:desc.market_hash_name||desc.name||'Unknown',
-                icon:'https://community.cloudflare.steamstatic.com/economy/image/'+desc.icon_url,
-                tradable:desc.tradable===1,
-                marketable:desc.marketable===1,
-                type:desc.type||''
-            };
-        }).filter(function(i){return i.tradable&&i.icon.indexOf('undefined')<0;});
-
-        if(_steamInv.length===0){
-            if(emptyEl)emptyEl.style.display='block';
-            return;
-        }
-
-        renderSteamInv();
-    }catch(e){
-        console.error('loadSteamInventory error:',e);
-        if(loadEl)loadEl.style.display='none';
-        if(errEl){
-            errEl.style.display='block';
-            errEl.innerHTML='<div style="color:var(--red)">Ошибка загрузки: '+e.message+'</div>';
-        }
-    }
-}
-
-function renderSteamInv(){
-    var grid=$('steamInvGrid');
-    if(!grid)return;
-    grid.innerHTML='';
-    var fr=document.createDocumentFragment();
-
-    _steamInv.forEach(function(item){
-        var e=document.createElement('div');
-        e.className='inv-item';
-        var selected=!!_steamSelected[item.assetid];
-        e.style.border='2px solid '+(selected?'#f5c542':'var(--border)');
-        e.style.background=selected?'rgba(245,197,66,0.1)':'rgba(0,0,0,0.4)';
-        e.style.cursor='pointer';
-        e.style.transition='all 0.2s';
-        e.style.borderRadius='12px';
-        e.style.padding='10px 8px';
-        e.style.textAlign='center';
-
-        e.innerHTML='<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div><div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
-
-        e.addEventListener('click',function(){
-            if(_steamSelected[item.assetid]){
-                delete _steamSelected[item.assetid];
-            }else{
-                _steamSelected[item.assetid]=item;
-            }
-            _ck();
-            renderSteamInv();
-            updateTradeSummary();
-        });
-
-        fr.appendChild(e);
-    });
-
-    grid.replaceChildren(fr);
-}
-
-function updateTradeSummary(){
-    var count=Object.keys(_steamSelected).length;
-    var summary=$('tradeSummary');
-    var countEl=$('selectedCount');
-    var totalEl=$('tradeTotal');
-    var btn=$('createTradeBtn');
-
-    if(count===0){
-        if(summary)summary.style.display='none';
-        return;
-    }
-
-    if(summary)summary.style.display='block';
-    if(countEl)countEl.textContent=count;
-    if(totalEl)totalEl.textContent=count+' скинов';
-    if(btn)btn.disabled=false;
-}
-
-async function createTrade(){
-    if(!_CU){_lg('❌ Войди в аккаунт','lose');return;}
-    var selected=Object.values(_steamSelected);
-    if(selected.length===0){_lg('❌ Выбери скины','lose');return;}
-
-    try{
-        await window.fbAddDoc(
-            window.fbCollection(window.fbDb,'trades'),
-            {
-                uid:_CU.uid,
-                steamId:_steamId,
-                displayName:_UDN||_CU.displayName||'Игрок',
-                steamUrl:'https://steamcommunity.com/profiles/'+_steamId,
-                items:selected.map(function(i){return{assetid:i.assetid,classid:i.classid,name:i.name,icon:i.icon};}),
-                itemCount:selected.length,
-                status:'pending',
-                createdAt:Date.now(),
-                expiresAt:Date.now()+(3*24*60*60*1000)
-            }
-        );
-
-        _lg('✅ Заявка создана! Отправь трейд на ссылку выше','win');
-
-        _steamSelected={};
-        renderSteamInv();
-        updateTradeSummary();
-        renderMyTrades();
-        openTradeUrl();
-    }catch(e){
-        console.error('createTrade error:',e);
-        _lg('❌ Ошибка: '+e.message,'lose');
-    }
-}
-
-function openTradeUrl(){
-    var url='https://steamcommunity.com/tradeoffer/new/?partner=1073064847&token=Jjv7evlj';
-    window.open(url,'_blank');
-}
-
-async function renderMyTrades(){
-    var wrap=$('myTrades');
-    if(!wrap)return;
-    if(!_CU){
-        wrap.innerHTML='<div class="empty-inv" style="padding:30px">Войди в аккаунт</div>';
-        return;
-    }
-
-    try{
-        var q=window.fbQuery(
-            window.fbCollection(window.fbDb,'trades'),
-            window.fbWhere('uid','==',_CU.uid)
-        );
-        var snap=await window.fbGetDocs(q);
-        var trades=[];
-        snap.forEach(function(d){trades.push(Object.assign({_id:d.id},d.data()));});
-        trades.sort(function(a,b){return b.createdAt-a.createdAt;});
-
-        if(trades.length===0){
-            wrap.innerHTML='<div class="empty-inv" style="padding:30px">Заявок пока нет</div>';
-            return;
-        }
-
-        var frag=document.createDocumentFragment();
-        trades.forEach(function(t){
-            var el=document.createElement('div');
-            el.className='trade-item '+t.status;
-
-            var statusText={
-                pending:'ОЖИДАЕТ',
-                confirmed:'ПОДТВЕРЖДЕНО',
-                declined:'ОТКЛОНЕНО',
-                cancelled:'ОТМЕНЕНО'
-            }[t.status]||t.status;
-
-            var itemsInfo=t.itemCount?'Скинов: '+t.itemCount:'Скин: '+(t.skinName||'—');
-
-            var html='';
-            html+='<div class="trade-info">';
-            html+='<div class="name">'+itemsInfo+'</div>';
-            if(t.items&&t.items.length>0){
-                html+='<div style="font-size:0.7rem;color:#6a6a80;margin-top:4px">'+t.items.map(function(i){return i.name;}).join(', ')+'</div>';
-            }
-            html+='</div>';
-            html+='<div class="trade-status '+t.status+'">'+statusText+'</div>';
-
-            if(t.status==='pending'){
-                html+='<div class="trade-actions"><button data-cancel="'+t._id+'">Отменить</button></div>';
-            }
-
-            el.innerHTML=html;
-
-            if(t.status==='pending'){
-                el.querySelector('[data-cancel]').addEventListener('click',function(){
-                    cancelTrade(t._id);
-                });
-            }
-
-            frag.appendChild(el);
-        });
-        wrap.replaceChildren(frag);
-    }catch(e){
-        console.error('renderMyTrades error:',e);
-        wrap.innerHTML='<div class="empty-inv" style="padding:30px">Ошибка загрузки</div>';
-    }
-}
-
-async function cancelTrade(tradeId){
-    if(!_CU)return;
-    if(!confirm('Отменить заявку?'))return;
-    try{
-        var tradeRef=window.fbDoc(window.fbDb,'trades',tradeId);
-        var tradeSnap=await window.fbGetDoc(tradeRef);
-        if(!tradeSnap.exists()){_lg('❌ Заявка не найдена','lose');return;}
-        var trade=tradeSnap.data();
-        if(trade.uid!==_CU.uid){_lg('❌ Это не твоя заявка','lose');return;}
-        if(trade.status!=='pending'){_lg('❌ Заявка уже не активна','lose');return;}
-        await window.fbDeleteDoc(tradeRef);
-        _lg('✅ Заявка отменена','info');
-        renderMyTrades();
-    }catch(e){
-        console.error('cancelTrade error:',e);
-        _lg('❌ Ошибка: '+e.message,'lose');
-    }
-}
-
-async function checkExpiredTrades(){
-    if(!_CU)return;
-    try{
-        var q=window.fbQuery(
-            window.fbCollection(window.fbDb,'trades'),
-            window.fbWhere('uid','==',_CU.uid),
-            window.fbWhere('status','==','pending')
-        );
-        var snap=await window.fbGetDocs(q);
-        var now=Date.now();
-        var expired=[];
-        snap.forEach(function(docSnap){
-            var trade=docSnap.data();
-            if(trade.expiresAt&&now>trade.expiresAt){
-                expired.push({id:docSnap.id,data:trade});
-            }
-        });
-        for(var i=0;i<expired.length;i++){
-            await window.fbDeleteDoc(window.fbDoc(window.fbDb,'trades',expired[i].id));
-            _lg('⏰ Заявка истекла','info');
-        }
-        if(expired.length>0)renderMyTrades();
-    }catch(e){console.error('checkExpiredTrades error:',e);}
-}
-
-function _ah(){
-    var ub=$('userBadge');if(ub)ub.addEventListener('click',function(){if(_CU)_ol();else _oa();});
-    var lc=$('logoutConfirm');if(lc)lc.addEventListener('click',_lo);
-    var lx=$('logoutCancel');if(lx)lx.addEventListener('click',function(){_ck();_cl();});
-    var ss=$('speedSlowBtn');if(ss)ss.addEventListener('click',function(){_un();_ck();state.spinSpeed='slow';_usb();save();});
-    var sf=$('speedFastBtn');if(sf)sf.addEventListener('click',function(){_un();_ck();state.spinSpeed='fast';_usb();save();});
-    var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);
-    var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'🔊':'🔇';if(state.soundOn){_un();_ck();}save();});
-    var bc=$('buyCancel');if(bc)bc.addEventListener('click',function(){_ck();$('buyModal').classList.remove('show');_pp=null;_pq=1;});
-    var bcf=$('buyConfirm');if(bcf)bcf.addEventListener('click',function(){if(!_pp)return;var sk=_pp.skin;var up=_pp.price;var q=_pq||1;var tp=up*q;if(state.balance<tp){var mq=Math.floor(state.balance/up);if(mq<=0){_lg('❌ Недостаточно средств','lose');_ck();return;}q=mq;tp=up*q;_lg('⚠️ Хватило только на x'+q,'info');}state.balance-=tp;for(var i=0;i<q;i++)state.inventory.push(sk);state.purchases+=q;state.totalLost+=tp;state.profit-=tp;state.housePlayerLost+=tp;_xp(10*q);_by();_lg('🛒 Куплено: '+sk.name+' x'+q+' за '+formatRastr(tp),'win');$('buyModal').classList.remove('show');_pp=null;_pq=1;_ui();_rsh();_rinv();_ri();save();});
-    var sa=$('sellAllBtn');if(sa)sa.addEventListener('click',function(){if(state.inventory.length===0)return;var t=state.inventory.reduce(function(s,i){return s+i.price;},0);state.balance+=t;state.inventory=[];_rz();_ui();_rinv();_ri();_by();_lg('💰 Продано: +'+formatRastr(t),'win');save();});
-    var ub2=$('upgradeBtn');if(ub2)ub2.addEventListener('click',_hu);
-    var ss2=$('sourceSlot');if(ss2)ss2.addEventListener('click',function(){if(state.upgradeSource)return;_un();_ck();var p=document.querySelector('.upg-inv-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
-    var ts2=$('targetSlot');if(ts2)ts2.addEventListener('click',function(){if(state.upgradeTarget)return;_un();_ck();var p=document.querySelector('.upg-items-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
-    var sr=$('sourceRemoveBtn');if(sr)sr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();_rz();});
-    var tr=$('targetRemoveBtn');if(tr)tr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();state.upgradeTarget=null;state.selectedPreset=null;_rt1();_rp1();_uc();});
-    var is=$('invSearch');if(is)is.addEventListener('input',_ri);
-    var its=$('itemsSearch');if(its)its.addEventListener('input',_rt2);
-    var so=$('shopSort');if(so)so.addEventListener('change',function(e){state.shopSort=e.target.value;_sv=20;_rsh();save();_ck();});
-    document.querySelectorAll('.shop-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();
-        if(b.dataset.game){document.querySelectorAll('.shop-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');loadSteamInventory(b.dataset.game);return;}
-        document.querySelectorAll('.shop-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state.shopFilter=b.dataset.rarity;_sv=20;_rsh();save();});});
-    document.querySelectorAll('.inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');_ivf=b.dataset.rarity;_rinv();});});
-    document.querySelectorAll('.nav-tab').forEach(function(t){t.addEventListener('click',function(){_un();_ck();_sl();document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});t.classList.add('active');$('page-'+t.dataset.page).classList.add('active');if(t.dataset.page==='shop'){_sv=20;_rsh();}if(t.dataset.page==='inventory')_rinv();if(t.dataset.page==='trade'){renderMyTrades();}if(t.dataset.page==='upgrade'){_ri();_rt2();}});});
-    document.addEventListener('visibilitychange',function(){if(document.hidden)_sl();});
-    document.body.addEventListener('click',function(){_un();},{once:true});
-    var stb=$('steamLoginBtn');if(stb)stb.addEventListener('click',function(){window.location.href='/api/steam';});
-    var tlb=$('tradeLoginBtn');if(tlb)tlb.addEventListener('click',function(){window.location.href='/api/steam';});
-    var rib=$('reloadInvBtn');if(rib)rib.addEventListener('click',function(){_ck();loadSteamInventory(_steamAppId);});
-    var ctb=$('createTradeBtn');if(ctb)ctb.addEventListener('click',createTrade);
-}
-
-function _checkSteamToken(){
-    var p=new URLSearchParams(window.location.search);
-    var t=p.get('steam_token');
-    if(!t)return false;
-    window.history.replaceState({},document.title,window.location.pathname);
-    if(window.fbSignInWithCustomToken&&window.fbAuth){
-        window.fbSignInWithCustomToken(window.fbAuth,t)
-            .then(function(c){console.log('Steam OK',c.user.uid);})
-            .catch(function(e){console.error('Steam err',e.message);alert('Ошибка входа: '+e.message);});
-        return true;
-    }
-    return false;
-}
-function _waitForFirebase(cb,attempts){
-    attempts=attempts||0;
-    if(window.fbReady&&window.fbSignInWithCustomToken){cb();return;}
-    if(attempts>50){console.error('Firebase timeout');return;}
-    setTimeout(function(){_waitForFirebase(cb,attempts+1);},100);
-}
-function _init(){
-    _ipf('invPanelFilters','invPanelFilter',_ri);
-    _ipf('itemsPanelFilters','itemsPanelFilter',_rt2);
-    var sf=document.querySelector('.shop-filter[data-rarity="'+state.shopFilter+'"]');
-    if(sf){document.querySelectorAll('.shop-filter').forEach(function(b){b.classList.remove('active');});sf.classList.add('active');}
-    if($('shopSort'))$('shopSort').value=state.shopSort;
-    if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'🔊':'🔇';
-    _ah();
-    _fb();
-}
-window.state=state;
-window.save=save;
-window.log=_lg;
-window.renderAll=_ra;
-window.updateUI=_ui;
-window.resetStateToDefault=_rs;
-window.formatRastr=formatRastr;
-window.START_BALANCE=START_BALANCE;
-window.SKINS=SKINS;
-window.RARITIES=RARITIES;
-window.renderSkinIcon=renderSkinIcon;
-window.currentUser=function(){return _CU;};
-window.createTrade=createTrade;
-window.cancelTrade=cancelTrade;
-window.renderMyTrades=renderMyTrades;
-window.loadSteamInventory=loadSteamInventory;
-window.checkExpiredTrades=checkExpiredTrades;
-if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',function(){
-        _init();
-        _waitForFirebase(function(){_checkSteamToken();});
-    });
-}else{
-    _init();
-    _waitForFirebase(function(){_checkSteamToken();});
-}
-})();
+const SKINS=[
+{id:'rock',name:'Камень',shortname:'rock',svg:'d',rarity:'common',price:0.13},
+{id:'torch',name:'Факел',shortname:'torch',svg:'d',rarity:'common',price:0.14},
+{id:'bandage',name:'Бинты',shortname:'bandage',svg:'m',rarity:'common',price:0.15},
+{id:'bone_knife',name:'Костяной нож',shortname:'knife.bone',svg:'k',rarity:'common',price:0.19},
+{id:'wooden_spear',name:'Деревянное копьё',shortname:'spear.wooden',svg:'r',rarity:'common',price:0.24},
+{id:'stone_hatchet_basic',name:'Каменный топор',shortname:'stonehatchet',svg:'a',rarity:'common',price:0.29},
+{id:'bow_basic',name:'Лук',shortname:'bow.hunting',svg:'cr',rarity:'common',price:0.38},
+{id:'stone_spear',name:'Каменное копьё',shortname:'spear.stone',svg:'r',rarity:'common',price:0.48},
+{id:'crossbow_basic',name:'Арбалет',shortname:'crossbow',svg:'cr',rarity:'common',price:0.57},
+{id:'revolver_basic',name:'Револьвер',shortname:'pistol.revolver',svg:'p',rarity:'common',price:0.66},
+{id:'eoka_pistol',name:'Eoka Pistol',shortname:'pistol.eoka',svg:'p',rarity:'common',price:0.76},
+{id:'compound_bow',name:'Составной лук',shortname:'bow.compound',svg:'cr',rarity:'common',price:0.95},
+{id:'waterpipe_shotgun',name:'Водопроводный дробовик',shortname:'shotgun.waterpipe',svg:'r',rarity:'common',price:1.14},
+{id:'semi_auto_pistol',name:'Semi-Auto Pistol',shortname:'pistol.semiauto',svg:'p',rarity:'common',price:1.43},
+{id:'big_burger',name:'Big Burger',shortname:'food.burger',svg:'m',rarity:'common',price:1.90},
+{id:'full_metal_helmet',name:'Full Metal Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:2.66},
+{id:'tiger_mask',name:'Tiger Mask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:2.85},
+{id:'glorious_ak',name:'Glorious AK',shortname:'rifle.ak',svg:'r',rarity:'common',price:3.14},
+{id:'black_diamond_gloves',name:'Black Diamond Gloves',shortname:'gloves',svg:'ar',rarity:'common',price:3.42},
+{id:'skull_bandana',name:'Skull Bandana',shortname:'mask.bandana',svg:'mk',rarity:'common',price:3.71},
+{id:'dungeon_garage_door',name:'Dungeon Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'common',price:4.09},
+{id:'twisted_metal_double_door',name:'Twisted Metal Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:4.37},
+{id:'flashbacks_pants',name:'Flashbacks Pants',shortname:'pants',svg:'ar',rarity:'common',price:4.66},
+{id:'azul_ak47',name:'Azul AK47',shortname:'rifle.ak',svg:'r',rarity:'common',price:4.94},
+{id:'rust_goalkeeper_shorts',name:'Rust Goalkeeper Shorts',shortname:'pants.shorts',svg:'ar',rarity:'common',price:5.23},
+{id:'road_romeo_helmet',name:'Road Romeo Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:5.51},
+{id:'phantom_lr300',name:'Phantom LR-300',shortname:'rifle.lr300',svg:'r',rarity:'common',price:5.80},
+{id:'black_gold_m249',name:'Black Gold M249',shortname:'lmg.m249',svg:'r',rarity:'common',price:6.08},
+{id:'ancient_totem_furnace',name:'Ancient Totem Furnace',shortname:'furnace',svg:'d',rarity:'common',price:6.37},
+{id:'bandit_rug',name:'Bandit Rug',shortname:'rug',svg:'d',rarity:'common',price:6.65},
+{id:'cyber_core_mp5',name:'Cyber Core MP5',shortname:'smg.mp5',svg:'r',rarity:'common',price:6.94},
+{id:'wasteland_hunter_boots',name:'Wasteland Hunter Boots',shortname:'shoes.boots',svg:'ar',rarity:'common',price:7.13},
+{id:'nordic_beast_kilt',name:'Nordic Beast Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:7.32},
+{id:'flashbacks_helmet',name:'Flashbacks Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:7.51},
+{id:'hazard_semi_auto_rifle',name:'Hazard Semi Auto Rifle',shortname:'rifle.semiauto',svg:'r',rarity:'common',price:7.70},
+{id:'wasteland_hunter_pants',name:'Wasteland Hunter Pants',shortname:'pants',svg:'ar',rarity:'common',price:7.89},
+{id:'knights_templar_chestplate',name:'Knights Templar Chestplate',shortname:'metal.plate.torso',svg:'ar',rarity:'common',price:8.08},
+{id:'heavenly_legion_kilt',name:'Heavenly Legion Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:8.27},
+{id:'dragon_rage_hoodie',name:'Dragon Rage Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:8.46},
+{id:'battle_scarred_aks47',name:'Battle-Scarred AKS47',shortname:'rifle.ak',svg:'r',rarity:'common',price:8.65},
+{id:'anubis_ak47',name:'Anubis AK47',shortname:'rifle.ak',svg:'r',rarity:'common',price:8.84},
+{id:'rainbow_pony_ar',name:'Rainbow Pony AR',shortname:'rifle.ak',svg:'r',rarity:'common',price:9.03},
+{id:'furnace_from_hell',name:'Furnace From Hell',shortname:'furnace',svg:'d',rarity:'common',price:9.22},
+{id:'greening_area_garage_door',name:'Greening Area Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'common',price:9.41},
+{id:'black_diamond_pants',name:'Black Diamond Pants',shortname:'pants',svg:'ar',rarity:'common',price:9.60},
+{id:'reptile_hunter_large_backpack',name:'Reptile Hunter Large Backpack',shortname:'backpack',svg:'ar',rarity:'common',price:9.79},
+{id:'tea_ceremony_knife',name:'Tea Ceremony Knife',shortname:'knife.bone',svg:'k',rarity:'common',price:9.98},
+{id:'neon_pumpkin_metal_double_door',name:'Neon Pumpkin Metal Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:10.17},
+{id:'abyss_boots',name:'Abyss Boots',shortname:'shoes.boots',svg:'ar',rarity:'common',price:10.36},
+{id:'military_chestplate',name:'Military Chestplate',shortname:'metal.plate.torso',svg:'ar',rarity:'common',price:10.55},
+{id:'sand_rhino_facemask',name:'Sand Rhino Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:10.74},
+{id:'cobalt_container_metal_door',name:'Cobalt Container Metal Door',shortname:'door.hinged.metal',svg:'d',rarity:'common',price:10.93},
+{id:'desert_conqueror_pants',name:'Desert Conqueror Pants',shortname:'pants',svg:'ar',rarity:'common',price:11.12},
+{id:'thundergold_facemask',name:'Thundergold Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:11.31},
+{id:'elite_forest_camo_pants',name:'Elite Forest Camo Pants',shortname:'pants',svg:'ar',rarity:'common',price:11.50},
+{id:'wasteland_hunter_hoodie',name:'Wasteland Hunter Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:11.69},
+{id:'neon_charcoal_storage',name:'Neon Charcoal Storage',shortname:'box.wooden.large',svg:'d',rarity:'common',price:11.88},
+{id:'comics_sleeping_bag',name:'Comics Sleeping Bag',shortname:'sleepingbag',svg:'d',rarity:'common',price:12.07},
+{id:'abyss_sleeping_bag',name:'Abyss Sleeping Bag',shortname:'sleepingbag',svg:'d',rarity:'common',price:12.26},
+{id:'urban_light_sar',name:'Urban Light SAR',shortname:'rifle.semiauto',svg:'r',rarity:'common',price:12.45},
+{id:'aztec_jade_hachet',name:'Aztec Jade Hachet',shortname:'hatchet',svg:'a',rarity:'common',price:12.64},
+{id:'no_mercy_mp5',name:'No Mercy MP5',shortname:'smg.mp5',svg:'r',rarity:'common',price:12.83},
+{id:'no_mercy_kilt',name:'No Mercy Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:13.02},
+{id:'neon_frags_storage',name:'Neon Frags Storage',shortname:'box.wooden.large',svg:'d',rarity:'common',price:13.21},
+{id:'metalhead_m39',name:'Metalhead M39',shortname:'rifle.m39',svg:'r',rarity:'common',price:13.40},
+{id:'tactical_leather_gloves',name:'Tactical Leather Gloves',shortname:'gloves',svg:'ar',rarity:'common',price:13.59},
+{id:'no_mercy_garage_door',name:'No Mercy Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'common',price:13.78},
+{id:'uap_pilot_sleeping_bag',name:'UAP Pilot Sleeping Bag',shortname:'sleepingbag',svg:'d',rarity:'common',price:13.97},
+{id:'pirate_bed',name:'Pirate Bed',shortname:'bed',svg:'d',rarity:'common',price:14.16},
+{id:'carbon_facemask',name:'Carbon Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:14.35},
+{id:'blackout_mp5',name:'Blackout MP5',shortname:'smg.mp5',svg:'r',rarity:'common',price:14.54},
+{id:'polished_obsidian_furnace',name:'Polished Obsidian Furnace',shortname:'furnace',svg:'d',rarity:'common',price:14.73},
+{id:'spooky_speaker',name:'Spooky Speaker',shortname:'speaker',svg:'d',rarity:'common',price:14.92},
+{id:'porcelain_ar',name:'Porcelain AR',shortname:'rifle.ak',svg:'r',rarity:'common',price:15.11},
+{id:'lavapick',name:'Lavapick',shortname:'pickaxe',svg:'a',rarity:'common',price:15.30},
+{id:'cardboard_helmet',name:'Cardboard Helmet',shortname:'bucket.helmet',svg:'h',rarity:'common',price:15.49},
+{id:'glory_gloves',name:'Glory Gloves',shortname:'gloves',svg:'ar',rarity:'common',price:15.68},
+{id:'bombshell_garage_door',name:'Bombshell Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'common',price:15.87},
+{id:'yellow_police_jacket',name:'Yellow Police Jacket',shortname:'jacket',svg:'ar',rarity:'common',price:16.06},
+{id:'flower_hat',name:'Flower Hat',shortname:'hat',svg:'ar',rarity:'common',price:16.25},
+{id:'no_mercy_helmet',name:'No Mercy Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:16.44},
+{id:'bombshell_sheet_metal_door',name:'Bombshell Sheet Metal Door',shortname:'door.hinged.metal',svg:'d',rarity:'common',price:16.63},
+{id:'mummy_wraps',name:'Mummy Wraps',shortname:'burlap.gloves',svg:'ar',rarity:'common',price:16.82},
+{id:'heat_seeker_revolver',name:'Heat Seeker Revolver',shortname:'pistol.revolver',svg:'p',rarity:'common',price:17.01},
+{id:'easter_chick_hammer',name:'Easter Chick Hammer',shortname:'hammer',svg:'a',rarity:'common',price:17.20},
+{id:'blackout_ar',name:'Blackout AR',shortname:'rifle.ak',svg:'r',rarity:'common',price:17.39},
+{id:'rusty_bucket_helmet',name:'Rusty Bucket Helmet',shortname:'bucket.helmet',svg:'h',rarity:'common',price:17.58},
+{id:'pirate_sheet_metal_door',name:'Pirate Sheet Metal Door',shortname:'door.hinged.metal',svg:'d',rarity:'common',price:17.77},
+{id:'bee_cosplay_chestplate',name:'Bee Cosplay Chestplate',shortname:'metal.plate.torso',svg:'ar',rarity:'common',price:17.96},
+{id:'reptile_hunter_vest',name:'Reptile Hunter Vest',shortname:'metal.plate.torso',svg:'ar',rarity:'common',price:18.15},
+{id:'training_gloves',name:'Training Gloves',shortname:'gloves',svg:'ar',rarity:'common',price:18.34},
+{id:'neon_bismuth_armored_double_door',name:'Neon Bismuth Armored Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:18.53},
+{id:'uprising_stone_pickaxe',name:'Uprising Stone Pickaxe',shortname:'pickaxe',svg:'a',rarity:'common',price:18.72},
+{id:'blackout_facemask',name:'Blackout Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:18.91},
+{id:'black_gold_kilt',name:'Black Gold Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:19.10},
+{id:'fish_shoes',name:'Fish Shoes',shortname:'shoes.boots',svg:'ar',rarity:'common',price:19.29},
+{id:'fireflies_metal_door',name:'Fireflies Metal Door',shortname:'door.hinged.metal',svg:'d',rarity:'common',price:19.48},
+{id:'ancient_gods_furnace',name:'Ancient Gods Furnace',shortname:'furnace',svg:'d',rarity:'common',price:19.67},
+{id:'homemade_shorts',name:'Homemade Shorts',shortname:'pants.shorts',svg:'ar',rarity:'common',price:19.86},
+{id:'farmer_straw_hat',name:'Farmer Straw Hat',shortname:'hat',svg:'ar',rarity:'common',price:20.05},
+{id:'bee_cosplay_facemask',name:'Bee Cosplay Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:20.24},
+{id:'danger_fork',name:'Danger Fork',shortname:'fork',svg:'k',rarity:'common',price:20.43},
+{id:'scientific_gunpowder_storage',name:'Scientific Gunpowder Storage',shortname:'box.wooden.large',svg:'d',rarity:'common',price:20.62},
+{id:'military_facemask',name:'Military Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:20.81},
+{id:'desert_conqueror_hoodie',name:'Desert Conqueror Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:21.00},
+{id:'cowboy_sheriff_hat',name:'Cowboy Sheriff Hat',shortname:'hat',svg:'ar',rarity:'common',price:21.19},
+{id:'faded_sap',name:'Faded SAP',shortname:'pistol.semiauto',svg:'p',rarity:'common',price:21.38},
+{id:'urban_vending_machine',name:'Urban Vending Machine',shortname:'vending.machine',svg:'d',rarity:'common',price:21.57},
+{id:'predator_hoodie',name:'Predator Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:21.76},
+{id:'salvaged_plating_armor',name:'Salvaged Plating Armor',shortname:'metal.plate.torso',svg:'ar',rarity:'common',price:21.95},
+{id:'no_mercy_ak47',name:'No Mercy AK47',shortname:'rifle.ak',svg:'r',rarity:'common',price:22.14},
+{id:'urban_ice_hoodie',name:'Urban Ice Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:22.33},
+{id:'sakura_ar',name:'Sakura AR',shortname:'rifle.ak',svg:'r',rarity:'common',price:22.52},
+{id:'blackout_python',name:'Blackout Python',shortname:'pistol.python',svg:'p',rarity:'common',price:22.71},
+{id:'whiteout_chestplate',name:'Whiteout Chestplate',shortname:'metal.plate.torso',svg:'ar',rarity:'common',price:22.90},
+{id:'cow_moo_flage_gloves',name:'Cow Moo Flage Gloves',shortname:'gloves',svg:'ar',rarity:'common',price:23.09},
+{id:'glory_mask',name:'Glory Mask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:23.28},
+{id:'survivor_lr300',name:'Survivor LR-300',shortname:'rifle.lr300',svg:'r',rarity:'common',price:23.47},
+{id:'grass_rug',name:'Grass Rug',shortname:'rug',svg:'d',rarity:'common',price:23.66},
+{id:'cardboard_kilt',name:'Cardboard Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:23.85},
+{id:'sleazy_rider',name:'Sleazy Rider',shortname:'hoodie',svg:'ar',rarity:'common',price:24.04},
+{id:'going_deep_garage_door',name:'Going Deep Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'common',price:24.23},
+{id:'space_station_armored_double_door',name:'Space Station Armored Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:24.42},
+{id:'volcanic_stone_hatchet',name:'Volcanic Stone Hatchet',shortname:'hatchet',svg:'a',rarity:'common',price:24.61},
+{id:'fisherman_burlap_shirt',name:'Fisherman Burlap Shirt',shortname:'burlap.shirt',svg:'ar',rarity:'common',price:24.80},
+{id:'batteries_not_included',name:'Batteries Not Included',shortname:'rifle.ak',svg:'r',rarity:'common',price:24.99},
+{id:'knights_templar_hoodie',name:'Knights Templar Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:25.18},
+{id:'cobalt_coffee',name:'Cobalt Coffee',shortname:'coffeecan.helmet',svg:'d',rarity:'common',price:25.37},
+{id:'forest_camo_bag',name:'Forest Camo Bag',shortname:'sleepingbag',svg:'ar',rarity:'common',price:25.56},
+{id:'hellcore_thompson',name:'Hellcore Thompson',shortname:'smg.thompson',svg:'r',rarity:'common',price:25.75},
+{id:'forest_camouflage_net',name:'Forest Camouflage Net',shortname:'net',svg:'d',rarity:'common',price:25.94},
+{id:'comics_jackhammer',name:'Comics Jackhammer',shortname:'jackhammer',svg:'a',rarity:'common',price:26.13},
+{id:'uprising_hide_shoes',name:'Uprising Hide Shoes',shortname:'attire.hide.boots',svg:'ar',rarity:'common',price:26.32},
+{id:'jack_sheet_metal_double_door',name:'Jack Sheet Metal Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:26.51},
+{id:'cargo_heli_locker',name:'Cargo Heli Locker',shortname:'locker',svg:'d',rarity:'common',price:26.70},
+{id:'weapon_barrel',name:'Weapon Barrel',shortname:'box.wooden.large',svg:'d',rarity:'common',price:26.89},
+{id:'whiteout_roadsign_gloves',name:'Whiteout Roadsign Gloves',shortname:'roadsign.gloves',svg:'ar',rarity:'common',price:27.08},
+{id:'phantom_hoodie',name:'Phantom Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:27.27},
+{id:'training_kilt',name:'Training Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:27.46},
+{id:'polymer_bar',name:'Polymer Bar',shortname:'rifle.ak',svg:'r',rarity:'common',price:27.65},
+{id:'thundergold_roadsign_kilt',name:'Thundergold Roadsign Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:27.84},
+{id:'arctic_protection_burlap_pants',name:'Arctic Protection Burlap Pants',shortname:'burlap.pants',svg:'ar',rarity:'common',price:28.03},
+{id:'popstar_garage_door',name:'Popstar Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'common',price:28.22},
+{id:'crypt_armored_double_door',name:'Crypt Armored Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:28.41},
+{id:'reptile_hunter_chestplate',name:'Reptile Hunter Chestplate',shortname:'metal.plate.torso',svg:'ar',rarity:'common',price:28.60},
+{id:'urban_night_door',name:'Urban Night Door',shortname:'door.hinged.metal',svg:'d',rarity:'common',price:28.79},
+{id:'boxers_bandages',name:"Boxer's Bandages",shortname:'gloves',svg:'ar',rarity:'common',price:28.98},
+{id:'kayak_helmet',name:'Kayak Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:29.17},
+{id:'forest_raiders_boots',name:'Forest Raiders Boots',shortname:'shoes.boots',svg:'ar',rarity:'common',price:29.36},
+{id:'blue_tarp_skirt',name:'Blue Tarp Skirt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:29.55},
+{id:'knights_templar_facemask',name:'Knights Templar Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:29.74},
+{id:'whiteout_pants',name:'Whiteout Pants',shortname:'pants',svg:'ar',rarity:'common',price:29.93},
+{id:'redemption_kilt',name:'Redemption Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'common',price:30.12},
+{id:'scientific_guns_storage',name:'Scientific Guns Storage',shortname:'box.wooden.large',svg:'d',rarity:'common',price:30.31},
+{id:'operator_helmet',name:'Operator Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:30.50},
+{id:'abyss_metal_double_door',name:'Abyss Metal Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:30.69},
+{id:'neon_bismuth_metal_double_door',name:'Neon Bismuth Metal Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:30.88},
+{id:'thundergold_helmet',name:'Thundergold Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:31.07},
+{id:'popstar',name:'Popstar',shortname:'rifle.ak',svg:'r',rarity:'common',price:31.26},
+{id:'burlap_bandit_shirt',name:'Burlap Bandit Shirt',shortname:'burlap.shirt',svg:'ar',rarity:'common',price:31.45},
+{id:'brutalist_garage_door',name:'Brutalist Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'common',price:31.64},
+{id:'beauty_industry_double_door',name:'Beauty Industry Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'common',price:31.83},
+{id:'desert_patrol_pants',name:'Desert Patrol Pants',shortname:'pants',svg:'ar',rarity:'common',price:32.02},
+{id:'army_armored_helmet',name:'Army Armored Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:32.21},
+{id:'military_helmet',name:'Military Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'common',price:32.40},
+{id:'bombshell_m249',name:'Bombshell M249',shortname:'lmg.m249',svg:'r',rarity:'common',price:32.59},
+{id:'jpeg_roadsign_gloves',name:'JPEG Roadsign Gloves',shortname:'roadsign.gloves',svg:'ar',rarity:'common',price:32.78},
+{id:'blackout_jacket',name:'Blackout Jacket',shortname:'jacket',svg:'ar',rarity:'common',price:32.97},
+{id:'tribesman_hide_shirt',name:'Tribesman Hide Shirt',shortname:'attire.hide.helterneck',svg:'ar',rarity:'common',price:33.16},
+{id:'burglar_mask',name:'Burglar Mask',shortname:'mask.bandana',svg:'mk',rarity:'common',price:33.35},
+{id:'tools_supply_container',name:'Tools Supply Container',shortname:'box.wooden.large',svg:'d',rarity:'common',price:33.54},
+{id:'army_facemask',name:'Army Facemask',shortname:'metal.facemask',svg:'mk',rarity:'common',price:33.73},
+{id:'cargo_heli_storage',name:'Cargo Heli Storage',shortname:'box.wooden.large',svg:'d',rarity:'common',price:33.92},
+{id:'training_hoodie',name:'Training Hoodie',shortname:'hoodie',svg:'ar',rarity:'common',price:34.11},
+{id:'desert_patrol_helmet',name:'Desert Patrol Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'rare',price:35.00},
+{id:'cobalt_personal_locker',name:'Cobalt Personal Locker',shortname:'locker',svg:'d',rarity:'rare',price:36.00},
+{id:'no_mercy_gloves',name:'No Mercy Gloves',shortname:'gloves',svg:'ar',rarity:'rare',price:37.00},
+{id:'blackout_bow',name:'Blackout Bow',shortname:'bow.hunting',svg:'cr',rarity:'rare',price:38.00},
+{id:'farmer_overalls_bottom',name:'Farmer Overalls Bottom',shortname:'pants',svg:'ar',rarity:'rare',price:39.00},
+{id:'stinger_icepick',name:'Stinger Icepick',shortname:'icepick',svg:'a',rarity:'rare',price:40.00},
+{id:'predator_pants',name:'Predator Pants',shortname:'pants',svg:'ar',rarity:'rare',price:41.00},
+{id:'greening_area_double_door',name:'Greening Area Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'rare',price:42.00},
+{id:'grey_wolf_hide_poncho',name:'Grey Wolf Hide Poncho',shortname:'attire.hide.poncho',svg:'ar',rarity:'rare',price:43.00},
+{id:'dark_silver_python',name:'Dark Silver Python',shortname:'pistol.python',svg:'p',rarity:'rare',price:44.00},
+{id:'neon_wood_storage',name:'Neon Wood Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:45.00},
+{id:'knight_templar_kilt',name:'Knight Templar Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'rare',price:46.00},
+{id:'military_roadsign_gloves',name:'Military Roadsign Gloves',shortname:'roadsign.gloves',svg:'ar',rarity:'rare',price:48.00},
+{id:'christmas_locker',name:'Christmas Locker',shortname:'locker',svg:'d',rarity:'rare',price:50.00},
+{id:'heat_seeker_thompson',name:'Heat Seeker Thompson',shortname:'smg.thompson',svg:'r',rarity:'rare',price:52.00},
+{id:'addicted_guitarist',name:'Addicted Guitarist',shortname:'guitar',svg:'d',rarity:'rare',price:54.00},
+{id:'neon_elec_storage',name:'Neon Elec Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:56.00},
+{id:'comics_hoodie',name:'Comics Hoodie',shortname:'hoodie',svg:'ar',rarity:'rare',price:58.00},
+{id:'protector_sheet_metal_double_door',name:'Protector Sheet Metal Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'rare',price:60.00},
+{id:'tempered_ak47',name:'Tempered AK47',shortname:'rifle.ak',svg:'r',rarity:'rare',price:63.00},
+{id:'scientific_electrical_storage',name:'Scientific Electrical Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:66.00},
+{id:'neon_sign_pack',name:'Neon Sign Pack',shortname:'sign.pack',svg:'d',rarity:'rare',price:70.00},
+{id:'vandals_peace_door',name:"Vandal's Peace Door",shortname:'door.hinged.metal',svg:'d',rarity:'rare',price:74.00},
+{id:'cold_hunter_ak',name:'Cold Hunter AK',shortname:'rifle.ak',svg:'r',rarity:'rare',price:78.00},
+{id:'black_acoustic_guitar',name:'Black Acoustic Guitar',shortname:'guitar',svg:'d',rarity:'rare',price:82.00},
+{id:'elite_forest_camo_hoodie',name:'Elite Forest Camo Hoodie',shortname:'hoodie',svg:'ar',rarity:'rare',price:86.00},
+{id:'red_leather_chair',name:'Red Leather Chair',shortname:'chair',svg:'d',rarity:'rare',price:91.00},
+{id:'neon_clothes_storage',name:'Neon Clothes Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:96.00},
+{id:'fisherman_burlap_pants',name:'Fisherman Burlap Pants',shortname:'burlap.pants',svg:'ar',rarity:'rare',price:102.00},
+{id:'scavenger_facemask',name:'Scavenger Facemask',shortname:'metal.facemask',svg:'mk',rarity:'rare',price:108.00},
+{id:'digger_helmet',name:'Digger Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'rare',price:115.00},
+{id:'training_pants',name:'Training Pants',shortname:'pants',svg:'ar',rarity:'rare',price:122.00},
+{id:'legacy_bow',name:'Legacy Bow',shortname:'bow.hunting',svg:'cr',rarity:'rare',price:130.00},
+{id:'savage_facemask',name:'Savage Facemask',shortname:'metal.facemask',svg:'mk',rarity:'rare',price:138.00},
+{id:'kiss_ar',name:'Kiss AR',shortname:'rifle.ak',svg:'r',rarity:'rare',price:147.00},
+{id:'silver_leaf_hammer',name:'Silver Leaf Hammer',shortname:'hammer',svg:'a',rarity:'rare',price:156.00},
+{id:'labyrinth_door',name:'Labyrinth Door',shortname:'door.hinged.metal',svg:'d',rarity:'rare',price:166.00},
+{id:'high_quality_bag',name:'High Quality Bag',shortname:'sleepingbag',svg:'ar',rarity:'rare',price:176.00},
+{id:'cobalt_container_double_door',name:'Cobalt Container Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'rare',price:187.00},
+{id:'portable_toilet',name:'Portable Toilet',shortname:'toilet',svg:'d',rarity:'rare',price:199.00},
+{id:'snow_warrior_hoodie',name:'Snow Warrior Hoodie',shortname:'hoodie',svg:'ar',rarity:'rare',price:211.00},
+{id:'reptile_hunter_facemask',name:'Reptile Hunter Facemask',shortname:'metal.facemask',svg:'mk',rarity:'rare',price:224.00},
+{id:'neon_scrap_storage',name:'Neon Scrap Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:238.00},
+{id:'uprising_hide_poncho',name:'Uprising Hide Poncho',shortname:'attire.hide.poncho',svg:'ar',rarity:'rare',price:253.00},
+{id:'blackout_boots',name:'Blackout Boots',shortname:'shoes.boots',svg:'ar',rarity:'rare',price:269.00},
+{id:'cold_hunter_mp5',name:'Cold Hunter MP5',shortname:'smg.mp5',svg:'r',rarity:'rare',price:286.00},
+{id:'aztec_long_t_shirt',name:'Aztec Long T-Shirt',shortname:'tshirt.long',svg:'ar',rarity:'rare',price:304.00},
+{id:'military_vest',name:'Military Vest',shortname:'metal.plate.torso',svg:'ar',rarity:'rare',price:323.00},
+{id:'no_mercy_facemask',name:'No Mercy Facemask',shortname:'metal.facemask',svg:'mk',rarity:'rare',price:343.00},
+{id:'desert_patrol_vest',name:'Desert Patrol Vest',shortname:'metal.plate.torso',svg:'ar',rarity:'rare',price:365.00},
+{id:'neon_ore_storage',name:'Neon Ore Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:388.00},
+{id:'spooky_slime_furnace',name:'Spooky Slime Furnace',shortname:'furnace',svg:'d',rarity:'rare',price:412.00},
+{id:'cowboy_sheriff_pants',name:'Cowboy Sheriff Pants',shortname:'pants',svg:'ar',rarity:'rare',price:438.00},
+{id:'neon_drop_box_storage',name:'Neon Drop Box Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:465.00},
+{id:'bombshell_sheet_metal_double_door',name:'Bombshell Sheet Metal Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'rare',price:494.00},
+{id:'rabbit_mask',name:'Rabbit Mask',shortname:'metal.facemask',svg:'mk',rarity:'rare',price:524.00},
+{id:'arctic_protection_burlap_shirt',name:'Arctic Protection Burlap Shirt',shortname:'burlap.shirt',svg:'ar',rarity:'rare',price:556.00},
+{id:'blackout_gloves',name:'Blackout Gloves',shortname:'gloves',svg:'ar',rarity:'rare',price:590.00},
+{id:'aztek_night_hunter',name:'Aztek Night Hunter',shortname:'metal.facemask',svg:'mk',rarity:'rare',price:626.00},
+{id:'glory_thompson',name:'Glory Thompson',shortname:'smg.thompson',svg:'r',rarity:'rare',price:664.00},
+{id:'blackout_helmet',name:'Blackout Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'rare',price:704.00},
+{id:'imp_sar',name:'IMP SAR',shortname:'rifle.semiauto',svg:'r',rarity:'rare',price:746.00},
+{id:'native_american_hide_shoes',name:'Native American Hide Shoes',shortname:'attire.hide.boots',svg:'ar',rarity:'rare',price:791.00},
+{id:'rustige_egg_ivory',name:'Rustigé Egg - Ivory',shortname:'egg',svg:'g',rarity:'rare',price:838.00},
+{id:'blackout_kilt',name:'Blackout Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'rare',price:888.00},
+{id:'arctic_protection_burlap_headwrap',name:'Arctic Protection Burlap Headwrap',shortname:'burlap.headwrap',svg:'ar',rarity:'rare',price:941.00},
+{id:'skeleton_hoodie',name:'Skeleton Hoodie',shortname:'hoodie',svg:'ar',rarity:'rare',price:997.00},
+{id:'scientific_ammo_storage',name:'Scientific Ammo Storage',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:1056.00},
+{id:'cargo_truck_garage_door',name:'Cargo Truck Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'rare',price:1119.00},
+{id:'toxic',name:'Toxic',shortname:'rifle.ak',svg:'r',rarity:'rare',price:1185.00},
+{id:'box_from_hell',name:'Box From Hell',shortname:'box.wooden.large',svg:'d',rarity:'rare',price:1255.00},
+{id:'furious_raider_riot_helmet',name:'Furious Raider Riot Helmet',shortname:'riot.helmet',svg:'h',rarity:'rare',price:1329.00},
+{id:'worker_pants',name:'Worker Pants',shortname:'pants',svg:'ar',rarity:'rare',price:1408.00},
+{id:'brutalist_sheet_metal_door',name:'Brutalist Sheet Metal Door',shortname:'door.hinged.metal',svg:'d',rarity:'rare',price:1491.00},
+{id:'cowboy_sheriff_hoodie',name:'Cowboy Sheriff Hoodie',shortname:'hoodie',svg:'ar',rarity:'rare',price:1579.00},
+{id:'comics_sar',name:'Comics SAR',shortname:'rifle.semiauto',svg:'r',rarity:'rare',price:1672.00},
+{id:'whiteout_hoodie',name:'Whiteout Hoodie',shortname:'hoodie',svg:'ar',rarity:'rare',price:1770.00},
+{id:'forest_raiders_metal_chest_plate',name:'Forest Raiders Metal Chest Plate',shortname:'metal.plate.torso',svg:'ar',rarity:'rare',price:1875.00},
+{id:'spacesuit',name:'Spacesuit',shortname:'hazmatsuit.spacesuit',svg:'ar',rarity:'rare',price:1985.00},
+{id:'tribesman_hide_pants',name:'Tribesman Hide Pants',shortname:'attire.hide.pants',svg:'ar',rarity:'rare',price:2100.00},
+{id:'forest_raiders_hoodie',name:'Forest Raiders Hoodie',shortname:'hoodie',svg:'ar',rarity:'legendary',price:2200.00},
+{id:'comics_ar',name:'Comics AR',shortname:'rifle.ak',svg:'r',rarity:'legendary',price:2300.00},
+{id:'army_bolt_rifle',name:'Army Bolt Rifle',shortname:'rifle.bolt',svg:'r',rarity:'legendary',price:2400.00},
+{id:'rox_black_vending_machine',name:'Rox Black Vending Machine',shortname:'vending.machine',svg:'d',rarity:'legendary',price:2500.00},
+{id:'glory_sar',name:'Glory SAR',shortname:'rifle.semiauto',svg:'r',rarity:'legendary',price:2600.00},
+{id:'playmaker_ak47',name:'Playmaker AK47',shortname:'rifle.ak',svg:'r',rarity:'legendary',price:2700.00},
+{id:'scientific_fuel_storage',name:'Scientific Fuel Storage',shortname:'box.wooden.large',svg:'d',rarity:'legendary',price:2800.00},
+{id:'whiteout_facemask',name:'Whiteout Facemask',shortname:'metal.facemask',svg:'mk',rarity:'legendary',price:2900.00},
+{id:'desert_raiders_roadsign_pants',name:'Desert Raiders Roadsign Pants',shortname:'roadsign.kilt',svg:'ar',rarity:'legendary',price:3000.00},
+{id:'polymer_pump_shotgun',name:'Polymer Pump Shotgun',shortname:'shotgun.pump',svg:'r',rarity:'legendary',price:3200.00},
+{id:'whiteout_kilt',name:'Whiteout Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'legendary',price:3400.00},
+{id:'whiteout_vest',name:'Whiteout Vest',shortname:'metal.plate.torso',svg:'ar',rarity:'legendary',price:3600.00},
+{id:'no_mercy_hoodie',name:'No Mercy Hoodie',shortname:'hoodie',svg:'ar',rarity:'legendary',price:3800.00},
+{id:'blackout_vest',name:'Blackout Vest',shortname:'metal.plate.torso',svg:'ar',rarity:'legendary',price:4000.00},
+{id:'forest_raiders_facemask',name:'Forest Raiders Facemask',shortname:'metal.facemask',svg:'mk',rarity:'legendary',price:4300.00},
+{id:'wasteland_hunter_gloves',name:'Wasteland Hunter Gloves',shortname:'gloves',svg:'ar',rarity:'legendary',price:4600.00},
+{id:'heat_double_shotgun',name:'Heat Double Shotgun',shortname:'shotgun.double',svg:'r',rarity:'legendary',price:4900.00},
+{id:'scorched_hammer',name:'Scorched Hammer',shortname:'hammer',svg:'a',rarity:'legendary',price:5200.00},
+{id:'rat_mask',name:'Rat Mask',shortname:'metal.facemask',svg:'mk',rarity:'legendary',price:5600.00},
+{id:'military_kilt',name:'Military Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'legendary',price:6000.00},
+{id:'hot_tempered_revolver',name:'Hot-Tempered Revolver',shortname:'pistol.revolver',svg:'p',rarity:'legendary',price:6500.00},
+{id:'skull_door_knocker',name:'Skull Door Knocker',shortname:'door.hinged.metal',svg:'d',rarity:'legendary',price:7000.00},
+{id:'blackout_hoodie',name:'Blackout Hoodie',shortname:'hoodie',svg:'ar',rarity:'legendary',price:7500.00},
+{id:'dragon_glass_stone_hatchet',name:'Dragon Glass Stone Hatchet',shortname:'hatchet',svg:'a',rarity:'legendary',price:8000.00},
+{id:'press_vest',name:'Press Vest',shortname:'metal.plate.torso',svg:'ar',rarity:'legendary',price:8600.00},
+{id:'desert_raiders_helmet',name:'Desert Raiders Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'legendary',price:9200.00},
+{id:'desert_raiders_hoodie',name:'Desert Raiders Hoodie',shortname:'hoodie',svg:'ar',rarity:'legendary',price:10000.00},
+{id:'panda_rug',name:'Panda Rug',shortname:'rug',svg:'d',rarity:'legendary',price:10800.00},
+{id:'blackout_pants',name:'Blackout Pants',shortname:'pants',svg:'ar',rarity:'legendary',price:11600.00},
+{id:'military_camo_roadsign_kilt',name:'Military Camo Roadsign Kilt',shortname:'roadsign.kilt',svg:'ar',rarity:'legendary',price:12500.00},
+{id:'desert_raiders_roadsign_vest',name:'Desert Raiders Roadsign Vest',shortname:'roadsign.jacket',svg:'ar',rarity:'legendary',price:13500.00},
+{id:'mystic_ak47',name:'Mystic AK47',shortname:'rifle.ak',svg:'r',rarity:'legendary',price:14500.00},
+{id:'ak47_from_hell',name:'AK-47 From Hell',shortname:'rifle.ak',svg:'r',rarity:'legendary',price:15600.00},
+{id:'no_mercy_pants',name:'No Mercy Pants',shortname:'pants',svg:'ar',rarity:'legendary',price:16800.00},
+{id:'soviet_carpet',name:'Soviet Carpet',shortname:'rug',svg:'d',rarity:'legendary',price:18000.00},
+{id:'checkpoint_riot_helmet',name:'Checkpoint Riot Helmet',shortname:'riot.helmet',svg:'h',rarity:'legendary',price:19400.00},
+{id:'rustige_egg_red',name:'Rustigé Egg - Red',shortname:'egg',svg:'g',rarity:'legendary',price:20900.00},
+{id:'neon_boom_storage',name:'Neon Boom Storage',shortname:'box.wooden.large',svg:'d',rarity:'legendary',price:22500.00},
+{id:'desert_raiders_pants',name:'Desert Raiders Pants',shortname:'pants',svg:'ar',rarity:'legendary',price:24300.00},
+{id:'no_mercy_jacket',name:'No Mercy Jacket',shortname:'jacket',svg:'ar',rarity:'legendary',price:26200.00},
+{id:'double_door_from_hell',name:'Double Door From Hell',shortname:'door.double.hinged.metal',svg:'d',rarity:'legendary',price:28200.00},
+{id:'cow_moo_flage_pants',name:'Cow Moo Flage Pants',shortname:'pants',svg:'ar',rarity:'legendary',price:30400.00},
+{id:'whiteout_helmet',name:'Whiteout Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'legendary',price:32800.00},
+{id:'forest_raiders_pants',name:'Forest Raiders Pants',shortname:'pants',svg:'ar',rarity:'legendary',price:35400.00},
+{id:'howling_double_door',name:'Howling Double Door',shortname:'door.double.hinged.metal',svg:'d',rarity:'legendary',price:38200.00},
+{id:'chop_shop_garage_door',name:'Chop Shop Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'legendary',price:41200.00},
+{id:'forest_raiders_roadsign_gloves',name:'Forest Raiders Roadsign Gloves',shortname:'roadsign.gloves',svg:'ar',rarity:'legendary',price:44400.00},
+{id:'polymer_mp5',name:'Polymer MP5',shortname:'smg.mp5',svg:'r',rarity:'legendary',price:47800.00},
+{id:'surgeon_scrubs',name:'Surgeon Scrubs',shortname:'hazmatsuit',svg:'ar',rarity:'legendary',price:51500.00},
+{id:'ak47_victoria',name:'AK-47 Victoria',shortname:'rifle.ak',svg:'r',rarity:'legendary',price:55400.00},
+{id:'forest_raiders_helmet',name:'Forest Raiders Helmet',shortname:'coffeecan.helmet',svg:'h',rarity:'legendary',price:59600.00},
+{id:'shard_of_true_ice',name:'Shard of True Ice',shortname:'gem',svg:'g',rarity:'legendary',price:64100.00},
+{id:'space_rocket_work_gloves',name:'Space Rocket Work Gloves',shortname:'gloves',svg:'ar',rarity:'legendary',price:68900.00},
+{id:'ak_royale',name:'AK Royale',shortname:'rifle.ak',svg:'r',rarity:'legendary',price:74000.00},
+{id:'forest_raiders_roadsign_vest',name:'Forest Raiders Roadsign Vest',shortname:'roadsign.jacket',svg:'ar',rarity:'legendary',price:79500.00},
+{id:'desert_raiders_chest_plate',name:'Desert Raiders Chest Plate',shortname:'metal.plate.torso',svg:'ar',rarity:'legendary',price:85400.00},
+{id:'direct_threat_sap',name:'Direct Threat SAP',shortname:'pistol.semiauto',svg:'p',rarity:'mythical',price:92000.00},
+{id:'tea_vending_machine',name:'Tea Vending Machine',shortname:'vending.machine',svg:'d',rarity:'mythical',price:99000.00},
+{id:'desert_raiders_facemask',name:'Desert Raiders Facemask',shortname:'metal.facemask',svg:'mk',rarity:'mythical',price:106000.00},
+{id:'after_death_ar',name:'After Death AR',shortname:'rifle.ak',svg:'r',rarity:'mythical',price:114000.00},
+{id:'forest_raiders_roadsign_pants',name:'Forest Raiders Roadsign Pants',shortname:'roadsign.kilt',svg:'ar',rarity:'mythical',price:122000.00},
+{id:'plate_carrier_black',name:'Plate Carrier - Black',shortname:'metal.plate.torso',svg:'ar',rarity:'mythical',price:131000.00},
+{id:'legendary_gold_facemask',name:'Legendary Gold Facemask',shortname:'metal.facemask',svg:'mk',rarity:'mythical',price:140000.00},
+{id:'stainless_facemask',name:'Stainless Facemask',shortname:'metal.facemask',svg:'mk',rarity:'mythical',price:150000.00},
+{id:'gold_rock',name:'Gold Rock',shortname:'rock',svg:'d',rarity:'mythical',price:161000.00},
+{id:'alien_red',name:'Alien Red',shortname:'rifle.ak',svg:'r',rarity:'mythical',price:172000.00},
+{id:'christmas_lights',name:'Christmas Lights',shortname:'xmas.lights',svg:'d',rarity:'mythical',price:184000.00},
+{id:'glowing_skull',name:'Glowing Skull',shortname:'metal.facemask',svg:'mk',rarity:'mythical',price:197000.00},
+{id:'hot_tempered_longsword',name:'Hot-Tempered Longsword',shortname:'knife.combat',svg:'k',rarity:'mythical',price:211000.00},
+{id:'tempered_mask',name:'Tempered Mask',shortname:'metal.facemask',svg:'mk',rarity:'mythical',price:226000.00},
+{id:'military_camo_mp5',name:'Military Camo MP5',shortname:'smg.mp5',svg:'r',rarity:'mythical',price:242000.00},
+{id:'glory_ak47',name:'Glory AK47',shortname:'rifle.ak',svg:'r',rarity:'mythical',price:259000.00},
+{id:'tempered_mp5',name:'Tempered MP5',shortname:'smg.mp5',svg:'r',rarity:'mythical',price:277000.00},
+{id:'neon_dragon_garage_door',name:'Neon Dragon Garage Door',shortname:'wall.frame.garagedoor',svg:'d',rarity:'mythical',price:297000.00},
+{id:'creepy_clown_bandana',name:'Creepy Clown Bandana',shortname:'mask.bandana',svg:'mk',rarity:'mythical',price:318000.00},
+{id:'big_grin',name:'Big Grin',shortname:'metal.facemask',svg:'mk',rarity:'mythical',price:340000.00},
+{id:'horror_bag',name:'Horror Bag',shortname:'sleepingbag',svg:'ar',rarity:'mythical',price:364000.00}
+];
+var SKIN_BY_ID={};SKINS.forEach(function(s){SKIN_BY_ID[s.id]=s;});
+function resolveSkin(item){if(!item)return null;return SKIN_BY_ID[item.id]||item;}
