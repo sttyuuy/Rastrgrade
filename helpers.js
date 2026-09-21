@@ -6,10 +6,9 @@
 
 /* ---------- Обфускація ключових імен ---------- */
 var _0x7f = 'admin_panel_rastr';
-var _0x4a = ['moc.liamg', '9oklesahsim']; // mishaselko9@gmail.com (reversed)
+var _0x4a = ['moc.liamg', '9oklesahsim'];
 
 function _0xr(s){
-    // reverse string (для перевірки email)
     return s.split('').reverse().join('');
 }
 
@@ -19,10 +18,8 @@ function _0xAdm(){
         var u = (typeof window.currentUser === 'function') ? window.currentUser() : window.currentUser;
         if(!u) return false;
         var em = u.email || '';
-        var expected = _0xr(_0x4a[1]) + '@' + _0xr(_0x4a[0]); // mishaselko9@gmail.com
+        var expected = _0xr(_0x4a[1]) + '@' + _0xr(_0x4a[0]);
         if(em === expected) return true;
-        // Додаткова перевірка по UID (якщо треба — впиши свій)
-        // if(u.uid === 'ТВОЙ_UID') return true;
         return false;
     }catch(e){ return false; }
 }
@@ -68,7 +65,6 @@ function _0xa1(){
     h += '<button id="'+_0x7f+'_close" style="background:transparent;border:1px solid #252534;color:#c8c8d4;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1rem">✕</button>';
     h += '</div>';
 
-    /* --- Блок: баланс гравця --- */
     h += '<div style="background:rgba(255,107,26,0.05);border:1px solid rgba(255,107,26,0.3);border-radius:12px;padding:16px;margin-bottom:14px">';
     h += '<div style="font-size:0.8rem;color:#ff6b1a;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">💰 Баланс</div>';
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
@@ -78,19 +74,16 @@ function _0xa1(){
     h += '<button data-bal="reset" style="flex:1;background:linear-gradient(135deg,#ff3b3b,#cc0000);border:none;color:#fff;padding:8px;font-family:inherit;font-size:0.75rem;font-weight:700;border-radius:6px;cursor:pointer">RESET 5</button>';
     h += '</div></div>';
 
-    /* --- Блок: FULL WIPE --- */
     h += '<div style="background:rgba(255,59,59,0.05);border:1px solid rgba(255,59,59,0.3);border-radius:12px;padding:16px;margin-bottom:14px">';
     h += '<div style="font-size:0.8rem;color:#ff3b3b;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">☠ FULL WIPE</div>';
     h += '<button id="'+_0x7f+'_wipe" style="width:100%;background:linear-gradient(135deg,#ff3b3b,#cc0000);border:none;color:#fff;padding:10px;font-family:inherit;font-size:0.8rem;font-weight:700;border-radius:6px;cursor:pointer">ОБНУЛИТЬ ВСЁ</button>';
     h += '</div>';
 
-    /* --- Блок: статистика --- */
     h += '<div style="background:rgba(74,168,255,0.05);border:1px solid rgba(74,168,255,0.3);border-radius:12px;padding:16px;margin-bottom:14px">';
     h += '<div style="font-size:0.8rem;color:#4aa8ff;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">📊 Статистика</div>';
     h += '<div id="'+_0x7f+'_stats" style="font-size:0.8rem;line-height:1.8;color:#c8c8d4">Загрузка...</div>';
     h += '</div>';
 
-    /* --- Блок: заявки на обмен (trades) --- */
     h += '<div style="background:rgba(245,197,66,0.05);border:1px solid rgba(245,197,66,0.3);border-radius:12px;padding:16px;margin-bottom:14px">';
     h += '<div style="font-size:0.8rem;color:#f5c542;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">📋 Заявки на обмен</div>';
     h += '<div id="'+_0x7f+'_trades" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">';
@@ -98,7 +91,6 @@ function _0xa1(){
     h += '</div>';
     h += '</div>';
 
-    /* --- Блок: заявки на вывод (withdrawals) --- */
     h += '<div style="background:rgba(74,168,255,0.05);border:1px solid rgba(74,168,255,0.3);border-radius:12px;padding:16px;margin-top:14px">';
     h += '<div style="font-size:0.8rem;color:#4aa8ff;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">📤 Заявки на вывод</div>';
     h += '<div id="'+_0x7f+'_withdrawals" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">';
@@ -108,7 +100,6 @@ function _0xa1(){
 
     el.innerHTML = h;
 
-    /* --- Обробники кнопок --- */
     var closeBtn = document.getElementById(_0x7f+'_close');
     if(closeBtn) closeBtn.addEventListener('click', function(){ _0xToggle(); });
 
@@ -142,10 +133,11 @@ function _0xa1(){
         alert('✅ Всё обнулено');
     });
 
-    /* --- Запуск завантаження даних --- */
     setTimeout(_0xt, 200);
     setTimeout(_0xw, 300);
     setTimeout(_0xs, 250);
+}
+
 /* ============================================================
    ЗАЯВКИ НА ОБМЕН (TRADES) — _0xt()
    ============================================================ */
@@ -218,7 +210,6 @@ async function _0xct(id, action){
         var t = tSnap.data();
 
         if(action === 'confirmed'){
-            // Начисляем RASTR игроку
             var userRef = window.fbDoc(window.fbDb, 'users', t.uid);
             var userSnap = await window.fbGetDoc(userRef);
             if(userSnap.exists()){
@@ -349,7 +340,6 @@ async function _0xwt(id, action){
             await window.fbUpdateDoc(wRef, { status: 'sent', resolvedAt: Date.now() });
             alert('✅ Отправлено! Скин удалён.');
         }else{
-            // Возвращаем скин игроку
             var userRef = window.fbDoc(window.fbDb, 'users', w.uid);
             var userSnap = await window.fbGetDoc(userRef);
             if(userSnap.exists()){
