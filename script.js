@@ -1,5 +1,6 @@
 /* ============================================================
-   RASTRGRADE v31 — Google Auth + Firestore + START 50 000 000 000₴
+   RASTRGRADE v32 — Google Auth + Firestore + START 50 млрд₴
+   Звуки в корне репозитория (без папки sounds/)
    ============================================================ */
 
 const START_BALANCE = 50000000000;
@@ -124,7 +125,9 @@ function resolveSkin(item) {
     return SKIN_BY_ID[item.id] || item;
 }
 
-/* FIREBASE */
+/* ============================================================
+   FIREBASE AUTH + FIRESTORE
+   ============================================================ */
 var currentUser = null;
 var cloudSaveTimer = null;
 
@@ -251,7 +254,9 @@ function closeAuthModal() {
     if (m) m.classList.remove('show');
 }
 
-/* STATE */
+/* ============================================================
+   STATE
+   ============================================================ */
 var state = {
     balance: 0,
     inventory: [],
@@ -285,15 +290,17 @@ function resetStateToDefault() {
 
 function $(id){ return document.getElementById(id); }
 
-/* SOUNDS */
+/* ============================================================
+   ЗВУКИ — файлы лежат в корне репозитория (без папки sounds/)
+   ============================================================ */
 const SOUND_FILES = {
-    spin: 'sounds/spin.mp3',
-    win_common: 'sounds/win_common.mp3',
-    win_legendary: 'sounds/win_legendary.mp3',
-    lose: 'sounds/lose.mp3',
-    click: 'sounds/click.mp3',
-    buy: 'sounds/buy.mp3',
-    levelup: 'sounds/levelup.mp3'
+    spin: 'spin.mp3',
+    win_common: 'win_common.mp3',
+    win_legendary: 'win_legendary.mp3',
+    lose: 'lose.mp3',
+    click: 'click.mp3',
+    buy: 'buy.mp3',
+    levelup: 'levelup.mp3'
 };
 
 var SOUNDS = {};
@@ -404,7 +411,7 @@ function startUpgradeSound(duration) {
 
 preloadSounds();
 
-/* LOG */
+/* ============ ЛОГ ============ */
 function log(msg, type) {
     type = type || 'info';
     var wrap = $('toastWrap');
@@ -422,7 +429,7 @@ function log(msg, type) {
     }, 3500);
 }
 
-/* UTILS */
+/* ============ УТИЛИТЫ ============ */
 function findTargetByPrice(targetPrice, sourceSkin) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
@@ -464,7 +471,7 @@ function resetUpgradeSlots() {
     if (DOM.upgradeBtn) DOM.upgradeBtn.disabled = true;
 }
 
-/* DOM CACHE */
+/* ============ DOM CACHE ============ */
 var DOM = {};
 function cacheDom() {
     ['balance','profit','invCount','invValue','statTotalWon','statTotalLost',
@@ -508,7 +515,6 @@ function updateUI() {
     save();
 }
 
-/* RESULT */
 function showResult(o) {
     var inner = $('resultInner');
     inner.className = 'modal-inner result-inner ' + o.type;
@@ -552,7 +558,7 @@ function showResult(o) {
 
 function closeResult() { sClick(); $('resultModal').classList.remove('show'); }
 
-/* UPGRADE */
+/* ============ UPGRADE ============ */
 var CIRCLE_RADIUS = 100;
 var CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
