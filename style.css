@@ -1317,31 +1317,11 @@ body::before {
    Заменяем сломанные иконки / alt-тексты на картинку металла
    ============================================================ */
 
-/* 1. Скрыть любые символы ⚙, которые могли попасть в текст */
-.hud-stat-value,
-.shop-info-value,
-.upg-panel-price,
-.upg-inv-price,
-.upg-target-price,
-.shop-item .price,
-.inv-item .price,
-.stat-card-value,
-.result-value,
-.buy-price {
-    position: relative;
+@media (prefers-reduced-motion: reduce) {
+    .particle { animation: none !important; display: none; }
+    .bg-glow { animation: none !important; }
 }
-
-/* 2. Скрыть пустые/сломанные иконки */
-.hud-stat-icon:empty {
-    background-image: url('https://api.yrsproject.ru/public/image/Resize?shortname=metal.fragments&x=64&y=64') !important;
-    background-size: contain !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    min-width: 22px !important;
-    min-height: 22px !important;
-    display: inline-block !important;
-}
-
+#upgradeBtn[disabled] { pointer-events: none; }
 /* 3. Убрать шестерёнку из alt-текста сломанных картинок */
 img[alt=""],
 img[alt="⚙"],
