@@ -1,6 +1,10 @@
 /* ============================================================
-   RASTRGRADE v32 — Google Auth + Firestore + START 50 млрд₴
-   Звуки в корне репозитория (без папки sounds/)
+   RASTRGRADE v33
+   - Запрет апгрейда в дешёвую цель
+   - Запрет апгрейда source → source
+   - Массовая покупка в магазине (x1 / x5 / x10 / x50)
+   - Расширенная база скинов (на каждый множитель есть цель)
+   - Звуки в корне репозитория (без папки sounds/)
    ============================================================ */
 
 const START_BALANCE = 50000000000;
@@ -30,55 +34,86 @@ const ICON_SVG = {
     default:'<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="currentColor">?</text></svg>'
 };
 
+/* ============================================================
+   SKINS — расширенная база (покрытие x1.5 … x500)
+   ============================================================ */
 const SKINS = [
-    {id:'rock', name:'Камень', svg:'default', rarity:'common', price:usdToUah(0.10)},
-    {id:'torch', name:'Факел', svg:'default', rarity:'common', price:usdToUah(0.15)},
-    {id:'bandage', name:'Бинты', svg:'medkit', rarity:'common', price:usdToUah(0.20)},
-    {id:'burlap', name:'Мешковина', svg:'armor', rarity:'common', price:usdToUah(0.25)},
-    {id:'box', name:'Деревянный ящик', svg:'default', rarity:'common', price:usdToUah(0.18)},
-    {id:'hatchet', name:'Каменный топор', svg:'axe', rarity:'common', price:usdToUah(0.30)},
-    {id:'spear', name:'Деревянное копьё', svg:'rifle', rarity:'common', price:usdToUah(0.35)},
-    {id:'bow', name:'Лук', svg:'crossbow', rarity:'common', price:usdToUah(0.40)},
-    {id:'revolver', name:'Револьвер', svg:'pistol', rarity:'common', price:usdToUah(0.50)},
-    {id:'knife_bone', name:'Костяной нож', svg:'knife', rarity:'common', price:usdToUah(0.20)},
-    {id:'knife_stone', name:'Каменный нож', svg:'knife', rarity:'common', price:usdToUah(0.25)},
-    {id:'shotgun_pipe', name:'Водопроводный дробовик', svg:'rifle', rarity:'common', price:usdToUah(0.50)},
-    {id:'spear_metal', name:'Металлическое копьё', svg:'rifle', rarity:'uncommon', price:usdToUah(2)},
-    {id:'shotgun_double', name:'Двойной ствол', svg:'rifle', rarity:'uncommon', price:usdToUah(3)},
-    {id:'rifle_semiauto', name:'Полуавтомат', svg:'rifle', rarity:'uncommon', price:usdToUah(4)},
-    {id:'smg_custom', name:'Самодельный ПП', svg:'rifle', rarity:'uncommon', price:usdToUah(5)},
-    {id:'hide', name:'Кожаная броня', svg:'armor', rarity:'uncommon', price:usdToUah(3)},
-    {id:'respirator', name:'Респиратор', svg:'mask', rarity:'uncommon', price:usdToUah(4)},
-    {id:'cupboard', name:'Шкаф', svg:'default', rarity:'uncommon', price:usdToUah(2)},
-    {id:'trap_bear', name:'Капкан', svg:'default', rarity:'uncommon', price:usdToUah(5)},
-    {id:'thompson', name:'Томпсон', svg:'rifle', rarity:'uncommon', price:usdToUah(8)},
-    {id:'sks', name:'SKS', svg:'rifle', rarity:'rare', price:usdToUah(10)},
-    {id:'m39', name:'M39', svg:'rifle', rarity:'rare', price:usdToUah(12)},
-    {id:'pump', name:'Дробовик', svg:'rifle', rarity:'rare', price:usdToUah(15)},
-    {id:'python', name:'Python', svg:'pistol', rarity:'rare', price:usdToUah(20)},
-    {id:'roadsign', name:'Дорожные знаки', svg:'armor', rarity:'rare', price:usdToUah(10)},
-    {id:'coffee', name:'Coffee Can Helmet', svg:'helmet', rarity:'rare', price:usdToUah(8)},
-    {id:'gas_mask', name:'Противогаз', svg:'mask', rarity:'rare', price:usdToUah(12)},
-    {id:'locker', name:'Сейф', svg:'default', rarity:'rare', price:usdToUah(15)},
-    {id:'radio', name:'Радиостанция', svg:'default', rarity:'rare', price:usdToUah(10)},
-    {id:'ak', name:'AK-47', svg:'rifle', rarity:'epic', price:usdToUah(15)},
-    {id:'lr300', name:'LR-300', svg:'rifle', rarity:'epic', price:usdToUah(25)},
-    {id:'mp5', name:'MP5A4', svg:'rifle', rarity:'epic', price:usdToUah(20)},
-    {id:'bolt', name:'Болтовка', svg:'rifle', rarity:'epic', price:usdToUah(30)},
-    {id:'m92', name:'M92 Beretta', svg:'pistol', rarity:'epic', price:usdToUah(25)},
-    {id:'metal_mask', name:'Металлическая маска', svg:'mask', rarity:'epic', price:usdToUah(35)},
-    {id:'explosive', name:'Взрывчатка', svg:'bomb', rarity:'epic', price:usdToUah(40)},
-    {id:'turret', name:'Турель', svg:'turret', rarity:'epic', price:usdToUah(45)},
-    {id:'gps', name:'GPS', svg:'default', rarity:'epic', price:usdToUah(35)},
-    {id:'l96', name:'L96', svg:'rifle', rarity:'legendary', price:usdToUah(80)},
-    {id:'m249', name:'M249', svg:'rifle', rarity:'legendary', price:usdToUah(120)},
-    {id:'spas', name:'SPAS-12', svg:'rifle', rarity:'legendary', price:usdToUah(90)},
-    {id:'c4', name:'C4', svg:'bomb', rarity:'legendary', price:usdToUah(100)},
-    {id:'rocket', name:'Ракетница', svg:'rocket', rarity:'legendary', price:usdToUah(150)},
-    {id:'ak_glory', name:'Glory AK47', svg:'rifle', rarity:'mythical', price:usdToUah(310)},
-    {id:'smg_alien', name:'Alien Relic SMG', svg:'rifle', rarity:'mythical', price:usdToUah(1816)},
-    {id:'mask_biggrin', name:'Big Grin Facemask', svg:'mask', rarity:'mythical', price:usdToUah(1323)},
-    {id:'bandana_clown', name:'Creepy Clown Bandana', svg:'mask', rarity:'mythical', price:usdToUah(1157)}
+    // COMMON (8-52₴)
+    {id:'box', name:'Деревянный ящик', svg:'default', rarity:'common', price:8},
+    {id:'knife_bone', name:'Костяной нож', svg:'knife', rarity:'common', price:9},
+    {id:'rock', name:'Камень', svg:'default', rarity:'common', price:10},
+    {id:'bandage', name:'Бинты', svg:'medkit', rarity:'common', price:11},
+    {id:'burlap', name:'Мешковина', svg:'armor', rarity:'common', price:12},
+    {id:'torch', name:'Факел', svg:'default', rarity:'common', price:13},
+    {id:'knife_stone', name:'Каменный нож', svg:'knife', rarity:'common', price:14},
+    {id:'hatchet', name:'Каменный топор', svg:'axe', rarity:'common', price:16},
+    {id:'spear', name:'Деревянное копьё', svg:'rifle', rarity:'common', price:18},
+    {id:'bow', name:'Лук', svg:'crossbow', rarity:'common', price:20},
+    {id:'revolver', name:'Револьвер', svg:'pistol', rarity:'common', price:23},
+    {id:'shotgun_pipe', name:'Водопроводный дробовик', svg:'rifle', rarity:'common', price:26},
+    {id:'knife_combat', name:'Боевой нож', svg:'knife', rarity:'common', price:30},
+    {id:'pickaxe', name:'Кирка', svg:'axe', rarity:'common', price:34},
+    {id:'hammer', name:'Молот', svg:'axe', rarity:'common', price:38},
+    {id:'bow_compound', name:'Составной лук', svg:'crossbow', rarity:'common', price:42},
+    {id:'pistol_nailgun', name:'Гвоздемёт', svg:'pistol', rarity:'common', price:48},
+    {id:'smoke_grenade', name:'Дымовая шашка', svg:'bomb', rarity:'common', price:52},
+
+    // UNCOMMON (60-200₴)
+    {id:'hide', name:'Кожаная броня', svg:'armor', rarity:'uncommon', price:60},
+    {id:'respirator', name:'Респиратор', svg:'mask', rarity:'uncommon', price:70},
+    {id:'trap_bear', name:'Капкан', svg:'default', rarity:'uncommon', price:80},
+    {id:'spear_metal', name:'Металлическое копьё', svg:'rifle', rarity:'uncommon', price:90},
+    {id:'shotgun_double', name:'Двойной ствол', svg:'rifle', rarity:'uncommon', price:100},
+    {id:'smg_custom', name:'Самодельный ПП', svg:'rifle', rarity:'uncommon', price:115},
+    {id:'rifle_semiauto', name:'Полуавтомат', svg:'rifle', rarity:'uncommon', price:130},
+    {id:'thompson', name:'Томпсон', svg:'rifle', rarity:'uncommon', price:145},
+    {id:'hoodie', name:'Худи', svg:'armor', rarity:'uncommon', price:160},
+    {id:'jacket', name:'Куртка', svg:'armor', rarity:'uncommon', price:180},
+    {id:'coffee', name:'Coffee Can Helmet', svg:'helmet', rarity:'uncommon', price:200},
+
+    // RARE (250-620₴)
+    {id:'roadsign', name:'Дорожные знаки', svg:'armor', rarity:'rare', price:250},
+    {id:'gas_mask', name:'Противогаз', svg:'mask', rarity:'rare', price:280},
+    {id:'pump', name:'Дробовик', svg:'rifle', rarity:'rare', price:320},
+    {id:'sks', name:'SKS', svg:'rifle', rarity:'rare', price:360},
+    {id:'radio', name:'Радиостанция', svg:'rifle', rarity:'rare', price:400},
+    {id:'m39', name:'M39', svg:'rifle', rarity:'rare', price:450},
+    {id:'python', name:'Python', svg:'pistol', rarity:'rare', price:500},
+    {id:'locker', name:'Сейф', svg:'default', rarity:'rare', price:560},
+    {id:'helmet_wood', name:'Деревянный шлем', svg:'helmet', rarity:'rare', price:620},
+
+    // EPIC (700-2400₴)
+    {id:'turret', name:'Турель', svg:'turret', rarity:'epic', price:700},
+    {id:'ak', name:'AK-47', svg:'rifle', rarity:'epic', price:800},
+    {id:'metal_mask', name:'Металлическая маска', svg:'mask', rarity:'epic', price:950},
+    {id:'gps', name:'GPS', svg:'default', rarity:'epic', price:1100},
+    {id:'explosive', name:'Взрывчатка', svg:'bomb', rarity:'epic', price:1300},
+    {id:'lr300', name:'LR-300', svg:'rifle', rarity:'epic', price:1500},
+    {id:'mp5', name:'MP5A4', svg:'rifle', rarity:'epic', price:1700},
+    {id:'bolt', name:'Болтовка', svg:'rifle', rarity:'epic', price:1900},
+    {id:'m92', name:'M92 Beretta', svg:'pistol', rarity:'epic', price:2100},
+    {id:'sheet_metal', name:'Листовой металл', svg:'armor', rarity:'epic', price:2400},
+
+    // LEGENDARY (3000-12000₴)
+    {id:'spas', name:'SPAS-12', svg:'rifle', rarity:'legendary', price:3000},
+    {id:'l96', name:'L96', svg:'rifle', rarity:'legendary', price:3800},
+    {id:'heavy_armor', name:'Тяжёлая броня', svg:'armor', rarity:'legendary', price:4500},
+    {id:'m249', name:'M249', svg:'rifle', rarity:'legendary', price:5500},
+    {id:'c4', name:'C4', svg:'bomb', rarity:'legendary', price:6500},
+    {id:'rocket', name:'Ракетница', svg:'rocket', rarity:'legendary', price:8000},
+    {id:'lmg_custom', name:'Кастомный пулемёт', svg:'rifle', rarity:'legendary', price:10000},
+    {id:'golden_helmet', name:'Золотой шлем', svg:'helmet', rarity:'legendary', price:12000},
+
+    // MYTHICAL (15000-200000₴)
+    {id:'ak_glory', name:'Glory AK47', svg:'rifle', rarity:'mythical', price:15000},
+    {id:'dragon_lore', name:'Dragon Lore', svg:'rifle', rarity:'mythical', price:22000},
+    {id:'golden_ak', name:'Золотой АК', svg:'rifle', rarity:'mythical', price:32000},
+    {id:'mask_biggrin', name:'Big Grin Facemask', svg:'mask', rarity:'mythical', price:48000},
+    {id:'bandana_clown', name:'Creepy Clown Bandana', svg:'mask', rarity:'mythical', price:65000},
+    {id:'smg_alien', name:'Alien Relic SMG', svg:'rifle', rarity:'mythical', price:80000},
+    {id:'artifact', name:'Артефакт', svg:'gem', rarity:'mythical', price:100000},
+    {id:'crown', name:'Корона', svg:'crown', rarity:'mythical', price:150000},
+    {id:'trophy_gold', name:'Золотой трофей', svg:'trophy', rarity:'mythical', price:200000}
 ];
 
 const SVG_CACHE = {};
@@ -126,7 +161,7 @@ function resolveSkin(item) {
 }
 
 /* ============================================================
-   FIREBASE AUTH + FIRESTORE
+   FIREBASE
    ============================================================ */
 var currentUser = null;
 var cloudSaveTimer = null;
@@ -291,7 +326,7 @@ function resetStateToDefault() {
 function $(id){ return document.getElementById(id); }
 
 /* ============================================================
-   ЗВУКИ — файлы лежат в корне репозитория (без папки sounds/)
+   ЗВУКИ (файлы в корне репозитория)
    ============================================================ */
 const SOUND_FILES = {
     spin: 'spin.mp3',
@@ -377,9 +412,7 @@ function startLoopSound(name, vol) {
     c.play().catch(function(){});
     _loopAudio[name] = c;
     return {
-        stop: function() {
-            if (_loopAudio[name]) { try { _loopAudio[name].pause(); } catch(e){} _loopAudio[name] = null; }
-        },
+        stop: function() { if (_loopAudio[name]) { try { _loopAudio[name].pause(); } catch(e){} _loopAudio[name] = null; } },
         fadeStop: function(duration) {
             duration = duration || 800;
             var audio = _loopAudio[name];
@@ -433,7 +466,9 @@ function log(msg, type) {
 function findTargetByPrice(targetPrice, sourceSkin) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
+        /* ФИКС 1 + 2: исключаем source и все скины дешевле/равные source */
         if (sourceSkin && s.id === sourceSkin.id) return;
+        if (sourceSkin && s.price <= sourceSkin.price) return;
         var d = Math.abs(s.price - targetPrice);
         if (d < bestDiff) { bestDiff = d; best = s; }
     });
@@ -515,6 +550,7 @@ function updateUI() {
     save();
 }
 
+/* ============ RESULT ============ */
 function showResult(o) {
     var inner = $('resultInner');
     inner.className = 'modal-inner result-inner ' + o.type;
@@ -678,7 +714,10 @@ function selectPreset(idx) {
     var sourcePrice = state.upgradeSource.price;
     var desiredTargetPrice = sourcePrice * p.mult;
     var target = findTargetByPrice(desiredTargetPrice, state.upgradeSource);
-    if (!target || target.price <= sourcePrice) { log('❌ Нет подходящей цели для ' + p.label, 'lose'); return; }
+    if (!target || target.price <= sourcePrice) {
+        log('❌ Нет подходящей цели дороже твоего предмета', 'lose');
+        return;
+    }
     state.upgradeTarget = target;
     state.selectedPreset = idx;
     state.upgradeTarget._realChance = calcRealChance(sourcePrice, target.price);
@@ -687,6 +726,7 @@ function selectPreset(idx) {
     updateCircleFromPreset();
 }
 
+/* ============ INVENTORY PANEL ============ */
 function renderInvPanel() {
     var list = $('invPanelList');
     if (!list) return;
@@ -736,6 +776,17 @@ function renderItemsPanel() {
         el.innerHTML = renderSkinIcon(skin) + '<div class="upg-target-name">' + skin.name + '</div><div class="upg-target-price">' + formatUah(skin.price) + '</div>';
         el.addEventListener('click', function() {
             if (!state.upgradeSource) { log('❌ Сначала выбери свой предмет', 'lose'); return; }
+            /* ФИКС 1 + 2: запрет на цель дешевле/равной source и на source→source */
+            if (skin.id === state.upgradeSource.id) {
+                log('❌ Нельзя апгрейдить предмет в самого себя', 'lose');
+                sLose();
+                return;
+            }
+            if (skin.price <= state.upgradeSource.price) {
+                log('❌ Цель должна быть дороже твоего предмета', 'lose');
+                sLose();
+                return;
+            }
             unlockAudio(); sClick();
             state.upgradeTarget = skin;
             state.selectedPreset = null;
@@ -749,6 +800,7 @@ function renderItemsPanel() {
     grid.replaceChildren(frag);
 }
 
+/* ============ ANIMATION ============ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
         var duration = state.spinSpeed === 'fast' ? 2000 : 4000;
@@ -789,6 +841,12 @@ function handleUpgrade() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
     if (state.upgrading) return;
     if (state.inventory.indexOf(state.upgradeSource) < 0) { resetUpgradeSlots(); log('❌ Предмет больше не в инвентаре', 'lose'); return; }
+    /* ФИКС 1 + 2: защита на уровне кнопки */
+    if (state.upgradeTarget.id === state.upgradeSource.id || state.upgradeTarget.price <= state.upgradeSource.price) {
+        log('❌ Недопустимая цель апгрейда', 'lose');
+        resetUpgradeSlots();
+        return;
+    }
     unlockAudio();
     var btn = $('upgradeBtn');
     btn.style.pointerEvents = 'none';
@@ -853,6 +911,7 @@ function handleUpgrade() {
     });
 }
 
+/* ============ FILTERS ============ */
 function initPanelFilters(containerId, filterKey, callback) {
     var container = $(containerId);
     if (!container) return;
@@ -881,7 +940,13 @@ function initPanelFilters(containerId, filterKey, callback) {
     });
 }
 
+/* ============ SHOP ============ */
 var _shopVisibleCount = 20;
+
+/* ФИКС 3: массовая покупка */
+var pendingPurchase = null;
+var pendingQuantity = 1;
+
 function renderShop() {
     var grid = $('shopGrid');
     if (!grid) return;
@@ -923,14 +988,46 @@ function renderShop() {
 function openBuyModal(skin, price) {
     unlockAudio(); sClick();
     pendingPurchase = { skin: skin, price: price };
+    pendingQuantity = 1;
     $('buyIcon').innerHTML = renderSkinIcon(skin);
     $('buyTitle').textContent = skin.name;
-    $('buySub').textContent = RARITIES[skin.rarity].name + ' · Купить?';
+    $('buySub').textContent = RARITIES[skin.rarity].name + ' · Выбери количество:';
     $('buyPrice').textContent = formatUah(price);
+    /* Создаём/обновляем панель количества */
+    var inner = $('buyInner');
+    if (!inner) return;
+    var qtyRow = inner.querySelector('.buy-qty-row');
+    if (!qtyRow) {
+        qtyRow = document.createElement('div');
+        qtyRow.className = 'buy-qty-row';
+        qtyRow.style.cssText = 'display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';
+        [1,5,10,50].forEach(function(q){
+            var b = document.createElement('button');
+            b.className = 'btn-secondary';
+            b.style.padding = '8px 16px';
+            b.textContent = 'x' + q;
+            b.dataset.qty = q;
+            b.addEventListener('click', function() {
+                pendingQuantity = q;
+                qtyRow.querySelectorAll('button').forEach(function(x){ x.style.borderColor=''; x.style.color=''; });
+                b.style.borderColor = 'var(--accent)';
+                b.style.color = 'var(--accent)';
+                $('buyPrice').textContent = formatUah(price * q);
+                sClick();
+            });
+            qtyRow.appendChild(b);
+        });
+        var actions = inner.querySelector('.buy-actions');
+        if (actions) inner.insertBefore(qtyRow, actions);
+        else inner.appendChild(qtyRow);
+    }
+    qtyRow.querySelectorAll('button').forEach(function(x){ x.style.borderColor=''; x.style.color=''; });
+    var firstBtn = qtyRow.querySelector('button[data-qty="1"]');
+    if (firstBtn) { firstBtn.style.borderColor = 'var(--accent)'; firstBtn.style.color = 'var(--accent)'; }
     $('buyModal').classList.add('show');
 }
-var pendingPurchase = null;
 
+/* ============ INVENTORY PAGE ============ */
 var invFilter = 'all';
 function renderInventory() {
     var inv = $('inventory');
@@ -960,6 +1057,7 @@ function sellSkin(skin) {
     save();
 }
 
+/* ============ RENDER ALL ============ */
 function renderAll() {
     renderSourceSlot();
     renderTargetSlot();
@@ -982,6 +1080,7 @@ function updateSpeedButtons() {
     else { slowBtn.classList.add('active'); fastBtn.classList.remove('active'); }
 }
 
+/* ============ HANDLERS ============ */
 function attachHandlers() {
     var userBadge = $('userBadge');
     if (userBadge) userBadge.addEventListener('click', function() { if (currentUser) logout(); else openAuthModal(); });
@@ -1014,21 +1113,35 @@ function attachHandlers() {
     });
 
     var buyCancel = $('buyCancel');
-    if (buyCancel) buyCancel.addEventListener('click', function() { sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null; });
+    if (buyCancel) buyCancel.addEventListener('click', function() {
+        sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null; pendingQuantity = 1;
+    });
 
+    /* ФИКС 3: массовая покупка */
     var buyConfirm = $('buyConfirm');
     if (buyConfirm) buyConfirm.addEventListener('click', function() {
         if (!pendingPurchase) return;
-        var skin = pendingPurchase.skin; var price = pendingPurchase.price;
-        if (state.balance < price) { log('❌ Недостаточно средств', 'lose'); sLose(); return; }
-        state.balance -= price;
-        state.inventory.push(skin);
-        state.purchases++;
-        state.totalLost += price; state.profit -= price;
-        state.housePlayerLost += price;
-        addXP(10); sBuy();
-        log('🛒 Куплено: ' + skin.name + ' за ' + formatUah(price), 'win');
-        $('buyModal').classList.remove('show'); pendingPurchase = null;
+        var skin = pendingPurchase.skin;
+        var unitPrice = pendingPurchase.price;
+        var qty = pendingQuantity || 1;
+        var totalPrice = unitPrice * qty;
+        if (state.balance < totalPrice) {
+            log('❌ Недостаточно средств для x' + qty, 'lose');
+            sLose();
+            return;
+        }
+        state.balance -= totalPrice;
+        for (var i = 0; i < qty; i++) state.inventory.push(skin);
+        state.purchases += qty;
+        state.totalLost += totalPrice;
+        state.profit -= totalPrice;
+        state.housePlayerLost += totalPrice;
+        addXP(10 * qty);
+        sBuy();
+        log('🛒 Куплено: ' + skin.name + ' x' + qty + ' за ' + formatUah(totalPrice), 'win');
+        $('buyModal').classList.remove('show');
+        pendingPurchase = null;
+        pendingQuantity = 1;
         updateUI(); renderShop(); renderInventory(); renderInvPanel();
         save();
     });
@@ -1121,6 +1234,7 @@ function attachHandlers() {
     document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
 }
 
+/* ============ INIT ============ */
 function init() {
     initPanelFilters('invPanelFilters', 'invPanelFilter', renderInvPanel);
     initPanelFilters('itemsPanelFilters', 'itemsPanelFilter', renderItemsPanel);
