@@ -31,6 +31,7 @@ window.fbGoogleProvider = googleProvider;
 window.fbSignInWithPopup = signInWithPopup;
 window.fbOnAuthStateChanged = onAuthStateChanged;
 window.fbSignInWithCustomToken = signInWithCustomToken;
+window.fbSignOut = signOut;
 window.fbDoc = doc;
 window.fbGetDoc = getDoc;
 window.fbSetDoc = setDoc;
@@ -282,8 +283,8 @@ window.dispatchEvent(new Event('fb-ready'));
 </svg>
 <span>Продолжить через Google</span>
 </button>
-  <button class="auth-google-btn" id="steamLoginBtn" style="margin-top:10px;background:#171a21;color:#fff;border-color:#171a21">
-    <span>Войти через Steam</span>
+<button class="auth-google-btn" id="steamLoginBtn" style="margin-top:10px;background:#171a21;color:#fff;border-color:#171a21">
+<span>Войти через Steam</span>
 </button>
 <div class="auth-error" id="authError"></div>
 <div class="auth-hint">Прогресс автоматически синхронизируется с облаком Firebase</div>
