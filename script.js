@@ -1,4 +1,3 @@
-
 (function(){
 'use strict';
 function _a1(s){return s.price;}
@@ -11,6 +10,7 @@ var _steamId='';
 var _steamAppId='730';
 var _steamInv=[];
 var _steamSelected={};
+var _ndl=null;
 
 function _fb(){
     if(!window.fbReady){setTimeout(_fb,100);return;}
@@ -174,7 +174,7 @@ function _sp(n,v){
                 var t=(performance.now()-st)/d;
                 if(t>=1){clearInterval(iv);try{a.pause();}catch(e){}_LP[n]=null;return;}
                 a.volume=Math.max(0,sv*(1-t));
-            },50);
+            },80);
         }
     };
 }
@@ -249,7 +249,7 @@ function _sr(o){
     if(o.type==='result-win'||o.type==='result-jackpot'){
         var w=$('resultParticles');w.innerHTML='';
         var cs=o.type==='result-jackpot'?['#f5c542','#ffdd88','#ff6b1a']:['#00e676','#4aa8ff','#a55cff'];
-        for(var i=0;i<20;i++){
+        for(var i=0;i<12;i++){
             var p=document.createElement('div');p.className='particle';
             var a=Math.random()*Math.PI*2;var d=120+Math.random()*180;
             p.style.setProperty('--dx',Math.cos(a)*d+'px');
@@ -266,7 +266,7 @@ function _cr(){_ck();$('resultModal').classList.remove('show');}
 
 var _CR=100;var _CC=2*Math.PI*_CR;
 function _dc(c){c=Math.max(0,Math.min(100,c));var l=(c/100)*_CC;$('chanceSector').setAttribute('stroke-dasharray',l+' '+_CC);var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';$('chanceSector').style.color=co;}
-function _na(d){$('circleNeedle').style.transform='rotate('+d+'deg)';}
+function _na(d){if(!_ndl)_ndl=$('circleNeedle');if(_ndl)_ndl.style.transform='rotate('+d+'deg)';}
 function _cc(c,t,k){_dc(c);$('circlePercent').textContent=Math.round(c)+'%';var s=$('circleStatus');s.textContent=t||'';s.className='upg-status '+(k||'');var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';$('circlePercent').style.color=co;}
 function _rs1(){var s=$('sourceSlot');if(!s)return;if(state.upgradeSource){s.className='upg-item-slot filled '+state.upgradeSource.rarity;s.innerHTML=renderSkinIcon(state.upgradeSource)+'<div class="upg-item-name">'+state.upgradeSource.name+'</div><div class="upg-item-rarity" style="color:'+RARITIES[state.upgradeSource.rarity].color+'">'+RARITIES[state.upgradeSource.rarity].name+'</div>';$('sourcePriceLabel').textContent=formatRastr(state.upgradeSource.price);$('sourceRemoveBtn').style.display='block';}else{s.className='upg-item-slot';s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">+</div><div class="upg-item-empty-text">Выбрать предмет</div></div>';$('sourcePriceLabel').textContent='—';$('sourceRemoveBtn').style.display='none';}}
 function _rt1(){var s=$('targetSlot');if(!s)return;if(state.upgradeTarget){s.className='upg-item-slot filled '+state.upgradeTarget.rarity;s.innerHTML=renderSkinIcon(state.upgradeTarget)+'<div class="upg-item-name">'+state.upgradeTarget.name+'</div><div class="upg-item-rarity" style="color:'+RARITIES[state.upgradeTarget.rarity].color+'">'+RARITIES[state.upgradeTarget.rarity].name+'</div>';$('targetPriceLabel').textContent=formatRastr(state.upgradeTarget.price);$('targetRemoveBtn').style.display='block';}else{s.className='upg-item-slot';s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">?</div><div class="upg-item-empty-text">Цель</div></div>';$('targetPriceLabel').textContent='—';$('targetRemoveBtn').style.display='none';}}
@@ -275,7 +275,44 @@ function _rp1(){var cn=$('presetContainer');if(!cn)return;var f=document.createD
 function _sp2(i){if(!state.upgradeSource){_lg('❌ Сначала выбери предмет','lose');_ck();return;}_un();_ck();if(state.upgradeSource.price>=_MX*0.99){_lg('❌ Это максимальный скин — апгрейд невозможен','lose');return;}var p=_P[i];var sp=state.upgradeSource.price;var tp=sp*p.mult;var t=_tg(tp,state.upgradeSource);if(!t||t.price<=sp){_lg('❌ Нет подходящей цели дороже твоего предмета','lose');return;}if(t.price>_MX){_lg('❌ Нет цели дороже макс скина','lose');return;}state.upgradeTarget=t;state.selectedPreset=i;state.upgradeTarget._realChance=_ch(sp,t.price);_rt1();_rp1();_uc();}
 function _ri(){var l=$('invPanelList');if(!l)return;var f=state.invPanelFilter;var s=($('invSearch').value||'').toLowerCase();var sr=state.inventory.slice().sort(function(a,b){return b.price-a.price;});if(f!=='all')sr=sr.filter(function(x){return x.rarity===f;});if(s)sr=sr.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('invPanelCount').textContent=state.inventory.length+' шт.';if(sr.length===0){l.innerHTML='<div class="upg-inv-empty">Инвентарь пуст</div>';return;}var fr=document.createDocumentFragment();sr.forEach(function(sk){var e=document.createElement('div');e.className='upg-inv-item '+sk.rarity;if(state.upgradeSource&&state.upgradeSource===sk)e.classList.add('used');e.innerHTML=renderSkinIcon(sk)+'<div class="upg-inv-name">'+sk.name+'</div><div class="upg-inv-price">'+formatRastr(sk.price)+'</div>';e.addEventListener('click',function(){_un();_ck();state.upgradeSource=sk;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_ri();_rp1();_uc();});fr.appendChild(e);});l.replaceChildren(fr);}
 function _rt2(){var g=$('itemsPanelGrid');if(!g)return;var f=state.itemsPanelFilter;var s=($('itemsSearch').value||'').toLowerCase();var it=SKINS.slice();if(f!=='all')it=it.filter(function(x){return x.rarity===f;});if(s)it=it.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('targetsCount').textContent=it.length;if(it.length===0){g.innerHTML='<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();it.forEach(function(sk){var e=document.createElement('div');e.className='upg-target-item '+sk.rarity;if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(sk.price)+'</div>';e.addEventListener('click',function(){if(!state.upgradeSource){_lg('❌ Сначала выбери свой предмет','lose');_ck();return;}if(sk.id===state.upgradeSource.id){_lg('❌ Нельзя апгрейдить в самого себя','lose');_ck();return;}if(sk.price<=state.upgradeSource.price){_lg('❌ Цель должна быть дороже','lose');_ck();return;}if(sk.price>_MX){_lg('❌ Нет цели дороже макс скина','lose');_ck();return;}_un();_ck();state.upgradeTarget=sk;state.selectedPreset=null;state.upgradeTarget._realChance=_ch(state.upgradeSource.price,sk.price);_rt1();_rp1();_uc();});fr.appendChild(e);});g.replaceChildren(fr);}
-function _pa(c,w){return new Promise(function(res){var d=state.spinSpeed==='fast'?2000:4000;var se=c*3.6;var fa;if(w){var m=Math.min(se*0.15,8);fa=Math.max(m,Math.random()*(se-m));}else{var os=se+3;var oe=357;if(os>=oe)fa=(se+3+Math.random()*3)%360;else fa=os+Math.random()*(oe-os);}var fs=state.spinSpeed==='fast'?5+Math.floor(Math.random()*3):8+Math.floor(Math.random()*4);var tr=fs*360+fa;var st=performance.now();var sd=_us(d);function an(now){var t=Math.min(1,(now-st)/d);var ez=1-Math.pow(1-t,4);_na(tr*ez);if(t<1)requestAnimationFrame(an);else{_na(fa);if(sd)sd.stop();var s=$('circleStatus');if(w){s.textContent='✅ ПОБЕДА';s.className='upg-status win';}else{s.textContent='❌ ПРОВАЛ';s.className='upg-status lose';}setTimeout(res,900);}}requestAnimationFrame(an);});}
+
+function _pa(c,w){
+    return new Promise(function(res){
+        var d=state.spinSpeed==='fast'?2000:4000;
+        var se=c*3.6;
+        var fa;
+        if(w){
+            var m=Math.min(se*0.15,8);
+            fa=Math.max(m,Math.random()*(se-m));
+        }else{
+            var os=se+3;
+            var oe=357;
+            if(os>=oe)fa=(se+3+Math.random()*3)%360;
+            else fa=os+Math.random()*(oe-os);
+        }
+        var fs=state.spinSpeed==='fast'?5+Math.floor(Math.random()*3):8+Math.floor(Math.random()*4);
+        var tr=fs*360+fa;
+        var st=performance.now();
+        var sd=_us(d);
+        if(!_ndl)_ndl=$('circleNeedle');
+        function an(now){
+            var t=Math.min(1,(now-st)/d);
+            var ez=1-Math.pow(1-t,5);
+            if(_ndl)_ndl.style.transform='rotate('+((tr*ez)%360)+'deg)';
+            if(t<1)requestAnimationFrame(an);
+            else{
+                if(_ndl)_ndl.style.transform='rotate('+fa+'deg)';
+                if(sd)sd.stop();
+                var s=$('circleStatus');
+                if(w){s.textContent='✅ ПОБЕДА';s.className='upg-status win';}
+                else{s.textContent='❌ ПРОВАЛ';s.className='upg-status lose';}
+                setTimeout(res,900);
+            }
+        }
+        requestAnimationFrame(an);
+    });
+}
+
 function _hu(){
     if(!state.upgradeSource||!state.upgradeTarget)return;
     if(state.upgrading)return;
@@ -317,10 +354,6 @@ function _ssk(sk){var i=state.inventory.indexOf(sk);if(i<0)return;state.inventor
 function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
-/* ============================================================
-   СИСТЕМА ОБМЕНА СКИНОВ (Steam Inventory)
-   ============================================================ */
-
 async function loadSteamInventory(appId){
     _steamAppId=appId;
     var loadEl=$('invLoading');
@@ -329,7 +362,6 @@ async function loadSteamInventory(appId){
     var grid=$('steamInvGrid');
     var summary=$('tradeSummary');
     if(!grid)return;
-
     grid.innerHTML='';
     if(errEl)errEl.style.display='none';
     if(emptyEl)emptyEl.style.display='none';
@@ -338,14 +370,11 @@ async function loadSteamInventory(appId){
     _steamInv=[];
     _steamSelected={};
     updateTradeSummary();
-
     try{
         var url='/api/inventory?steamid='+_steamId+'&appid='+appId;
         var r=await fetch(url);
         var data=await r.json();
-
         if(loadEl)loadEl.style.display='none';
-
         if(data.error){
             if(errEl){
                 errEl.style.display='block';
@@ -357,15 +386,12 @@ async function loadSteamInventory(appId){
             }
             return;
         }
-
         if(!data.assets||data.assets.length===0){
             if(emptyEl)emptyEl.style.display='block';
             return;
         }
-
         var descMap={};
         data.descriptions.forEach(function(d){descMap[d.classid+'_'+d.instanceid]=d;});
-
         _steamInv=data.assets.map(function(a){
             var desc=descMap[a.classid+'_'+a.instanceid]||{};
             return{
@@ -379,12 +405,10 @@ async function loadSteamInventory(appId){
                 type:desc.type||''
             };
         }).filter(function(i){return i.tradable&&i.icon.indexOf('undefined')<0;});
-
         if(_steamInv.length===0){
             if(emptyEl)emptyEl.style.display='block';
             return;
         }
-
         renderSteamInv();
     }catch(e){
         console.error('loadSteamInventory error:',e);
@@ -401,7 +425,6 @@ function renderSteamInv(){
     if(!grid)return;
     grid.innerHTML='';
     var fr=document.createDocumentFragment();
-
     _steamInv.forEach(function(item){
         var e=document.createElement('div');
         e.className='inv-item';
@@ -413,23 +436,14 @@ function renderSteamInv(){
         e.style.borderRadius='12px';
         e.style.padding='10px 8px';
         e.style.textAlign='center';
-
         e.innerHTML='<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div><div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
-
         e.addEventListener('click',function(){
-            if(_steamSelected[item.assetid]){
-                delete _steamSelected[item.assetid];
-            }else{
-                _steamSelected[item.assetid]=item;
-            }
-            _ck();
-            renderSteamInv();
-            updateTradeSummary();
+            if(_steamSelected[item.assetid]){delete _steamSelected[item.assetid];}
+            else{_steamSelected[item.assetid]=item;}
+            _ck();renderSteamInv();updateTradeSummary();
         });
-
         fr.appendChild(e);
     });
-
     grid.replaceChildren(fr);
 }
 
@@ -439,12 +453,7 @@ function updateTradeSummary(){
     var countEl=$('selectedCount');
     var totalEl=$('tradeTotal');
     var btn=$('createTradeBtn');
-
-    if(count===0){
-        if(summary)summary.style.display='none';
-        return;
-    }
-
+    if(count===0){if(summary)summary.style.display='none';return;}
     if(summary)summary.style.display='block';
     if(countEl)countEl.textContent=count;
     if(totalEl)totalEl.textContent=count+' скинов';
@@ -455,7 +464,6 @@ async function createTrade(){
     if(!_CU){_lg('❌ Войди в аккаунт','lose');return;}
     var selected=Object.values(_steamSelected);
     if(selected.length===0){_lg('❌ Выбери скины','lose');return;}
-
     try{
         await window.fbAddDoc(
             window.fbCollection(window.fbDb,'trades'),
@@ -471,9 +479,7 @@ async function createTrade(){
                 expiresAt:Date.now()+(3*24*60*60*1000)
             }
         );
-
         _lg('✅ Заявка создана! Отправь трейд на ссылку выше','win');
-
         _steamSelected={};
         renderSteamInv();
         updateTradeSummary();
@@ -493,61 +499,29 @@ function openTradeUrl(){
 async function renderMyTrades(){
     var wrap=$('myTrades');
     if(!wrap)return;
-    if(!_CU){
-        wrap.innerHTML='<div class="empty-inv" style="padding:30px">Войди в аккаунт</div>';
-        return;
-    }
-
+    if(!_CU){wrap.innerHTML='<div class="empty-inv" style="padding:30px">Войди в аккаунт</div>';return;}
     try{
-        var q=window.fbQuery(
-            window.fbCollection(window.fbDb,'trades'),
-            window.fbWhere('uid','==',_CU.uid)
-        );
+        var q=window.fbQuery(window.fbCollection(window.fbDb,'trades'),window.fbWhere('uid','==',_CU.uid));
         var snap=await window.fbGetDocs(q);
         var trades=[];
         snap.forEach(function(d){trades.push(Object.assign({_id:d.id},d.data()));});
         trades.sort(function(a,b){return b.createdAt-a.createdAt;});
-
-        if(trades.length===0){
-            wrap.innerHTML='<div class="empty-inv" style="padding:30px">Заявок пока нет</div>';
-            return;
-        }
-
+        if(trades.length===0){wrap.innerHTML='<div class="empty-inv" style="padding:30px">Заявок пока нет</div>';return;}
         var frag=document.createDocumentFragment();
         trades.forEach(function(t){
             var el=document.createElement('div');
             el.className='trade-item '+t.status;
-
-            var statusText={
-                pending:'ОЖИДАЕТ',
-                confirmed:'ПОДТВЕРЖДЕНО',
-                declined:'ОТКЛОНЕНО',
-                cancelled:'ОТМЕНЕНО'
-            }[t.status]||t.status;
-
+            var statusText={pending:'ОЖИДАЕТ',confirmed:'ПОДТВЕРЖДЕНО',declined:'ОТКЛОНЕНО',cancelled:'ОТМЕНЕНО'}[t.status]||t.status;
             var itemsInfo=t.itemCount?'Скинов: '+t.itemCount:'Скин: '+(t.skinName||'—');
-
             var html='';
             html+='<div class="trade-info">';
             html+='<div class="name">'+itemsInfo+'</div>';
-            if(t.items&&t.items.length>0){
-                html+='<div style="font-size:0.7rem;color:#6a6a80;margin-top:4px">'+t.items.map(function(i){return i.name;}).join(', ')+'</div>';
-            }
+            if(t.items&&t.items.length>0){html+='<div style="font-size:0.7rem;color:#6a6a80;margin-top:4px">'+t.items.map(function(i){return i.name;}).join(', ')+'</div>';}
             html+='</div>';
             html+='<div class="trade-status '+t.status+'">'+statusText+'</div>';
-
-            if(t.status==='pending'){
-                html+='<div class="trade-actions"><button data-cancel="'+t._id+'">Отменить</button></div>';
-            }
-
+            if(t.status==='pending'){html+='<div class="trade-actions"><button data-cancel="'+t._id+'">Отменить</button></div>';}
             el.innerHTML=html;
-
-            if(t.status==='pending'){
-                el.querySelector('[data-cancel]').addEventListener('click',function(){
-                    cancelTrade(t._id);
-                });
-            }
-
+            if(t.status==='pending'){el.querySelector('[data-cancel]').addEventListener('click',function(){cancelTrade(t._id);});}
             frag.appendChild(el);
         });
         wrap.replaceChildren(frag);
@@ -570,28 +544,19 @@ async function cancelTrade(tradeId){
         await window.fbDeleteDoc(tradeRef);
         _lg('✅ Заявка отменена','info');
         renderMyTrades();
-    }catch(e){
-        console.error('cancelTrade error:',e);
-        _lg('❌ Ошибка: '+e.message,'lose');
-    }
+    }catch(e){console.error('cancelTrade error:',e);_lg('❌ Ошибка: '+e.message,'lose');}
 }
 
 async function checkExpiredTrades(){
     if(!_CU)return;
     try{
-        var q=window.fbQuery(
-            window.fbCollection(window.fbDb,'trades'),
-            window.fbWhere('uid','==',_CU.uid),
-            window.fbWhere('status','==','pending')
-        );
+        var q=window.fbQuery(window.fbCollection(window.fbDb,'trades'),window.fbWhere('uid','==',_CU.uid),window.fbWhere('status','==','pending'));
         var snap=await window.fbGetDocs(q);
         var now=Date.now();
         var expired=[];
         snap.forEach(function(docSnap){
             var trade=docSnap.data();
-            if(trade.expiresAt&&now>trade.expiresAt){
-                expired.push({id:docSnap.id,data:trade});
-            }
+            if(trade.expiresAt&&now>trade.expiresAt){expired.push({id:docSnap.id,data:trade});}
         });
         for(var i=0;i<expired.length;i++){
             await window.fbDeleteDoc(window.fbDoc(window.fbDb,'trades',expired[i].id));
