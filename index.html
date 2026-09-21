@@ -337,6 +337,37 @@
 
 <div class="toast-wrap" id="toastWrap"></div>
 
+  <!-- Модальное окно выхода из аккаунта -->
+<div class="modal" id="logoutModal">
+    <div class="modal-inner auth-inner" style="max-width:400px">
+        <div class="auth-icon" style="font-size:3rem">🚪</div>
+        <h2 class="auth-title">ВЫХОД</h2>
+        <div class="auth-hint-top" style="margin-bottom:20px">
+            Точно ли вы хотите выйти из аккаунта?<br>
+            Прогресс сохранится в облаке.
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center">
+            <button class="btn-primary" id="logoutConfirm">ВЫЙТИ</button>
+            <button class="btn-secondary" id="logoutCancel">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно выбора бонусного скина -->
+<div class="modal" id="bonusModal">
+    <div class="modal-inner" style="max-width:700px">
+        <h2 class="auth-title" style="margin-bottom:10px">🎁 ВЫБЕРИ БОНУС</h2>
+        <div class="auth-hint-top" style="margin-bottom:16px">
+            При успехе ты получишь свой топ-скин + этот бонус.
+        </div>
+        <div class="bonus-grid" id="bonusGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;max-height:50vh;overflow-y:auto;margin-bottom:16px"></div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button class="btn-primary" id="bonusRandom">🎲 СЛУЧАЙНЫЙ</button>
+            <button class="btn-secondary" id="bonusCancel">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
+
 <!-- ВАЖНО: skins.js ПЕРЕД script.js -->
 <script src="skins.js"></script>
 <script src="script.js"></script>
