@@ -19,10 +19,9 @@ var _MF_ICON='<img src="'+_MF+'" style="width:22px;height:22px;vertical-align:mi
 var _MF_ICON_BIG='<img src="'+_MF+'" style="width:32px;height:32px;vertical-align:middle;display:inline-block" alt="">';
 
 /* ============================================================
-   STEAM MARKET PRICE CACHE
+   STEAM MARKET PRICE — завантаження по одному при виборі
    ============================================================ */
 var _priceCache = {};
-var _pricePromiseCache = {};
 
 function _cleanName(s){
     return (s || '').toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
@@ -30,53 +29,60 @@ function _cleanName(s){
 
 function _findSkinPrice(steamName){
     if(!steamName) return 0;
-    
     var cacheKey = _cleanName(steamName);
-    if(_priceCache[cacheKey] !== undefined){
-        return _priceCache[cacheKey];
-    }
+    return _priceCache[cacheKey] || 0;
+}
+
+function _loadPriceFor(item){
+    if(!item || !item.name) return;
+    var cacheKey = _cleanName(item.name);
+    if(_priceCache[cacheKey] !== undefined) return;
     
-    // Локальний SKINS — швидко
-    var name = _cleanName(steamName);
-    var best = 0;
+    var name = _cleanName(item.name);
+    var localPrice = 0;
     if(window.SKINS){
         window.SKINS.forEach(function(s){
             var sName = _cleanName(s.name);
             if(sName && name.indexOf(sName) >= 0){
-                if(s.price > best) best = s.price;
+                if(s.price > localPrice) localPrice = s.price;
             }
         });
     }
-    
-    // Steam Market API — асинхронно
-    if(best === 0 && !_pricePromiseCache[cacheKey]){
-        var appId = _steamAppId || '730';
-        _pricePromiseCache[cacheKey] = fetch('/api/price?appid=' + appId + '&market_hash_name=' + encodeURIComponent(steamName))
-            .then(function(r){ return r.json(); })
-            .then(function(data){
-                if(data && data.success && data.lowest_price){
-                    var match = String(data.lowest_price).match(/[\d.,]+/);
-                    if(match){
-                        var price = parseFloat(match[0].replace(',', '.'));
-                        if(price > 0){
-                            _priceCache[cacheKey] = price;
-                            if(typeof renderSteamInv === 'function') renderSteamInv();
-                            if(typeof updateTradeSummary === 'function') updateTradeSummary();
-                            return price;
-                        }
-                    }
-                }
-                _priceCache[cacheKey] = 0;
-                return 0;
-            })
-            .catch(function(e){
-                console.error('Price fetch error:', e);
-                _priceCache[cacheKey] = 0;
-                return 0;
-            });
+    if(localPrice > 0){
+        _priceCache[cacheKey] = localPrice;
+        renderSteamInv();
+        updateTradeSummary();
+        return;
     }
     
-    return best;
+    _priceCache[cacheKey] = -1;
+    renderSteamInv();
+    updateTradeSummary();
+    
+    var appId = _steamAppId || '730';
+    fetch('/api/price?appid=' + appId + '&market_hash_name=' + encodeURIComponent(item.name))
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            if(data && data.success && data.lowest_price){
+                var match = String(data.lowest_price).match(/[\d.,]+/);
+                if(match){
+                    var price = parseFloat(match[0].replace(',', '.'));
+                    _priceCache[cacheKey] = price > 0 ? price : 0;
+                }else{
+                    _priceCache[cacheKey] = 0;
+                }
+            }else{
+                _priceCache[cacheKey] = 0;
+            }
+            renderSteamInv();
+            updateTradeSummary();
+        })
+        .catch(function(e){
+            console.error('Price fetch error:', e);
+            _priceCache[cacheKey] = 0;
+            renderSteamInv();
+            updateTradeSummary();
+        });
 }
 
 function _fb(){
@@ -614,6 +620,7 @@ function renderSteamInv(){
         e.className='inv-item';
         var selected=!!_steamSelected[item.assetid];
         var price = _findSkinPrice(item.name);
+        
         e.style.border='2px solid '+(selected?'#f5c542':'var(--border)');
         e.style.background=selected?'rgba(245,197,66,0.1)':'rgba(0,0,0,0.4)';
         e.style.cursor='pointer';
@@ -621,13 +628,22 @@ function renderSteamInv(){
         e.style.borderRadius='12px';
         e.style.padding='10px 8px';
         e.style.textAlign='center';
-        var priceHtml = price > 0 ? '<div style="font-size:0.65rem;color:#f5c542;font-weight:700;margin-top:2px">'+formatRastr(price)+'</div>' : '<div style="font-size:0.6rem;color:#6a6a80;margin-top:2px">—</div>';
+        
+        var priceHtml = '';
+        if(price === -1){
+            priceHtml = '<div style="font-size:0.65rem;color:#6a6a80;margin-top:2px">⏳ загрузка...</div>';
+        }else if(price > 0){
+            priceHtml = '<div style="font-size:0.65rem;color:#f5c542;font-weight:700;margin-top:2px">'+formatRastr(price)+'</div>';
+        }
+        
         e.innerHTML='<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div>'+priceHtml+'<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
+        
         e.addEventListener('click',function(){
             if(_steamSelected[item.assetid]){
                 delete _steamSelected[item.assetid];
             }else{
                 _steamSelected[item.assetid]=item;
+                _loadPriceFor(item);
             }
             _ck();
             renderSteamInv();
@@ -679,16 +695,25 @@ function updateTradeSummary(){
     if(summary)summary.style.display='block';
     
     var total = 0;
+    var loading = 0;
     Object.values(_steamSelected).forEach(function(item){
-        total += _findSkinPrice(item.name);
+        var p = _findSkinPrice(item.name);
+        if(p === -1){
+            loading++;
+        }else if(p > 0){
+            total += p;
+        }
     });
     
     if(countEl)countEl.textContent=count;
     if(totalEl){
-        if(total > 0){
-            totalEl.innerHTML = '≈ ' + formatRastr(total);
+        if(loading > 0 && total === 0){
+            totalEl.innerHTML = '<span style="color:#6a6a80;font-size:0.9rem">⏳ загрузка цены...</span>';
+        }else if(total > 0){
+            var extra = loading > 0 ? ' <span style="color:#6a6a80;font-size:0.7rem">(+'+loading+' грузится)</span>' : '';
+            totalEl.innerHTML = '≈ ' + formatRastr(total) + extra;
         }else{
-            totalEl.innerHTML = '<span style="color:#ff6b1a;font-size:0.9rem">Загрузка цены...</span>';
+            totalEl.innerHTML = '<span style="color:#ff6b1a;font-size:0.9rem">Не удалось определить</span>';
         }
     }
     if(btn)btn.disabled=false;
@@ -704,11 +729,11 @@ async function createTrade(){
     selected.forEach(function(item){
         var p = _findSkinPrice(item.name);
         if(p > 0) pricedItems++;
-        totalPrice += p;
+        if(p > 0) totalPrice += p;
     });
     
     if(totalPrice === 0){
-        _lg('⚠️ Цена ещё загружается или не определена. Админ введёт вручную.','info');
+        _lg('⚠️ Цена ещё загружается. Админ введёт вручную.','info');
     }
     
     try{
