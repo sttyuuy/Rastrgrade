@@ -1,7 +1,3 @@
-/* ============================================================
-   RASTRGRADE v31 — FULL STYLE
-   ============================================================ */
-
 :root {
     --bg:#050508;
     --bg-2:#0a0a10;
@@ -1188,6 +1184,87 @@ body::before {
 ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--gold)); border-radius: 5px; }
 ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--gold), var(--accent)); }
 
+/* Обмен */
+.trade-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+}
+.trade-item.pending { border-color: var(--accent); }
+.trade-item.confirmed { border-color: var(--green); }
+.trade-item.cancelled, .trade-item.declined { border-color: var(--red); opacity: 0.6; }
+.trade-item .skin-icon { width: 60px; height: 60px; flex-shrink: 0; }
+.trade-info { flex: 1; }
+.trade-info .name { font-weight: 700; color: #fff; text-transform: uppercase; font-size: 0.85rem; }
+.trade-info .price { font-family: 'Share Tech Mono', monospace; color: var(--gold); font-size: 0.9rem; margin-top: 4px; }
+.trade-info .steam-url { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; word-break: break-all; }
+.trade-status {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.trade-status.pending { background: rgba(255,107,26,0.2); color: var(--accent); }
+.trade-status.confirmed { background: rgba(0,230,118,0.2); color: var(--green); }
+.trade-status.cancelled, .trade-status.declined { background: rgba(255,59,59,0.2); color: var(--red); }
+.trade-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.trade-actions button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.trade-actions button:hover { border-color: var(--red); color: var(--red); }
+
+/* Бонус-пикер */
+.bonus-item {
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 100px;
+}
+.bonus-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+.bonus-item .skin-icon { width: 44px; height: 44px; }
+.bonus-item .bonus-name {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.55rem;
+    color: #fff;
+    text-align: center;
+    line-height: 1.1;
+    margin-top: 4px;
+}
+.bonus-item .bonus-price {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gold);
+    font-weight: 700;
+    margin-top: 2px;
+}
+
 @media (max-width: 1200px) {
     .upg-top { grid-template-columns: 1fr 320px 1fr; gap: 14px; }
     .upg-bottom { grid-template-columns: 320px 1fr; }
@@ -1252,39 +1329,3 @@ body::before {
     .bg-glow { animation: none !important; }
 }
 #upgradeBtn[disabled] { pointer-events: none; }
-
-/* Бонус-пикер */
-.bonus-item {
-    background: rgba(0,0,0,0.4);
-    border: 2px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: 100px;
-}
-.bonus-item:hover {
-    transform: translateY(-3px);
-    border-color: var(--accent);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-}
-.bonus-item .skin-icon { width: 44px; height: 44px; }
-.bonus-item .bonus-name {
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.55rem;
-    color: #fff;
-    text-align: center;
-    line-height: 1.1;
-    margin-top: 4px;
-}
-.bonus-item .bonus-price {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--gold);
-    font-weight: 700;
-    margin-top: 2px;
-}
