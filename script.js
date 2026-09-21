@@ -364,6 +364,25 @@ function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.s
 function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
 
 /* ============================================================
+   ПОИСК ЦЕНЫ СКИНА ПО НАЗВАНИЮ (для трейда)
+   ============================================================ */
+function _findSkinPrice(steamName){
+    if(!steamName || !window.SKINS) return 0;
+    var clean = function(s){
+        return (s||'').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
+    };
+    var name = clean(steamName);
+    var best = 0;
+    window.SKINS.forEach(function(s){
+        var sName = clean(s.name);
+        if(sName && name.indexOf(sName) >= 0){
+            if(s.price > best) best = s.price;
+        }
+    });
+    return best;
+}
+
+/* ============================================================
    ВЫВОД СКИНОВ (WITHDRAW) — с Steam-ссылкой + скін не зникає
    ============================================================ */
 async function _withdraw(skin){
@@ -387,7 +406,6 @@ async function _withdraw(skin){
     try{
         var idx = state.inventory.indexOf(skin);
         if(idx < 0){_lg('❌ Скин не найден','lose');return;}
-        // НЕ удаляем скин — он останется до подтверждения админом
         await window.fbAddDoc(
             window.fbCollection(window.fbDb, 'withdrawals'),
             {
@@ -557,6 +575,7 @@ function renderSteamInv(){
         var e=document.createElement('div');
         e.className='inv-item';
         var selected=!!_steamSelected[item.assetid];
+        var price = _findSkinPrice(item.name);
         e.style.border='2px solid '+(selected?'#f5c542':'var(--border)');
         e.style.background=selected?'rgba(245,197,66,0.1)':'rgba(0,0,0,0.4)';
         e.style.cursor='pointer';
@@ -564,7 +583,8 @@ function renderSteamInv(){
         e.style.borderRadius='12px';
         e.style.padding='10px 8px';
         e.style.textAlign='center';
-        e.innerHTML='<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div><div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
+        var priceHtml = price > 0 ? '<div style="font-size:0.65rem;color:#f5c542;font-weight:700;margin-top:2px">'+formatRastr(price)+'</div>' : '';
+        e.innerHTML='<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div>'+priceHtml+'<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
         e.addEventListener('click',function(){
             if(_steamSelected[item.assetid]){delete _steamSelected[item.assetid];}
             else{_steamSelected[item.assetid]=item;}
@@ -609,8 +629,20 @@ function updateTradeSummary(){
     var btn=$('createTradeBtn');
     if(count===0){if(summary)summary.style.display='none';return;}
     if(summary)summary.style.display='block';
+    
+    var total = 0;
+    Object.values(_steamSelected).forEach(function(item){
+        total += _findSkinPrice(item.name);
+    });
+    
     if(countEl)countEl.textContent=count;
-    if(totalEl)totalEl.textContent=count+' скинов';
+    if(totalEl){
+        if(total > 0){
+            totalEl.innerHTML = '≈ ' + formatRastr(total);
+        }else{
+            totalEl.innerHTML = '<span style="color:#ff6b1a;font-size:0.9rem">Цена не определена</span>';
+        }
+    }
     if(btn)btn.disabled=false;
 }
 
@@ -618,6 +650,19 @@ async function createTrade(){
     if(!_CU){_lg('❌ Войди в аккаунт','lose');return;}
     var selected=Object.values(_steamSelected);
     if(selected.length===0){_lg('❌ Выбери скины','lose');return;}
+    
+    var totalPrice = 0;
+    var pricedItems = 0;
+    selected.forEach(function(item){
+        var p = _findSkinPrice(item.name);
+        if(p > 0) pricedItems++;
+        totalPrice += p;
+    });
+    
+    if(totalPrice === 0){
+        _lg('⚠️ Не удалось определить цену. Админ введёт вручную.','info');
+    }
+    
     try{
         await window.fbAddDoc(
             window.fbCollection(window.fbDb,'trades'),
@@ -628,6 +673,8 @@ async function createTrade(){
                 steamUrl:'https://steamcommunity.com/profiles/'+_steamId,
                 items:selected.map(function(i){return{assetid:i.assetid,classid:i.classid,name:i.name,icon:i.icon};}),
                 itemCount:selected.length,
+                skinPrice: totalPrice,
+                pricedItems: pricedItems,
                 status:'pending',
                 createdAt:Date.now(),
                 expiresAt:Date.now()+(3*24*60*60*1000)
@@ -671,6 +718,7 @@ async function renderMyTrades(){
             html+='<div class="trade-info">';
             html+='<div class="name">'+itemsInfo+'</div>';
             if(t.items&&t.items.length>0){html+='<div style="font-size:0.7rem;color:#6a6a80;margin-top:4px">'+t.items.map(function(i){return i.name;}).join(', ')+'</div>';}
+            if(t.skinPrice){html+='<div style="font-size:0.75rem;color:#f5c542;margin-top:4px">💰 '+(typeof formatRastr === 'function' ? formatRastr(t.skinPrice) : t.skinPrice)+'</div>';}
             html+='</div>';
             html+='<div class="trade-status '+t.status+'">'+statusText+'</div>';
             if(t.status==='pending'){html+='<div class="trade-actions"><button data-cancel="'+t._id+'">Отменить</button></div>';}
