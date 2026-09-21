@@ -6,18 +6,114 @@ var _L=[{lvl:1,xp:0,name:'НОВИЧОК'},{lvl:2,xp:1000,name:'ЛЮБИТЕЛЬ
 var _MX=Math.max.apply(null,SKINS.map(function(s){return s.price;}));
 var _CU=null,_CT=null;
 var _UDN='';var _UPA='';
-function _fb(){if(!window.fbReady){setTimeout(_fb,100);return;}window.fbOnAuthStateChanged(window.fbAuth,async function(u){if(u){_CU={uid:u.uid,email:u.email,displayName:u.displayName,photoURL:u.photoURL};_ca();_rs();await _lc();_ra();_ub();_lg('👤 Добро пожаловать!','win');}else{_CU=null;_UDN='';_UPA='';_rs();_ra();_ub();_oa();}});var g=document.getElementById('googleLoginBtn');if(g)g.addEventListener('click',async function(){try{await window.fbSignInWithPopup(window.fbAuth,window.fbGoogleProvider);}catch(e){console.error(e);var er=document.getElementById('authError');if(er){if(e.code==='auth/popup-blocked')er.textContent='Браузер заблокировал окно.';else if(e.code==='auth/unauthorized-domain')er.textContent='Домен не добавлен в Firebase.';else er.textContent='Ошибка: '+(e.message||e.code);}}});}
-async function _lc(){if(!_CU||!window.fbDb)return;try{var r=window.fbDoc(window.fbDb,'users',_CU.uid);var s=await window.fbGetDoc(r);if(s.exists()){var d=s.data();Object.keys(d).forEach(function(k){state[k]=d[k];});state.inventory=(state.inventory||[]).map(resolveSkin).filter(Boolean);if(state.bestDrop)state.bestDrop=resolveSkin(state.bestDrop);if(state.bestUpgrade)state.bestUpgrade=resolveSkin(state.bestUpgrade);if(d.displayName)_UDN=d.displayName;if(d.photoURL)_UPA=d.photoURL;}else{state.balance=START_BALANCE;await _sc();}}catch(e){console.error(e);state.balance=START_BALANCE;}}
-async function _sc(){if(!_CU||!window.fbDb)return;try{var d={balance:state.balance,inventory:state.inventory.map(function(i){return{id:i.id,rarity:i.rarity};}),profit:state.profit,totalWon:state.totalWon,totalLost:state.totalLost,upgrades:state.upgrades,purchases:state.purchases,bestDrop:state.bestDrop?{id:state.bestDrop.id,rarity:state.bestDrop.rarity}:null,bestUpgrade:state.bestUpgrade?{id:state.bestUpgrade.id,rarity:state.bestUpgrade.rarity}:null,housePlayerLost:state.housePlayerLost,houseCasinoWon:state.houseCasinoWon,xp:state.xp,level:state.level,soundOn:state.soundOn,shopFilter:state.shopFilter,shopSort:state.shopSort,spinSpeed:state.spinSpeed,updatedAt:Date.now()};var r=window.fbDoc(window.fbDb,'users',_CU.uid);await window.fbSetDoc(r,d);}catch(e){console.error(e);}}
+function _fb(){
+    if(!window.fbReady){setTimeout(_fb,100);return;}
+    window.fbOnAuthStateChanged(window.fbAuth,async function(u){
+        if(u){
+            _CU={uid:u.uid,email:u.email,displayName:u.displayName,photoURL:u.photoURL};
+            _ca();_rs();await _lc();_ra();_ub();
+            _lg('👤 Добро пожаловать!','win');
+        }else{
+            _CU=null;_UDN='';_UPA='';
+            _rs();_ra();_ub();_oa();
+        }
+    });
+    var g=document.getElementById('googleLoginBtn');
+    if(g)g.addEventListener('click',async function(){
+        try{await window.fbSignInWithPopup(window.fbAuth,window.fbGoogleProvider);}
+        catch(e){
+            console.error(e);
+            var er=document.getElementById('authError');
+            if(er){
+                if(e.code==='auth/popup-blocked')er.textContent='Браузер заблокировал окно.';
+                else if(e.code==='auth/unauthorized-domain')er.textContent='Домен не добавлен в Firebase.';
+                else er.textContent='Ошибка: '+(e.message||e.code);
+            }
+        }
+    });
+}
+async function _lc(){
+    if(!_CU||!window.fbDb)return;
+    try{
+        var r=window.fbDoc(window.fbDb,'users',_CU.uid);
+        var s=await window.fbGetDoc(r);
+        if(s.exists()){
+            var d=s.data();
+            Object.keys(d).forEach(function(k){state[k]=d[k];});
+            state.inventory=(state.inventory||[]).map(resolveSkin).filter(Boolean);
+            if(state.bestDrop)state.bestDrop=resolveSkin(state.bestDrop);
+            if(state.bestUpgrade)state.bestUpgrade=resolveSkin(state.bestUpgrade);
+            if(d.displayName)_UDN=d.displayName;
+            if(d.photoURL)_UPA=d.photoURL;
+        }else{
+            state.balance=START_BALANCE;
+            await _sc();
+        }
+    }catch(e){console.error(e);state.balance=START_BALANCE;}
+}
+async function _sc(){
+    if(!_CU||!window.fbDb)return;
+    try{
+        var d={
+            balance:state.balance,
+            inventory:state.inventory.map(function(i){return{id:i.id,rarity:i.rarity};}),
+            profit:state.profit,
+            totalWon:state.totalWon,totalLost:state.totalLost,
+            upgrades:state.upgrades,purchases:state.purchases,
+            bestDrop:state.bestDrop?{id:state.bestDrop.id,rarity:state.bestDrop.rarity}:null,
+            bestUpgrade:state.bestUpgrade?{id:state.bestUpgrade.id,rarity:state.bestUpgrade.rarity}:null,
+            housePlayerLost:state.housePlayerLost,houseCasinoWon:state.houseCasinoWon,
+            xp:state.xp,level:state.level,
+            soundOn:state.soundOn,
+            shopFilter:state.shopFilter,shopSort:state.shopSort,
+            spinSpeed:state.spinSpeed,
+            updatedAt:Date.now()
+        };
+        var r=window.fbDoc(window.fbDb,'users',_CU.uid);
+        await window.fbSetDoc(r,d);
+    }catch(e){console.error(e);}
+}
 function save(){if(!_CU)return;if(_CT)clearTimeout(_CT);_CT=setTimeout(_sc,800);}
 function _ol(){var m=document.getElementById('logoutModal');if(m)m.classList.add('show');}
 function _cl(){var m=document.getElementById('logoutModal');if(m)m.classList.remove('show');}
 async function _lo(){_cl();try{await _sc();await window.fbSignOut(window.fbAuth);_lg('👋 Вы вышли','info');}catch(e){console.error(e);}}
-function _ub(){var b=document.getElementById('userBadge');var i=document.getElementById('userBadgeIcon');if(!b||!i)return;if(_CU){b.title='Выйти';if(_UPA){i.innerHTML='<img src="'+_UPA+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}else{i.textContent='🚪';}}else{b.title='Войти';i.textContent='👤';}}
+function _ub(){
+    var b=document.getElementById('userBadge');
+    var i=document.getElementById('userBadgeIcon');
+    if(!b||!i)return;
+    if(_CU){
+        b.title='Выйти';
+        if(_UPA){i.innerHTML='<img src="'+_UPA+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
+        else{i.textContent='🚪';}
+    }else{b.title='Войти';i.textContent='👤';}
+}
 function _oa(){var m=document.getElementById('authModal');if(m)m.classList.add('show');}
 function _ca(){var m=document.getElementById('authModal');if(m)m.classList.remove('show');}
-var state={balance:0,inventory:[],profit:0,totalWon:0,totalLost:0,upgrades:0,purchases:0,bestDrop:null,bestUpgrade:null,upgradeSource:null,upgradeTarget:null,selectedPreset:null,spinSpeed:'slow',housePlayerLost:0,houseCasinoWon:0,xp:0,level:1,soundOn:true,shopFilter:'all',shopSort:'price-asc',invPanelFilter:'all',itemsPanelFilter:'all',upgrading:false};
-function _rs(){state.balance=0;state.inventory=[];state.profit=0;state.totalWon=0;state.totalLost=0;state.upgrades=0;state.purchases=0;state.bestDrop=null;state.bestUpgrade=null;state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;state.spinSpeed='slow';state.housePlayerLost=0;state.houseCasinoWon=0;state.xp=0;state.level=1;state.shopFilter='all';state.shopSort='price-asc';state.invPanelFilter='all';state.itemsPanelFilter='all';state.upgrading=false;}
+var state={
+    balance:0,inventory:[],profit:0,
+    totalWon:0,totalLost:0,upgrades:0,purchases:0,
+    bestDrop:null,bestUpgrade:null,
+    upgradeSource:null,upgradeTarget:null,selectedPreset:null,
+    spinSpeed:'slow',
+    housePlayerLost:0,houseCasinoWon:0,
+    xp:0,level:1,
+    soundOn:true,
+    shopFilter:'all',shopSort:'price-asc',
+    invPanelFilter:'all',itemsPanelFilter:'all',
+    upgrading:false
+};
+function _rs(){
+    state.balance=0;state.inventory=[];state.profit=0;
+    state.totalWon=0;state.totalLost=0;state.upgrades=0;state.purchases=0;
+    state.bestDrop=null;state.bestUpgrade=null;
+    state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;
+    state.spinSpeed='slow';
+    state.housePlayerLost=0;state.houseCasinoWon=0;
+    state.xp=0;state.level=1;
+    state.shopFilter='all';state.shopSort='price-asc';
+    state.invPanelFilter='all';state.itemsPanelFilter='all';
+    state.upgrading=false;
+}
 function $(i){return document.getElementById(i);}
 var _SF={spin:'spin.mp3',win_common:'win_common.mp3',win_legendary:'win_legendary.mp3',lose:'lose.mp3',click:'click.mp3',buy:'buy.mp3',levelup:'levelup.mp3'};
 var _SD={};var _AU=false;
@@ -30,11 +126,43 @@ function _ls(){_sn('lose',0.8);}
 function _by(){_sn('buy',0.8);}
 function _lu(){_sn('levelup',0.9);}
 var _LP={};
-function _sp(n,v){if(!state.soundOn)return null;var s=_SD[n];if(!s)return null;if(_LP[n]){try{_LP[n].pause();}catch(e){}}var c=s.cloneNode();c.volume=v||0.6;c.loop=true;c.play().catch(function(){});_LP[n]=c;return{stop:function(){if(_LP[n]){try{_LP[n].pause();}catch(e){}_LP[n]=null;}},fadeStop:function(d){d=d||800;var a=_LP[n];if(!a)return;var sv=a.volume;var st=performance.now();var iv=setInterval(function(){var t=(performance.now()-st)/d;if(t>=1){clearInterval(iv);try{a.pause();}catch(e){}_LP[n]=null;return;}a.volume=Math.max(0,sv*(1-t));},50);}};}
+function _sp(n,v){
+    if(!state.soundOn)return null;
+    var s=_SD[n];if(!s)return null;
+    if(_LP[n]){try{_LP[n].pause();}catch(e){}}
+    var c=s.cloneNode();c.volume=v||0.6;c.loop=true;c.play().catch(function(){});
+    _LP[n]=c;
+    return{
+        stop:function(){if(_LP[n]){try{_LP[n].pause();}catch(e){}_LP[n]=null;}},
+        fadeStop:function(d){
+            d=d||800;var a=_LP[n];if(!a)return;
+            var sv=a.volume;var st=performance.now();
+            var iv=setInterval(function(){
+                var t=(performance.now()-st)/d;
+                if(t>=1){clearInterval(iv);try{a.pause();}catch(e){}_LP[n]=null;return;}
+                a.volume=Math.max(0,sv*(1-t));
+            },50);
+        }
+    };
+}
 function _sl(){Object.keys(_LP).forEach(function(k){if(_LP[k]){try{_LP[k].pause();}catch(e){}_LP[k]=null;}});}
 function _us(d){d=d||4000;var h=_sp('spin',0.55);if(!h)return null;setTimeout(function(){h.fadeStop(800);},d-800);return h;}
 _pl();
-function _lg(m,t){t=t||'info';var w=$('toastWrap');if(!w)return;while(w.children.length>=5)w.removeChild(w.firstChild);var e=document.createElement('div');e.className='toast '+t;e.innerHTML='<span class="toast-icon">'+(t==='win'?'✅':t==='lose'?'❌':t==='jackpot'?'🔥':'ℹ️')+'</span><span>'+m+'</span>';w.appendChild(e);setTimeout(function(){e.style.transition='all 0.4s';e.style.opacity='0';e.style.transform='translateX(120%)';setTimeout(function(){e.remove();},400);},3500);}
+function _lg(m,t){
+    t=t||'info';
+    var w=$('toastWrap');if(!w)return;
+    while(w.children.length>=5)w.removeChild(w.firstChild);
+    var e=document.createElement('div');
+    e.className='toast '+t;
+    e.innerHTML='<span class="toast-icon">'+(t==='win'?'✅':t==='lose'?'❌':t==='jackpot'?'🔥':'ℹ️')+'</span><span>'+m+'</span>';
+    w.appendChild(e);
+    setTimeout(function(){
+        e.style.transition='all 0.4s';
+        e.style.opacity='0';
+        e.style.transform='translateX(120%)';
+        setTimeout(function(){e.remove();},400);
+    },3500);
+}
 function _tg(tp,ss){var b=null,bd=Infinity;SKINS.forEach(function(s){if(ss&&s.id===ss.id)return;if(ss&&s.price<=ss.price)return;var d=Math.abs(s.price-tp);if(d<bd){bd=d;b=s;}});return b;}
 function _ch(sp,tp){var c=(sp/tp)*100;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
 function _xp(n){state.xp+=n;var p=state.level;for(var i=_L.length-1;i>=0;i--){if(state.xp>=_L[i].xp){state.level=_L[i].lvl;break;}}if(state.level>p){for(var l=p+1;l<=state.level;l++){var r=l*usdToRastr(11);state.balance+=r;_lg('⬆️ Уровень '+l+'! +'+formatRastr(r),'win');}_lu();}}
@@ -42,8 +170,61 @@ function _rz(){state.upgradeSource=null;state.upgradeTarget=null;state.selectedP
 var DOM={};
 function _cd(){['balance','profit','invCount','invValue','statTotalWon','statTotalLost','statUpgrades','statPurchases','statBestDrop','statBestUpgrade','housePlayer','houseCasino','levelBadge','levelName','levelBarFill','sourcePriceLabel','targetPriceLabel','sourceSlot','targetSlot','sourceRemoveBtn','targetRemoveBtn','circlePercent','circleStatus','presetContainer','invPanelCount','invPanelList','targetsCount','itemsPanelGrid','invSearch','itemsSearch','upgradeBtn','speedSlowBtn','speedFastBtn','userBadge'].forEach(function(i){DOM[i]=$(i);});DOM.shopBalance=$('shopBalance');}
 _cd();
-function _ui(){if(!DOM.balance)return;DOM.balance.textContent=formatRastr(state.balance);if(DOM.shopBalance)DOM.shopBalance.textContent=formatRastr(state.balance);var p=DOM.profit;p.textContent=(state.profit>=0?'+':'')+formatRastr(state.profit);p.className='hud-stat-value '+(state.profit>=0?'green':'red');DOM.invCount.textContent=state.inventory.length;DOM.invValue.textContent=formatRastr(state.inventory.reduce(function(s,i){return s+i.price;},0));DOM.statTotalWon.textContent=formatRastr(state.totalWon);DOM.statTotalLost.textContent=formatRastr(state.totalLost);DOM.statUpgrades.textContent=state.upgrades;DOM.statPurchases.textContent=state.purchases;DOM.statBestDrop.textContent=state.bestDrop?state.bestDrop.name+' '+formatRastr(state.bestDrop.price):'—';DOM.statBestUpgrade.textContent=state.bestUpgrade?state.bestUpgrade.name+' '+formatRastr(state.bestUpgrade.price):'—';DOM.housePlayer.textContent=formatRastr(state.housePlayerLost);DOM.houseCasino.textContent=formatRastr(state.houseCasinoWon);DOM.levelBadge.textContent=state.level;var li=_L.findIndex(function(l){return l.lvl===state.level;});var l=_L[li];var n=_L[li+1];DOM.levelName.textContent=l.name;if(n){var pr=(state.xp-l.xp)/(n.xp-l.xp)*100;DOM.levelBarFill.style.width=Math.min(100,Math.max(0,pr))+'%';}else DOM.levelBarFill.style.width='100%';save();}
-function _sr(o){var inn=$('resultInner');inn.className='modal-inner result-inner '+o.type;if(o.skin){$('resultIcon').innerHTML='';$('resultIcon').style.display='none';$('resultSkin').innerHTML='<div class="item '+o.skin.rarity+'" style="margin:0 auto;display:inline-flex;border:none;background:transparent;min-width:auto;height:auto;padding:0">'+renderSkinIcon(o.skin)+'<div style="margin-top:12px"><div class="name" style="font-size:0.85rem">'+o.skin.name+'</div><div class="price" style="font-size:1rem;margin-top:6px">'+formatRastr(o.skin.price)+'</div></div></div>';}else{$('resultIcon').textContent=o.icon;$('resultIcon').style.display='block';$('resultSkin').innerHTML='';}$('resultTitle').textContent=o.title;$('resultValue').innerHTML=o.value;var sb=$('resultSell');if(o.canSell&&o.skin){sb.style.display='inline-block';sb.onclick=function(){if(o.sellCallback)o.sellCallback();_cr();};}else sb.style.display='none';if(o.type==='result-win'||o.type==='result-jackpot'){var w=$('resultParticles');w.innerHTML='';var cs=o.type==='result-jackpot'?['#f5c542','#ffdd88','#ff6b1a']:['#00e676','#4aa8ff','#a55cff'];for(var i=0;i<20;i++){var p=document.createElement('div');p.className='particle';var a=Math.random()*Math.PI*2;var d=120+Math.random()*180;p.style.setProperty('--dx',Math.cos(a)*d+'px');p.style.setProperty('--dy',Math.sin(a)*d+'px');p.style.background=cs[Math.floor(Math.random()*cs.length)];p.style.left='50%';p.style.top='50%';p.style.animationDelay=(Math.random()*0.4)+'s';w.appendChild(p);}}$('resultModal').classList.add('show');}
+function _ui(){
+    if(!DOM.balance)return;
+    DOM.balance.textContent=formatRastr(state.balance);
+    if(DOM.shopBalance)DOM.shopBalance.textContent=formatRastr(state.balance);
+    var p=DOM.profit;
+    p.textContent=(state.profit>=0?'+':'')+formatRastr(state.profit);
+    p.className='hud-stat-value '+(state.profit>=0?'green':'red');
+    DOM.invCount.textContent=state.inventory.length;
+    DOM.invValue.textContent=formatRastr(state.inventory.reduce(function(s,i){return s+i.price;},0));
+    DOM.statTotalWon.textContent=formatRastr(state.totalWon);
+    DOM.statTotalLost.textContent=formatRastr(state.totalLost);
+    DOM.statUpgrades.textContent=state.upgrades;
+    DOM.statPurchases.textContent=state.purchases;
+    DOM.statBestDrop.textContent=state.bestDrop?state.bestDrop.name+' '+formatRastr(state.bestDrop.price):'—';
+    DOM.statBestUpgrade.textContent=state.bestUpgrade?state.bestUpgrade.name+' '+formatRastr(state.bestUpgrade.price):'—';
+    DOM.housePlayer.textContent=formatRastr(state.housePlayerLost);
+    DOM.houseCasino.textContent=formatRastr(state.houseCasinoWon);
+    DOM.levelBadge.textContent=state.level;
+    var li=_L.findIndex(function(l){return l.lvl===state.level;});
+    var l=_L[li];var n=_L[li+1];
+    DOM.levelName.textContent=l.name;
+    if(n){var pr=(state.xp-l.xp)/(n.xp-l.xp)*100;DOM.levelBarFill.style.width=Math.min(100,Math.max(0,pr))+'%';}
+    else DOM.levelBarFill.style.width='100%';
+    save();
+}
+function _sr(o){
+    var inn=$('resultInner');
+    inn.className='modal-inner result-inner '+o.type;
+    if(o.skin){
+        $('resultIcon').innerHTML='';$('resultIcon').style.display='none';
+        $('resultSkin').innerHTML='<div class="item '+o.skin.rarity+'" style="margin:0 auto;display:inline-flex;border:none;background:transparent;min-width:auto;height:auto;padding:0">'+renderSkinIcon(o.skin)+'<div style="margin-top:12px"><div class="name" style="font-size:0.85rem">'+o.skin.name+'</div><div class="price" style="font-size:1rem;margin-top:6px">'+formatRastr(o.skin.price)+'</div></div></div>';
+    }else{
+        $('resultIcon').textContent=o.icon;$('resultIcon').style.display='block';$('resultSkin').innerHTML='';
+    }
+    $('resultTitle').textContent=o.title;
+    $('resultValue').innerHTML=o.value;
+    var sb=$('resultSell');
+    if(o.canSell&&o.skin){sb.style.display='inline-block';sb.onclick=function(){if(o.sellCallback)o.sellCallback();_cr();};}
+    else sb.style.display='none';
+    if(o.type==='result-win'||o.type==='result-jackpot'){
+        var w=$('resultParticles');w.innerHTML='';
+        var cs=o.type==='result-jackpot'?['#f5c542','#ffdd88','#ff6b1a']:['#00e676','#4aa8ff','#a55cff'];
+        for(var i=0;i<20;i++){
+            var p=document.createElement('div');p.className='particle';
+            var a=Math.random()*Math.PI*2;var d=120+Math.random()*180;
+            p.style.setProperty('--dx',Math.cos(a)*d+'px');
+            p.style.setProperty('--dy',Math.sin(a)*d+'px');
+            p.style.background=cs[Math.floor(Math.random()*cs.length)];
+            p.style.left='50%';p.style.top='50%';
+            p.style.animationDelay=(Math.random()*0.4)+'s';
+            w.appendChild(p);
+        }
+    }
+    $('resultModal').classList.add('show');
+}
 function _cr(){_ck();$('resultModal').classList.remove('show');}
 var _CR=100;var _CC=2*Math.PI*_CR;
 function _dc(c){c=Math.max(0,Math.min(100,c));var l=(c/100)*_CC;$('chanceSector').setAttribute('stroke-dasharray',l+' '+_CC);var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';$('chanceSector').style.color=co;}
@@ -57,7 +238,37 @@ function _sp2(i){if(!state.upgradeSource){_lg('❌ Сначала выбери �
 function _ri(){var l=$('invPanelList');if(!l)return;var f=state.invPanelFilter;var s=($('invSearch').value||'').toLowerCase();var sr=state.inventory.slice().sort(function(a,b){return b.price-a.price;});if(f!=='all')sr=sr.filter(function(x){return x.rarity===f;});if(s)sr=sr.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('invPanelCount').textContent=state.inventory.length+' шт.';if(sr.length===0){l.innerHTML='<div class="upg-inv-empty">Инвентарь пуст</div>';return;}var fr=document.createDocumentFragment();sr.forEach(function(sk){var e=document.createElement('div');e.className='upg-inv-item '+sk.rarity;if(state.upgradeSource&&state.upgradeSource===sk)e.classList.add('used');e.innerHTML=renderSkinIcon(sk)+'<div class="upg-inv-name">'+sk.name+'</div><div class="upg-inv-price">'+formatRastr(sk.price)+'</div>';e.addEventListener('click',function(){_un();_ck();state.upgradeSource=sk;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_ri();_rp1();_uc();});fr.appendChild(e);});l.replaceChildren(fr);}
 function _rt2(){var g=$('itemsPanelGrid');if(!g)return;var f=state.itemsPanelFilter;var s=($('itemsSearch').value||'').toLowerCase();var it=SKINS.slice();if(f!=='all')it=it.filter(function(x){return x.rarity===f;});if(s)it=it.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('targetsCount').textContent=it.length;if(it.length===0){g.innerHTML='<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();it.forEach(function(sk){var e=document.createElement('div');e.className='upg-target-item '+sk.rarity;if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(sk.price)+'</div>';e.addEventListener('click',function(){if(!state.upgradeSource){_lg('❌ Сначала выбери свой предмет','lose');_ck();return;}if(sk.id===state.upgradeSource.id){_lg('❌ Нельзя апгрейдить в самого себя','lose');_ck();return;}if(sk.price<=state.upgradeSource.price){_lg('❌ Цель должна быть дороже','lose');_ck();return;}if(sk.price>_MX){_lg('❌ Нет цели дороже макс скина','lose');_ck();return;}_un();_ck();state.upgradeTarget=sk;state.selectedPreset=null;state.upgradeTarget._realChance=_ch(state.upgradeSource.price,sk.price);_rt1();_rp1();_uc();});fr.appendChild(e);});g.replaceChildren(fr);}
 function _pa(c,w){return new Promise(function(res){var d=state.spinSpeed==='fast'?2000:4000;var se=c*3.6;var fa;if(w){var m=Math.min(se*0.15,8);fa=Math.max(m,Math.random()*(se-m));}else{var os=se+3;var oe=357;if(os>=oe)fa=(se+3+Math.random()*3)%360;else fa=os+Math.random()*(oe-os);}var fs=state.spinSpeed==='fast'?5+Math.floor(Math.random()*3):8+Math.floor(Math.random()*4);var tr=fs*360+fa;var st=performance.now();var sd=_us(d);function an(now){var t=Math.min(1,(now-st)/d);var ez=1-Math.pow(1-t,4);_na(tr*ez);if(t<1)requestAnimationFrame(an);else{_na(fa);if(sd)sd.stop();var s=$('circleStatus');if(w){s.textContent='✅ ПОБЕДА';s.className='upg-status win';}else{s.textContent='❌ ПРОВАЛ';s.className='upg-status lose';}setTimeout(res,900);}}requestAnimationFrame(an);});}
-function _hu(){if(!state.upgradeSource||!state.upgradeTarget)return;if(state.upgrading)return;if(state.inventory.indexOf(state.upgradeSource)<0){_rz();_lg('❌ Предмет больше не в инвентаре','lose');return;}if(state.upgradeSource.price>=_MX*0.99){_lg('❌ Это максимальный скин — апгрейд невозможен','lose');_rz();return;}if(state.upgradeTarget.id===state.upgradeSource.id||state.upgradeTarget.price<=state.upgradeSource.price){_lg('❌ Недопустимая цель','lose');_rz();return;}_un();var b=$('upgradeBtn');b.style.pointerEvents='none';var c=state.upgradeTarget._realChance;if(c===undefined)c=_ch(state.upgradeSource.price,state.upgradeTarget.price);var r=Math.random()*100;var ok=r<c;state.upgrading=true;state.upgrades++;b.disabled=true;var ss=state.upgradeSource;var ts=state.upgradeTarget;var sv=ss.price;var tv=ts.price;_xp(20);_pa(c,ok).then(function(){var i=state.inventory.indexOf(ss);if(i>=0)state.inventory.splice(i,1);if(ok){state.inventory.push(ts);state.totalWon+=tv;state.profit+=tv-sv;state.houseCasinoWon+=tv;if(!state.bestUpgrade||tv>state.bestUpgrade.price)state.bestUpgrade=ts;_wn(ts.rarity);_sr({type:'result-win',icon:'🏆',title:'✅ УСПЕХ',skin:ts,value:'+'+formatRastr(tv),canSell:true,sellCallback:function(){var j=state.inventory.indexOf(ts);if(j>=0){state.inventory.splice(j,1);state.balance+=ts.price;_ui();_rinv();_ri();save();}}});_lg('⚡ '+ss.name+' → '+ts.name+' ✅','win');}else{state.totalLost+=sv;state.profit-=sv;state.housePlayerLost+=sv;_ls();_sr({type:'result-lose',icon:'💀',title:'❌ ПРОВАЛ',skin:null,value:'Потеряно: '+formatRastr(sv),canSell:false});_lg('⚡ '+ss.name+' → провал ❌','lose');}state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;state.upgrading=false;b.style.pointerEvents='';b.disabled=true;_rs1();_rt1();_ri();_rt2();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_ui();_rinv();save();});}
+function _hu(){
+    if(!state.upgradeSource||!state.upgradeTarget)return;
+    if(state.upgrading)return;
+    if(state.inventory.indexOf(state.upgradeSource)<0){_rz();_lg('❌ Предмет больше не в инвентаре','lose');return;}
+    if(state.upgradeSource.price>=_MX*0.99){_lg('❌ Это максимальный скин — апгрейд невозможен','lose');_rz();return;}
+    if(state.upgradeTarget.id===state.upgradeSource.id||state.upgradeTarget.price<=state.upgradeSource.price){_lg('❌ Недопустимая цель','lose');_rz();return;}
+    _un();
+    var b=$('upgradeBtn');b.style.pointerEvents='none';
+    var c=state.upgradeTarget._realChance;if(c===undefined)c=_ch(state.upgradeSource.price,state.upgradeTarget.price);
+    var r=Math.random()*100;var ok=r<c;
+    state.upgrading=true;state.upgrades++;b.disabled=true;
+    var ss=state.upgradeSource;var ts=state.upgradeTarget;var sv=ss.price;var tv=ts.price;
+    _xp(20);
+    _pa(c,ok).then(function(){
+        var i=state.inventory.indexOf(ss);if(i>=0)state.inventory.splice(i,1);
+        if(ok){
+            state.inventory.push(ts);state.totalWon+=tv;state.profit+=tv-sv;state.houseCasinoWon+=tv;
+            if(!state.bestUpgrade||tv>state.bestUpgrade.price)state.bestUpgrade=ts;
+            _wn(ts.rarity);
+            _sr({type:'result-win',icon:'🏆',title:'✅ УСПЕХ',skin:ts,value:'+'+formatRastr(tv),canSell:true,sellCallback:function(){var j=state.inventory.indexOf(ts);if(j>=0){state.inventory.splice(j,1);state.balance+=ts.price;_ui();_rinv();_ri();save();}}});
+            _lg('⚡ '+ss.name+' → '+ts.name+' ✅','win');
+        }else{
+            state.totalLost+=sv;state.profit-=sv;state.housePlayerLost+=sv;_ls();
+            _sr({type:'result-lose',icon:'💀',title:'❌ ПРОВАЛ',skin:null,value:'Потеряно: '+formatRastr(sv),canSell:false});
+            _lg('⚡ '+ss.name+' → провал ❌','lose');
+        }
+        state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;state.upgrading=false;
+        b.style.pointerEvents='';b.disabled=true;
+        _rs1();_rt1();_ri();_rt2();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_ui();_rinv();save();
+    });
+}
 function _ipf(cid,fk,cb){var cn=$(cid);if(!cn)return;cn.innerHTML='';var a=document.createElement('button');a.className='upg-inv-filter active';a.textContent='Все';a.dataset.filter='all';cn.appendChild(a);Object.entries(RARITIES).forEach(function(kv){var b=document.createElement('button');b.className='upg-inv-filter';b.textContent=kv[1].name;b.dataset.filter=kv[0];b.style.color=kv[1].color;cn.appendChild(b);});cn.querySelectorAll('.upg-inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();cn.querySelectorAll('.upg-inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state[fk]=b.dataset.filter;cb();});});}
 var _sv=20;var _pp=null;var _pq=1;
 function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return a.price-b.price;});else if(state.shopSort==='price-desc')it.sort(function(a,b){return b.price-a.price;});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span style="font-size:0.9rem">⚙️</span><span class="price">'+formatRastr(p)+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
@@ -67,9 +278,81 @@ function _rinv(){var iv=$('inventory');if(!iv)return;if(state.inventory.length==
 function _ssk(sk){var i=state.inventory.indexOf(sk);if(i<0)return;state.inventory.splice(i,1);state.balance+=sk.price;if(state.upgradeSource===sk)_rz();_ui();_rinv();_ri();_ck();_lg('💰 Продано: '+sk.name+' +'+formatRastr(sk.price),'info');save();}
 function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
-function _ah(){var ub=$('userBadge');if(ub)ub.addEventListener('click',function(){if(_CU)_ol();else _oa();});var lc=$('logoutConfirm');if(lc)lc.addEventListener('click',_lo);var lx=$('logoutCancel');if(lx)lx.addEventListener('click',function(){_ck();_cl();});var ss=$('speedSlowBtn');if(ss)ss.addEventListener('click',function(){_un();_ck();state.spinSpeed='slow';_usb();save();});var sf=$('speedFastBtn');if(sf)sf.addEventListener('click',function(){_un();_ck();state.spinSpeed='fast';_usb();save();});var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'🔊':'🔇';if(state.soundOn){_un();_ck();}save();});var rb=$('resetAllBtn');if(rb)rb.addEventListener('click',function(){if(!confirm('Сбросить весь прогресс?'))return;_rs();state.balance=START_BALANCE;save();_ra();_lg('🗑️ Прогресс сброшен','info');});var bc=$('buyCancel');if(bc)bc.addEventListener('click',function(){_ck();$('buyModal').classList.remove('show');_pp=null;_pq=1;});var bcf=$('buyConfirm');if(bcf)bcf.addEventListener('click',function(){if(!_pp)return;var sk=_pp.skin;var up=_pp.price;var q=_pq||1;var tp=up*q;if(state.balance<tp){var mq=Math.floor(state.balance/up);if(mq<=0){_lg('❌ Недостаточно средств','lose');_ck();return;}q=mq;tp=up*q;_lg('⚠️ Хватило только на x'+q,'info');}state.balance-=tp;for(var i=0;i<q;i++)state.inventory.push(sk);state.purchases+=q;state.totalLost+=tp;state.profit-=tp;state.housePlayerLost+=tp;_xp(10*q);_by();_lg('🛒 Куплено: '+sk.name+' x'+q+' за '+formatRastr(tp),'win');$('buyModal').classList.remove('show');_pp=null;_pq=1;_ui();_rsh();_rinv();_ri();save();});var sa=$('sellAllBtn');if(sa)sa.addEventListener('click',function(){if(state.inventory.length===0)return;var t=state.inventory.reduce(function(s,i){return s+i.price;},0);state.balance+=t;state.inventory=[];_rz();_ui();_rinv();_ri();_by();_lg('💰 Продано: +'+formatRastr(t),'win');save();});var ub2=$('upgradeBtn');if(ub2)ub2.addEventListener('click',_hu);var ss2=$('sourceSlot');if(ss2)ss2.addEventListener('click',function(){if(state.upgradeSource)return;_un();_ck();var p=document.querySelector('.upg-inv-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});var ts2=$('targetSlot');if(ts2)ts2.addEventListener('click',function(){if(state.upgradeTarget)return;_un();_ck();var p=document.querySelector('.upg-items-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});var sr=$('sourceRemoveBtn');if(sr)sr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();_rz();});var tr=$('targetRemoveBtn');if(tr)tr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();state.upgradeTarget=null;state.selectedPreset=null;_rt1();_rp1();_uc();});var is=$('invSearch');if(is)is.addEventListener('input',_ri);var its=$('itemsSearch');if(its)its.addEventListener('input',_rt2);var so=$('shopSort');if(so)so.addEventListener('change',function(e){state.shopSort=e.target.value;_sv=20;_rsh();save();_ck();});document.querySelectorAll('.shop-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.shop-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state.shopFilter=b.dataset.rarity;_sv=20;_rsh();save();});});document.querySelectorAll('.inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');_ivf=b.dataset.rarity;_rinv();});});document.querySelectorAll('.nav-tab').forEach(function(t){t.addEventListener('click',function(){_un();_ck();_sl();document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});t.classList.add('active');$('page-'+t.dataset.page).classList.add('active');if(t.dataset.page==='shop'){_sv=20;_rsh();}if(t.dataset.page==='inventory')_rinv();if(t.dataset.page==='upgrade'){_ri();_rt2();}});});document.addEventListener('visibilitychange',function(){if(document.hidden)_sl();});document.body.addEventListener('click',function(){_un();},{once:true});}
-function _init(){_ipf('invPanelFilters','invPanelFilter',_ri);_ipf('itemsPanelFilters','itemsPanelFilter',_rt2);var sf=document.querySelector('.shop-filter[data-rarity="'+state.shopFilter+'"]');if(sf){document.querySelectorAll('.shop-filter').forEach(function(b){b.classList.remove('active');});sf.classList.add('active');}if($('shopSort'))$('shopSort').value=state.shopSort;if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'🔊':'🔇';_ah();_fb();var stb=$('steamLoginBtn');if(stb)stb.addEventListener('click',function(){window.location.href='/api/steam';});}
-(function(){var p=new URLSearchParams(window.location.search);var t=p.get('steam_token');if(t){window.history.replaceState({},document.title,window.location.pathname);if(window.fbSignInWithCustomToken){window.fbSignInWithCustomToken(window.fbAuth,t).then(function(){console.log('Steam OK');}).catch(function(e){console.error('Steam err',e);});}}})();
-window.state=state;window.save=save;window.log=_lg;window.renderAll=_ra;window.updateUI=_ui;window.resetStateToDefault=_rs;window.formatRastr=formatRastr;window.START_BALANCE=START_BALANCE;window.SKINS=SKINS;window.RARITIES=RARITIES;window.renderSkinIcon=renderSkinIcon;window.currentUser=function(){return _CU;};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',_init);else _init();
+function _ah(){
+    var ub=$('userBadge');if(ub)ub.addEventListener('click',function(){if(_CU)_ol();else _oa();});
+    var lc=$('logoutConfirm');if(lc)lc.addEventListener('click',_lo);
+    var lx=$('logoutCancel');if(lx)lx.addEventListener('click',function(){_ck();_cl();});
+    var ss=$('speedSlowBtn');if(ss)ss.addEventListener('click',function(){_un();_ck();state.spinSpeed='slow';_usb();save();});
+    var sf=$('speedFastBtn');if(sf)sf.addEventListener('click',function(){_un();_ck();state.spinSpeed='fast';_usb();save();});
+    var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);
+    var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'🔊':'🔇';if(state.soundOn){_un();_ck();}save();});
+    var rb=$('resetAllBtn');if(rb)rb.addEventListener('click',function(){if(!confirm('Сбросить весь прогресс?'))return;_rs();state.balance=START_BALANCE;save();_ra();_lg('🗑️ Прогресс сброшен','info');});
+    var bc=$('buyCancel');if(bc)bc.addEventListener('click',function(){_ck();$('buyModal').classList.remove('show');_pp=null;_pq=1;});
+    var bcf=$('buyConfirm');if(bcf)bcf.addEventListener('click',function(){if(!_pp)return;var sk=_pp.skin;var up=_pp.price;var q=_pq||1;var tp=up*q;if(state.balance<tp){var mq=Math.floor(state.balance/up);if(mq<=0){_lg('❌ Недостаточно средств','lose');_ck();return;}q=mq;tp=up*q;_lg('⚠️ Хватило только на x'+q,'info');}state.balance-=tp;for(var i=0;i<q;i++)state.inventory.push(sk);state.purchases+=q;state.totalLost+=tp;state.profit-=tp;state.housePlayerLost+=tp;_xp(10*q);_by();_lg('🛒 Куплено: '+sk.name+' x'+q+' за '+formatRastr(tp),'win');$('buyModal').classList.remove('show');_pp=null;_pq=1;_ui();_rsh();_rinv();_ri();save();});
+    var sa=$('sellAllBtn');if(sa)sa.addEventListener('click',function(){if(state.inventory.length===0)return;var t=state.inventory.reduce(function(s,i){return s+i.price;},0);state.balance+=t;state.inventory=[];_rz();_ui();_rinv();_ri();_by();_lg('💰 Продано: +'+formatRastr(t),'win');save();});
+    var ub2=$('upgradeBtn');if(ub2)ub2.addEventListener('click',_hu);
+    var ss2=$('sourceSlot');if(ss2)ss2.addEventListener('click',function(){if(state.upgradeSource)return;_un();_ck();var p=document.querySelector('.upg-inv-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
+    var ts2=$('targetSlot');if(ts2)ts2.addEventListener('click',function(){if(state.upgradeTarget)return;_un();_ck();var p=document.querySelector('.upg-items-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
+    var sr=$('sourceRemoveBtn');if(sr)sr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();_rz();});
+    var tr=$('targetRemoveBtn');if(tr)tr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();state.upgradeTarget=null;state.selectedPreset=null;_rt1();_rp1();_uc();});
+    var is=$('invSearch');if(is)is.addEventListener('input',_ri);
+    var its=$('itemsSearch');if(its)its.addEventListener('input',_rt2);
+    var so=$('shopSort');if(so)so.addEventListener('change',function(e){state.shopSort=e.target.value;_sv=20;_rsh();save();_ck();});
+    document.querySelectorAll('.shop-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.shop-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state.shopFilter=b.dataset.rarity;_sv=20;_rsh();save();});});
+    document.querySelectorAll('.inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');_ivf=b.dataset.rarity;_rinv();});});
+    document.querySelectorAll('.nav-tab').forEach(function(t){t.addEventListener('click',function(){_un();_ck();_sl();document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});t.classList.add('active');$('page-'+t.dataset.page).classList.add('active');if(t.dataset.page==='shop'){_sv=20;_rsh();}if(t.dataset.page==='inventory')_rinv();if(t.dataset.page==='upgrade'){_ri();_rt2();}});});
+    document.addEventListener('visibilitychange',function(){if(document.hidden)_sl();});
+    document.body.addEventListener('click',function(){_un();},{once:true});
+    var stb=$('steamLoginBtn');if(stb)stb.addEventListener('click',function(){window.location.href='/api/steam';});
+}
+function _checkSteamToken(){
+    var p=new URLSearchParams(window.location.search);
+    var t=p.get('steam_token');
+    if(!t)return false;
+    window.history.replaceState({},document.title,window.location.pathname);
+    if(window.fbSignInWithCustomToken&&window.fbAuth){
+        window.fbSignInWithCustomToken(window.fbAuth,t)
+            .then(function(c){console.log('Steam OK',c.user.uid);})
+            .catch(function(e){console.error('Steam err',e.message);alert('Ошибка входа: '+e.message);});
+        return true;
+    }
+    return false;
+}
+function _waitForFirebase(cb,attempts){
+    attempts=attempts||0;
+    if(window.fbReady&&window.fbSignInWithCustomToken){cb();return;}
+    if(attempts>50){console.error('Firebase timeout');return;}
+    setTimeout(function(){_waitForFirebase(cb,attempts+1);},100);
+}
+function _init(){
+    _ipf('invPanelFilters','invPanelFilter',_ri);
+    _ipf('itemsPanelFilters','itemsPanelFilter',_rt2);
+    var sf=document.querySelector('.shop-filter[data-rarity="'+state.shopFilter+'"]');
+    if(sf){document.querySelectorAll('.shop-filter').forEach(function(b){b.classList.remove('active');});sf.classList.add('active');}
+    if($('shopSort'))$('shopSort').value=state.shopSort;
+    if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'🔊':'🔇';
+    _ah();
+    _fb();
+}
+window.state=state;
+window.save=save;
+window.log=_lg;
+window.renderAll=_ra;
+window.updateUI=_ui;
+window.resetStateToDefault=_rs;
+window.formatRastr=formatRastr;
+window.START_BALANCE=START_BALANCE;
+window.SKINS=SKINS;
+window.RARITIES=RARITIES;
+window.renderSkinIcon=renderSkinIcon;
+window.currentUser=function(){return _CU;};
+if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){
+        _init();
+        _waitForFirebase(function(){_checkSteamToken();});
+    });
+}else{
+    _init();
+    _waitForFirebase(function(){_checkSteamToken();});
+}
 })();
