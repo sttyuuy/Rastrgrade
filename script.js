@@ -1,11 +1,9 @@
 /* ============================================================
-   RASTRGRADE v37 — ФИНАЛ
-   Все баги исправлены:
-   - Бонус-пикер = модальное окно с сеткой
-   - Кнопка "Выйти" = своё модальное окно
-   - Звуки без лагов
-   - Топ→топ + бонус
-   - Защита от двойного клика
+   RASTRGRADE v38 — ФИНАЛ
+   - Убран бонус-пикер полностью
+   - Убран топ→топ апгрейд
+   - Блокировка цели дороже макс-скина
+   - Один клик на пресет (без двойного срабатывания)
    ============================================================ */
 
 function getShopPrice(skin) { return Math.ceil(skin.price * 1.15); }
@@ -29,6 +27,9 @@ const LEVELS = [
     {lvl:7,xp:250000,name:'ГУРУ'},{lvl:8,xp:500000,name:'ЛЕГЕНДА'},
     {lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}
 ];
+
+/* Максимальный скин в игре */
+var MAX_SKIN_PRICE = Math.max.apply(null, SKINS.map(function(s){return s.price;}));
 
 /* ============================================================
    FIREBASE
@@ -124,15 +125,9 @@ function save() {
     cloudSaveTimer = setTimeout(saveToCloud, 800);
 }
 
-/* ============ ФИКС #3: СВОЁ МОДАЛЬНОЕ ОКНО ВЫХОДА ============ */
-function openLogoutModal() {
-    var m = document.getElementById('logoutModal');
-    if (m) m.classList.add('show');
-}
-function closeLogoutModal() {
-    var m = document.getElementById('logoutModal');
-    if (m) m.classList.remove('show');
-}
+/* Своё модальное окно выхода */
+function openLogoutModal() { var m = document.getElementById('logoutModal'); if (m) m.classList.add('show'); }
+function closeLogoutModal() { var m = document.getElementById('logoutModal'); if (m) m.classList.remove('show'); }
 async function confirmLogout() {
     closeLogoutModal();
     try {
@@ -161,7 +156,6 @@ var state = {
     totalWon: 0, totalLost: 0, upgrades: 0, purchases: 0,
     bestDrop: null, bestUpgrade: null,
     upgradeSource: null, upgradeTarget: null, selectedPreset: null,
-    bonusSkin: null,
     spinSpeed: 'slow',
     housePlayerLost: 0, houseCasinoWon: 0,
     xp: 0, level: 1,
@@ -176,7 +170,6 @@ function resetStateToDefault() {
     state.totalWon = 0; state.totalLost = 0; state.upgrades = 0; state.purchases = 0;
     state.bestDrop = null; state.bestUpgrade = null;
     state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
-    state.bonusSkin = null;
     state.spinSpeed = 'slow';
     state.housePlayerLost = 0; state.houseCasinoWon = 0;
     state.xp = 0; state.level = 1;
@@ -188,8 +181,7 @@ function resetStateToDefault() {
 function $(id){ return document.getElementById(id); }
 
 /* ============================================================
-   ФИКС #2: ЗВУКИ БЕЗ ЛАГОВ
-   Простая логика: играем звук, если уже играет другой — останавливаем старый
+   ЗВУКИ — без лагов
    ============================================================ */
 const SOUND_FILES = {
     spin: 'spin.mp3', win_common: 'win_common.mp3', win_legendary: 'win_legendary.mp3',
@@ -197,7 +189,6 @@ const SOUND_FILES = {
 };
 var SOUNDS = {};
 var audioReady = false;
-var _currentSound = null;
 
 function preloadSounds() {
     Object.keys(SOUND_FILES).forEach(function(key){
@@ -219,7 +210,6 @@ function unlockAudio() {
         s.play().then(function(){ s.pause(); s.currentTime = 0; s.volume = 0.7; }).catch(function(){});
     });
 }
-/* ФИКС #2: играем через клон, но НЕ перекрываем */
 function playSound(name, vol) {
     if (!state.soundOn) return;
     var src = SOUNDS[name]; if (!src) return;
@@ -227,7 +217,6 @@ function playSound(name, vol) {
         var c = src.cloneNode();
         c.volume = vol || 0.7;
         c.play().catch(function(){});
-        c.onended = function(){ c = null; };
     } catch(e) {}
 }
 function sClick(){ playSound('click', 0.6); }
@@ -239,7 +228,6 @@ function sLose(){ playSound('lose', 0.8); }
 function sBuy(){ playSound('buy', 0.8); }
 function sLevelUp(){ playSound('levelup', 0.9); }
 
-/* Циклический звук для апгрейда */
 var _loopAudio = {};
 function startLoopSound(name, vol) {
     if (!state.soundOn) return null;
@@ -314,7 +302,6 @@ function calcRealChance(sourcePrice, targetPrice) {
     if (chance < 0.01) chance = 0.01;
     return chance;
 }
-/* ФИКС #10: логируем КАЖДЫЙ уровень */
 function addXP(n) {
     state.xp += n;
     var prev = state.level;
@@ -330,7 +317,6 @@ function addXP(n) {
 }
 function resetUpgradeSlots() {
     state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
-    state.bonusSkin = null;
     renderSourceSlot(); renderTargetSlot(); renderPresets();
     updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
     setNeedleAngle(0);
@@ -526,22 +512,37 @@ function renderPresets() {
         }
         btn.innerHTML = '<span class="upg-preset-mult">' + p.label + '</span><span class="upg-preset-chance">' + displayText + '</span>';
         if (state.selectedPreset === idx) btn.classList.add('active');
-        btn.addEventListener('click', function() { selectPreset(idx); });
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            selectPreset(idx);
+        });
         frag.appendChild(btn);
     });
     container.replaceChildren(frag);
 }
 
+/* ФИКС: один клик на пресет + проверка на макс скин */
 function selectPreset(idx) {
     if (!state.upgradeSource) { log('❌ Сначала выбери предмет', 'lose'); sClick(); return; }
     unlockAudio(); sClick();
+
+    // Блокировка: если source — макс скин, апгрейд невозможен
+    if (state.upgradeSource.price >= MAX_SKIN_PRICE * 0.99) {
+        log('❌ Это максимальный скин — апгрейд невозможен', 'lose');
+        return;
+    }
+
     var p = PRESETS[idx];
     var sourcePrice = state.upgradeSource.price;
     var desiredTargetPrice = sourcePrice * p.mult;
     var target = findTargetByPrice(desiredTargetPrice, state.upgradeSource);
     if (!target || target.price <= sourcePrice) {
         log('❌ Нет подходящей цели дороже твоего предмета', 'lose');
-        sClick();
+        return;
+    }
+    // Блокировка: цель не может быть дороже макс скина
+    if (target.price > MAX_SKIN_PRICE) {
+        log('❌ Нет цели дороже макс скина', 'lose');
         return;
     }
     state.upgradeTarget = target;
@@ -570,7 +571,6 @@ function renderInvPanel() {
             unlockAudio(); sClick();
             state.upgradeSource = skin;
             state.upgradeTarget = null; state.selectedPreset = null;
-            state.bonusSkin = null;
             renderSourceSlot(); renderTargetSlot(); renderInvPanel(); renderPresets(); updateCircleFromPreset();
         });
         frag.appendChild(el);
@@ -578,66 +578,7 @@ function renderInvPanel() {
     list.replaceChildren(frag);
 }
 
-/* ============ ФИКС #5: isTopSkin более гибкий ============ */
-function isTopSkin(skin) {
-    if (!skin) return false;
-    var maxPrice = Math.max.apply(null, SKINS.map(function(s){return s.price;}));
-    // Топ-скин = входит в топ-5 самых дорогих
-    var sorted = SKINS.slice().sort(function(a,b){return b.price - a.price;});
-    var top5 = sorted.slice(0, 5);
-    return top5.some(function(s){ return s.id === skin.id; });
-}
-
-/* ============ ФИКС #1: БОНУС-ПИКЕР = МОДАЛЬНОЕ ОКНО ============ */
-function openBonusPicker() {
-    var modal = $('bonusModal');
-    var grid = $('bonusGrid');
-    if (!modal || !grid) return;
-
-    // Показываем только скины ДЕШЕВЛЕ source
-    var sourcePrice = state.upgradeSource ? state.upgradeSource.price : Infinity;
-    var pool = SKINS.filter(function(s){
-        return s.price < sourcePrice && (!state.upgradeSource || s.id !== state.upgradeSource.id);
-    }).sort(function(a,b){ return a.price - b.price; });
-
-    if (pool.length === 0) {
-        log('❌ Нет скинов для бонуса', 'lose');
-        return;
-    }
-
-    var frag = document.createDocumentFragment();
-    pool.forEach(function(skin) {
-        var el = document.createElement('div');
-        el.className = 'bonus-item ' + skin.rarity;
-        el.innerHTML = renderSkinIcon(skin) + '<div class="bonus-name">' + skin.name + '</div><div class="bonus-price">' + formatRastr(skin.price) + '</div>';
-        el.addEventListener('click', function() {
-            state.bonusSkin = skin;
-            sClick();
-            closeBonusPicker();
-            log('🎁 Бонус: ' + skin.name, 'info');
-            renderTargetSlot();
-        });
-        frag.appendChild(el);
-    });
-    grid.replaceChildren(frag);
-    modal.classList.add('show');
-}
-
-function closeBonusPicker() {
-    var modal = $('bonusModal');
-    if (modal) modal.classList.remove('show');
-}
-
-function pickRandomBonus() {
-    var sourcePrice = state.upgradeSource ? state.upgradeSource.price : Infinity;
-    var pool = SKINS.filter(function(s){
-        return s.price < sourcePrice && (!state.upgradeSource || s.id !== state.upgradeSource.id);
-    });
-    if (pool.length === 0) return null;
-    return pool[Math.floor(Math.random() * pool.length)];
-}
-
-/* ============ ФИКС #7: подсветка выбранной цели ============ */
+/* ============ ITEMS PANEL — ФИКС: без топ→топ ============ */
 function renderItemsPanel() {
     var grid = $('itemsPanelGrid'); if (!grid) return;
     var filter = state.itemsPanelFilter;
@@ -651,7 +592,6 @@ function renderItemsPanel() {
     items.forEach(function(skin) {
         var el = document.createElement('div');
         el.className = 'upg-target-item ' + skin.rarity;
-        // ФИКС #7: подсветка выбранной цели
         if (state.upgradeTarget && state.upgradeTarget.id === skin.id) {
             el.style.borderColor = '#f5c542';
             el.style.boxShadow = '0 0 20px rgba(245,197,66,0.5)';
@@ -659,30 +599,18 @@ function renderItemsPanel() {
         el.innerHTML = renderSkinIcon(skin) + '<div class="upg-target-name">' + skin.name + '</div><div class="upg-target-price">' + formatRastr(skin.price) + '</div>';
         el.addEventListener('click', function() {
             if (!state.upgradeSource) { log('❌ Сначала выбери свой предмет', 'lose'); sClick(); return; }
-
-            var sourceIsTop = isTopSkin(state.upgradeSource);
-
-            // ТОП→ТОП апгрейд
+            // Убрана вся логика топ→топ и бонусов
             if (skin.id === state.upgradeSource.id) {
-                if (sourceIsTop) {
-                    unlockAudio(); sClick();
-                    state.upgradeTarget = skin;
-                    state.selectedPreset = null;
-                    state.upgradeTarget._realChance = 50;
-                    state.bonusSkin = null;
-                    openBonusPicker();
-                    renderTargetSlot(); renderPresets(); updateCircleFromPreset();
-                    return;
-                } else {
-                    log('❌ Нельзя апгрейдить предмет в самого себя', 'lose'); sClick(); return;
-                }
+                log('❌ Нельзя апгрейдить предмет в самого себя', 'lose'); sClick(); return;
             }
-
             if (skin.price <= state.upgradeSource.price) {
                 log('❌ Цель должна быть дороже твоего предмета', 'lose'); sClick(); return;
             }
+            if (skin.price > MAX_SKIN_PRICE) {
+                log('❌ Нет цели дороже макс скина', 'lose'); sClick(); return;
+            }
             unlockAudio(); sClick();
-            state.upgradeTarget = skin; state.selectedPreset = null; state.bonusSkin = null;
+            state.upgradeTarget = skin; state.selectedPreset = null;
             state.upgradeTarget._realChance = calcRealChance(state.upgradeSource.price, skin.price);
             renderTargetSlot(); renderPresets(); updateCircleFromPreset();
         });
@@ -728,34 +656,22 @@ function playUpgradeAnimation(chance, willWin) {
     });
 }
 
-/* ============ ФИКС #6: защита от двойного клика ============ */
+/* ============ HANDLE UPGRADE — БЕЗ ТОП→ТОП ============ */
 function handleUpgrade() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
     if (state.upgrading) return;
     if (state.inventory.indexOf(state.upgradeSource) < 0) { resetUpgradeSlots(); log('❌ Предмет больше не в инвентаре', 'lose'); return; }
 
-    var sourceIsTop = isTopSkin(state.upgradeSource);
-    var isTopToTop = sourceIsTop && state.upgradeTarget.id === state.upgradeSource.id;
-
-    if (isTopToTop) {
-        // Если бонус не выбран — подбираем случайный
-        if (!state.bonusSkin) {
-            state.bonusSkin = pickRandomBonus();
-            if (!state.bonusSkin) {
-                log('❌ Нет скинов для бонуса', 'lose');
-                return;
-            }
-        }
-        // ФИКС #8: бонус не может быть тем же скином
-        if (state.bonusSkin.id === state.upgradeSource.id) {
-            state.bonusSkin = pickRandomBonus();
-        }
-    } else {
-        if (state.upgradeTarget.id === state.upgradeSource.id || state.upgradeTarget.price <= state.upgradeSource.price) {
-            log('❌ Недопустимая цель апгрейда', 'lose');
-            resetUpgradeSlots();
-            return;
-        }
+    // Блокировка макс скина
+    if (state.upgradeSource.price >= MAX_SKIN_PRICE * 0.99) {
+        log('❌ Это максимальный скин — апгрейд невозможен', 'lose');
+        resetUpgradeSlots();
+        return;
+    }
+    if (state.upgradeTarget.id === state.upgradeSource.id || state.upgradeTarget.price <= state.upgradeSource.price) {
+        log('❌ Недопустимая цель апгрейда', 'lose');
+        resetUpgradeSlots();
+        return;
     }
 
     unlockAudio();
@@ -771,7 +687,6 @@ function handleUpgrade() {
 
     var sourceSkin = state.upgradeSource;
     var targetSkin = state.upgradeTarget;
-    var bonusSkin = state.bonusSkin;
     var sourceValue = sourceSkin.price;
     var targetValue = targetSkin.price;
 
@@ -782,37 +697,21 @@ function handleUpgrade() {
         if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
 
         if (success) {
-            if (isTopToTop) {
-                state.inventory.push(targetSkin);
-                state.inventory.push(bonusSkin);
-                state.totalWon += targetValue + bonusSkin.price;
-                state.profit += targetValue + bonusSkin.price - sourceValue;
-                state.houseCasinoWon += targetValue + bonusSkin.price;
-                sWin('mythical');
-                showResult({
-                    type: 'result-jackpot', icon: '🎁', title: '🔥 ТОП → ТОП',
-                    skin: targetSkin,
-                    value: '+' + formatRastr(targetValue) + '<br><span style="color:#f5c542;font-size:0.95rem">🎁 БОНУС: ' + bonusSkin.name + ' (+' + formatRastr(bonusSkin.price) + ')</span>',
-                    canSell: false
-                });
-                log('🔥 ТОП→ТОП: ' + targetSkin.name + ' + 🎁 ' + bonusSkin.name, 'jackpot');
-            } else {
-                state.inventory.push(targetSkin);
-                state.totalWon += targetValue;
-                state.profit += targetValue - sourceValue;
-                state.houseCasinoWon += targetValue;
-                if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
-                sWin(targetSkin.rarity);
-                showResult({
-                    type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
-                    value: '+' + formatRastr(targetValue), canSell: true,
-                    sellCallback: function() {
-                        var i = state.inventory.indexOf(targetSkin);
-                        if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); save(); }
-                    }
-                });
-                log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
-            }
+            state.inventory.push(targetSkin);
+            state.totalWon += targetValue;
+            state.profit += targetValue - sourceValue;
+            state.houseCasinoWon += targetValue;
+            if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
+            sWin(targetSkin.rarity);
+            showResult({
+                type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
+                value: '+' + formatRastr(targetValue), canSell: true,
+                sellCallback: function() {
+                    var i = state.inventory.indexOf(targetSkin);
+                    if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); save(); }
+                }
+            });
+            log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
         } else {
             state.totalLost += sourceValue;
             state.profit -= sourceValue;
@@ -825,7 +724,6 @@ function handleUpgrade() {
             log('⚡ ' + sourceSkin.name + ' → провал ❌', 'lose');
         }
         state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
-        state.bonusSkin = null;
         state.upgrading = false;
         btn.style.pointerEvents = '';
         btn.disabled = true;
@@ -995,24 +893,14 @@ function updateSpeedButtons() {
 function attachHandlers() {
     var userBadge = $('userBadge');
     if (userBadge) userBadge.addEventListener('click', function() {
-        if (currentUser) openLogoutModal();  // ФИКС #3: своё окно
+        if (currentUser) openLogoutModal();
         else openAuthModal();
     });
 
-    // ФИКС #3: кнопки своего окна выхода
     var logoutConfirm = $('logoutConfirm');
     if (logoutConfirm) logoutConfirm.addEventListener('click', confirmLogout);
     var logoutCancel = $('logoutCancel');
     if (logoutCancel) logoutCancel.addEventListener('click', function(){ sClick(); closeLogoutModal(); });
-
-    // Бонус-модалка
-    var bonusCancel = $('bonusCancel');
-    if (bonusCancel) bonusCancel.addEventListener('click', function(){ sClick(); closeBonusPicker(); });
-    var bonusRandom = $('bonusRandom');
-    if (bonusRandom) bonusRandom.addEventListener('click', function(){
-        var b = pickRandomBonus();
-        if (b) { state.bonusSkin = b; closeBonusPicker(); log('🎁 Бонус: ' + b.name, 'info'); renderTargetSlot(); }
-    });
 
     var speedSlow = $('speedSlowBtn');
     if (speedSlow) speedSlow.addEventListener('click', function() { unlockAudio(); sClick(); state.spinSpeed = 'slow'; updateSpeedButtons(); save(); });
@@ -1041,7 +929,6 @@ function attachHandlers() {
     var buyCancel = $('buyCancel');
     if (buyCancel) buyCancel.addEventListener('click', function() { sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null; pendingQuantity = 1; });
 
-    /* ФИКС #9: корректная обработка массовой покупки при нехватке */
     var buyConfirm = $('buyConfirm');
     if (buyConfirm) buyConfirm.addEventListener('click', function() {
         if (!pendingPurchase) return;
@@ -1049,7 +936,6 @@ function attachHandlers() {
         var qty = pendingQuantity || 1;
         var totalPrice = unitPrice * qty;
         if (state.balance < totalPrice) {
-            // Пробуем уменьшить qty
             var maxQty = Math.floor(state.balance / unitPrice);
             if (maxQty <= 0) { log('❌ Недостаточно средств', 'lose'); sClick(); return; }
             qty = maxQty;
@@ -1100,7 +986,7 @@ function attachHandlers() {
     var targetRemoveBtn = $('targetRemoveBtn');
     if (targetRemoveBtn) targetRemoveBtn.addEventListener('click', function(e) {
         e.stopPropagation(); unlockAudio(); sClick();
-        state.upgradeTarget = null; state.selectedPreset = null; state.bonusSkin = null;
+        state.upgradeTarget = null; state.selectedPreset = null;
         renderTargetSlot(); renderPresets(); updateCircleFromPreset();
     });
 
