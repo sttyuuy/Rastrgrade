@@ -1343,7 +1343,7 @@ body::before {
 }
 
 /* 3. Убрать шестерёнку из alt-текста сломанных картинок */
-img[alt="⚙️"],
+img[alt=""],
 img[alt="⚙"],
 img[alt*="⚙"] {
     font-size: 0 !important;
