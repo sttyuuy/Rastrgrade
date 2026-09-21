@@ -11,7 +11,7 @@ var h='';
 h+='<div id="'+_0x7f+'" class="modal">';
 h+='<div class="modal-inner" style="max-width:700px">';
 h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
-h+='<h2 class="auth-title" style="margin:0">⚙ TOOLS</h2>';
+h+='<h2 class="auth-title" style="margin:0">TOOLS</h2>';
 h+='<button class="btn-secondary" data-x="cl" style="padding:6px 14px">✕</button>';
 h+='</div>';
 h+='<div class="auth-hint-top" style="margin-bottom:16px">Session: <span style="color:#f5c542">'+((typeof window.currentUser==='function'&&window.currentUser())?window.currentUser().email:'—')+'</span></div>';
@@ -62,10 +62,6 @@ function _0x8f(){var el=document.getElementById(_0x7f+'_b');if(el)el.textContent
 function _0xa1(){if(!_0x2b())return;_0x5d();_0x8f();document.getElementById(_0x7f).classList.add('show');setTimeout(_0xt,200);}
 function _0x6e(){var p=document.getElementById(_0x7f);if(p)p.classList.remove('show');}
 function _0x9a(){var w1=confirm('⚠️ WARNING 1/3\n\nFULL WIPE?\n\nThis cannot be undone.');if(!w1)return;var w2=confirm('⚠️ WARNING 2/3\n\nAre you sure?');if(!w2)return;var w3=confirm('🚨 WARNING 3/3\n\nLAST CHANCE.');if(!w3)return;window.resetStateToDefault();window.state.balance=window.START_BALANCE;window.save();window.renderAll();window.log('🗑 Wiped','lose');_0x8f();}
-
-/* ============================================================
-   ЗАЯВКИ НА ОБМЕН — АДМИН
-   ============================================================ */
 
 async function _0xt(){
     var wrap=document.getElementById(_0x7f+'_trades');
