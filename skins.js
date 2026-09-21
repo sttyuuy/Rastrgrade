@@ -1,22 +1,24 @@
-/* ============================================================
-   RASTRGRADE — SKINS DATABASE v34
-   Ціни перераховані: 1$ = 0.95 RASTR (⚙️)
-   Рідкість за кольором як на Rastgrade
-   ============================================================ */
+/* RASTRGRADE SKINS v35 — с skinId для реальных картинок */
 
 const START_BALANCE = 50000000000;
-
-// Курс: 1$ = 0.95 RASTR
 const USD_TO_RASTR = 0.95;
 function usdToRastr(usd) { return Math.round(usd * USD_TO_RASTR * 100) / 100; }
 
-// Форматування ціни в RASTR
 const NUM_FMT = new Intl.NumberFormat('ru');
 function formatRastr(v) { return NUM_FMT.format(Math.round(v * 100) / 100) + ' ⚙️'; }
 
-/* ============================================================
-   ICON_SVG — стандартні іконки (fallback якщо API не завантажиться)
-   ============================================================ */
+/* API Hougan — РЕАЛЬНЫЕ ИКОНКИ СКИНОВ по skinId */
+function getSkinIconUrl(skin, size) {
+    size = size || 128;
+    // Если есть skinId — используем API Hougan (реальная иконка скина)
+    if (skin.skinId) {
+        return 'http://api.hougan.space/rust/skin/getImage/' + skin.skinId;
+    }
+    // Fallback — SVG
+    return null;
+}
+
+/* SVG fallback */
 const ICON_SVG = {
     knife:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 54l6-6 32-32 6 6-32 32-6 6z"/><path d="M44 18l8-8 6 6-8 8z"/></svg>',
     axe:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="28" y="6" width="6" height="52" rx="2"/><path d="M34 8l22 10-22 10z"/></svg>',
@@ -35,39 +37,56 @@ const ICON_SVG = {
     turret:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="28" width="40" height="8" rx="2"/><rect x="20" y="36" width="6" height="16"/></svg>',
     default:'<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="currentColor">?</text></svg>'
 };
+const SVG_CACHE = {}; Object.keys(ICON_SVG).forEach(function(k){ SVG_CACHE[k] = ICON_SVG[k]; });
+
+function renderSkinIcon(skin) {
+    var url = getSkinIconUrl(skin);
+    if (url) {
+        return '<div class="skin-icon"><img src="' + url + '" alt="' + skin.name + '" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + SVG_CACHE[skin.svg || 'default'].replace(/'/g, "\\'") + '\'"></div>';
+    }
+    var svgKey = skin.svg || 'default';
+    return '<div class="skin-icon">' + (SVG_CACHE[svgKey] || SVG_CACHE.default) + '</div>';
+}
+
+const RARITIES = {
+    common:    { name:'Обычный',     color:'#4aa8ff' },
+    rare:      { name:'Редкий',      color:'#a55cff' },
+    legendary: { name:'Легендарный', color:'#ff3b3b' },
+    mythical:  { name:'МИФИЧЕСКИЙ',  color:'#f5c542' }
+};
 
 /* ============================================================
-   SKINS — 200 предметів Rastgrade
-   Ціни в RASTR (⚙️). Рідкість за кольором.
+   SKINS — 200+ скинов с skinId где найдено
+   Формат: {id, name, svg, rarity, price, skinId?}
    ============================================================ */
 const SKINS = [
-    // 🟡 ЗОЛОТІ (mythical) — найкрутіші
-    {id:'horror_bag', name:'Horror Bag', svg:'armor', rarity:'mythical', price:usdToRastr(135.09)},
-    {id:'big_grin', name:'Big Grin', svg:'mask', rarity:'mythical', price:usdToRastr(133.58)},
+    // 🟡 ЗОЛОТІ (mythical) — с skinId
+    {id:'horror_bag', name:'Horror Bag', svg:'armor', rarity:'mythical', price:usdToRastr(135.09), skinId:535099192},
+    {id:'big_grin', name:'Big Grin', svg:'mask', rarity:'mythical', price:usdToRastr(133.58), skinId:784316334},
     {id:'creepy_clown_bandana', name:'Creepy Clown Bandana', svg:'mask', rarity:'mythical', price:usdToRastr(83.07)},
-    {id:'neon_dragon_garage_door', name:'Neon Dragon Garage Door', svg:'default', rarity:'mythical', price:usdToRastr(83.51)},
-    {id:'tempered_mp5', name:'Tempered MP5', svg:'rifle', rarity:'mythical', price:usdToRastr(533.25)},
-    {id:'glory_ak47', name:'Glory AK47', svg:'rifle', rarity:'mythical', price:usdToRastr(296.57)},
+    {id:'neon_dragon_garage_door', name:'Neon Dragon Garage Door', svg:'default', rarity:'mythical', price:usdToRastr(83.51), skinId:3149841519},
+    {id:'tempered_mp5', name:'Tempered MP5', svg:'rifle', rarity:'mythical', price:usdToRastr(533.25), skinId:800974015},
+    {id:'glory_ak47', name:'Glory AK47', svg:'rifle', rarity:'mythical', price:usdToRastr(296.57), skinId:889710179},
     {id:'military_camo_mp5', name:'Military Camo MP5', svg:'rifle', rarity:'mythical', price:usdToRastr(233.32)},
     {id:'tempered_mask', name:'Tempered Mask', svg:'mask', rarity:'mythical', price:usdToRastr(197.15)},
     {id:'hot_tempered_longsword', name:'Hot-Tempered Longsword', svg:'knife', rarity:'mythical', price:usdToRastr(196.37)},
     {id:'glowing_skull', name:'Glowing Skull', svg:'mask', rarity:'mythical', price:usdToRastr(172.89)},
     {id:'christmas_lights', name:'Christmas Lights', svg:'default', rarity:'mythical', price:usdToRastr(160.11)},
-    {id:'alien_red', name:'Alien Red', svg:'rifle', rarity:'mythical', price:usdToRastr(156.85)},
+    {id:'alien_red', name:'Alien Red', svg:'rifle', rarity:'mythical', price:usdToRastr(156.85), skinId:859845460},
     {id:'gold_rock', name:'Gold Rock', svg:'default', rarity:'mythical', price:usdToRastr(153.44)},
     {id:'stainless_facemask', name:'Stainless Facemask', svg:'mask', rarity:'mythical', price:usdToRastr(99.77)},
     {id:'legendary_gold_facemask', name:'Legendary Gold Facemask', svg:'mask', rarity:'mythical', price:usdToRastr(91.74)},
     {id:'plate_carrier_black', name:'Plate Carrier - Black', svg:'armor', rarity:'mythical', price:usdToRastr(88.04)},
     {id:'forest_raiders_roadsign_pants', name:'Forest Raiders Roadsign Pants', svg:'armor', rarity:'mythical', price:usdToRastr(84.66)},
-    {id:'after_death_ar', name:'After Death AR', svg:'rifle', rarity:'mythical', price:usdToRastr(83.54)},
+    {id:'after_death_ar', name:'After Death AR', svg:'rifle', rarity:'mythical', price:usdToRastr(83.54), skinId:3529283241},
     {id:'desert_raiders_facemask', name:'Desert Raiders Facemask', svg:'mask', rarity:'mythical', price:usdToRastr(78.97)},
     {id:'tea_vending_machine', name:'Tea Vending Machine', svg:'default', rarity:'mythical', price:usdToRastr(71.86)},
 
-    // 🔴 КРАСНІ (legendary/epic) — дорогі
+    // 🔴 КРАСНІ (legendary)
     {id:'direct_threat_sap', name:'Direct Threat SAP', svg:'pistol', rarity:'legendary', price:usdToRastr(70.79)},
     {id:'desert_raiders_chest_plate', name:'Desert Raiders Chest Plate', svg:'armor', rarity:'legendary', price:usdToRastr(63.56)},
     {id:'forest_raiders_roadsign_vest', name:'Forest Raiders Roadsign Vest', svg:'armor', rarity:'legendary', price:usdToRastr(62.08)},
-    {id:'ak_royale', name:'AK Royale', svg:'rifle', rarity:'legendary', price:usdToRastr(61.84)},
+    {id:'ak_royale', name:'AK Royale', svg:'rifle', rarity:'legendary', price:usdToRastr(61.84), skinId:1359893925},
     {id:'space_rocket_work_gloves', name:'Space Rocket Work Gloves', svg:'armor', rarity:'legendary', price:usdToRastr(60.57)},
     {id:'shard_of_true_ice', name:'Shard of True Ice', svg:'gem', rarity:'legendary', price:usdToRastr(59.60)},
     {id:'forest_raiders_helmet', name:'Forest Raiders Helmet', svg:'helmet', rarity:'legendary', price:usdToRastr(59.35)},
@@ -86,14 +105,14 @@ const SKINS = [
     {id:'neon_boom_storage', name:'Neon Boom Storage', svg:'default', rarity:'legendary', price:usdToRastr(32.51)},
     {id:'rustige_egg_red', name:'Rustigé Egg - Red', svg:'gem', rarity:'legendary', price:usdToRastr(31.86)},
     {id:'checkpoint_riot_helmet', name:'Checkpoint Riot Helmet', svg:'helmet', rarity:'legendary', price:usdToRastr(31.53)},
-    {id:'soviet_carpet', name:'Soviet Carpet', svg:'default', rarity:'legendary', price:usdToRastr(30.77)},
+    {id:'soviet_carpet', name:'Soviet Carpet', svg:'default', rarity:'legendary', price:usdToRastr(30.77), skinId:871072156},
     {id:'no_mercy_pants', name:'No Mercy Pants', svg:'armor', rarity:'legendary', price:usdToRastr(30.77)},
     {id:'ak47_from_hell', name:'AK-47 From Hell', svg:'rifle', rarity:'legendary', price:usdToRastr(29.18)},
     {id:'mystic_ak47', name:'Mystic AK47', svg:'rifle', rarity:'legendary', price:usdToRastr(29.15)},
     {id:'desert_raiders_roadsign_vest', name:'Desert Raiders Roadsign Vest', svg:'armor', rarity:'legendary', price:usdToRastr(29.01)},
     {id:'military_camo_roadsign_kilt', name:'Military Camo Roadsign Kilt', svg:'armor', rarity:'legendary', price:usdToRastr(28.60)},
     {id:'blackout_pants', name:'Blackout Pants', svg:'armor', rarity:'legendary', price:usdToRastr(27.41)},
-    {id:'panda_rug', name:'Panda Rug', svg:'default', rarity:'legendary', price:usdToRastr(26.68)},
+    {id:'panda_rug', name:'Panda Rug', svg:'default', rarity:'legendary', price:usdToRastr(26.68), skinId:870446546},
     {id:'desert_raiders_hoodie', name:'Desert Raiders Hoodie', svg:'armor', rarity:'legendary', price:usdToRastr(26.23)},
     {id:'desert_raiders_helmet', name:'Desert Raiders Helmet', svg:'helmet', rarity:'legendary', price:usdToRastr(25.73)},
     {id:'press_vest', name:'Press Vest', svg:'armor', rarity:'legendary', price:usdToRastr(25.36)},
@@ -105,7 +124,7 @@ const SKINS = [
     {id:'rat_mask', name:'Rat Mask', svg:'mask', rarity:'legendary', price:usdToRastr(22.97)},
     {id:'scorched_hammer', name:'Scorched Hammer', svg:'axe', rarity:'legendary', price:usdToRastr(22.63)},
     {id:'heat_double_shotgun', name:'Heat Double Shotgun', svg:'rifle', rarity:'legendary', price:usdToRastr(22.49)},
-    {id:'wasteland_hunter_gloves', name:'Wasteland Hunter Gloves', svg:'armor', rarity:'legendary', price:usdToRastr(22.06)},
+    {id:'wasteland_hunter_gloves', name:'Wasteland Hunter Gloves', svg:'armor', rarity:'legendary', price:usdToRastr(22.06), skinId:961103399},
     {id:'forest_raiders_facemask', name:'Forest Raiders Facemask', svg:'mask', rarity:'legendary', price:usdToRastr(21.26)},
     {id:'blackout_vest', name:'Blackout Vest', svg:'armor', rarity:'legendary', price:usdToRastr(21.04)},
     {id:'no_mercy_hoodie', name:'No Mercy Hoodie', svg:'armor', rarity:'legendary', price:usdToRastr(20.74)},
@@ -113,7 +132,7 @@ const SKINS = [
     {id:'whiteout_kilt', name:'Whiteout Kilt', svg:'armor', rarity:'legendary', price:usdToRastr(19.90)},
     {id:'polymer_pump_shotgun', name:'Polymer Pump Shotgun', svg:'rifle', rarity:'legendary', price:usdToRastr(19.52)},
     {id:'desert_raiders_roadsign_pants', name:'Desert Raiders Roadsign Pants', svg:'armor', rarity:'legendary', price:usdToRastr(19.44)},
-    {id:'whiteout_facemask', name:'Whiteout Facemask', svg:'mask', rarity:'legendary', price:usdToRastr(19.33)},
+    {id:'whiteout_facemask', name:'Whiteout Facemask', svg:'mask', rarity:'legendary', price:usdToRastr(19.33), skinId:2432948498},
     {id:'scientific_fuel_storage', name:'Scientific Fuel Storage', svg:'default', rarity:'legendary', price:usdToRastr(19.15)},
     {id:'playmaker_ak47', name:'Playmaker AK47', svg:'rifle', rarity:'legendary', price:usdToRastr(18.54)},
     {id:'glory_sar', name:'Glory SAR', svg:'rifle', rarity:'legendary', price:usdToRastr(18.49)},
@@ -122,7 +141,7 @@ const SKINS = [
     {id:'comics_ar', name:'Comics AR', svg:'rifle', rarity:'legendary', price:usdToRastr(18.39)},
     {id:'forest_raiders_hoodie', name:'Forest Raiders Hoodie', svg:'armor', rarity:'legendary', price:usdToRastr(18.25)},
 
-    // 🟣 ФІОЛЕТОВІ (rare) — середні
+    // 🟣 ФІОЛЕТОВІ (rare)
     {id:'tribesman_hide_pants', name:'Tribesman Hide Pants', svg:'armor', rarity:'rare', price:usdToRastr(18.21)},
     {id:'spacesuit', name:'Spacesuit', svg:'armor', rarity:'rare', price:usdToRastr(18.02)},
     {id:'forest_raiders_metal_chest_plate', name:'Forest Raiders Metal Chest Plate', svg:'armor', rarity:'rare', price:usdToRastr(17.98)},
@@ -183,7 +202,7 @@ const SKINS = [
     {id:'vandals_peace_door', name:'Vandal\'s Peace Door', svg:'default', rarity:'rare', price:usdToRastr(10.74)},
     {id:'neon_sign_pack', name:'Neon Sign Pack', svg:'default', rarity:'rare', price:usdToRastr(10.67)},
     {id:'scientific_electrical_storage', name:'Scientific Electrical Storage', svg:'default', rarity:'rare', price:usdToRastr(10.62)},
-    {id:'tempered_ak47', name:'Tempered AK47', svg:'rifle', rarity:'rare', price:usdToRastr(10.55)},
+    {id:'tempered_ak47', name:'Tempered AK47', svg:'rifle', rarity:'rare', price:usdToRastr(10.55), skinId:566540646},
     {id:'protector_sheet_metal_double_door', name:'Protector Sheet Metal Double Door', svg:'default', rarity:'rare', price:usdToRastr(10.50)},
     {id:'comics_hoodie', name:'Comics Hoodie', svg:'armor', rarity:'rare', price:usdToRastr(10.50)},
     {id:'neon_elec_storage', name:'Neon Elec Storage', svg:'default', rarity:'rare', price:usdToRastr(10.38)},
@@ -204,7 +223,7 @@ const SKINS = [
     {id:'cobalt_personal_locker', name:'Cobalt Personal Locker', svg:'default', rarity:'rare', price:usdToRastr(9.79)},
     {id:'desert_patrol_helmet', name:'Desert Patrol Helmet', svg:'helmet', rarity:'rare', price:usdToRastr(9.78)},
 
-    // 🔵 СИНІ (common) — дешеві
+    // 🔵 СИНІ (common)
     {id:'training_hoodie', name:'Training Hoodie', svg:'armor', rarity:'common', price:usdToRastr(9.77)},
     {id:'cargo_heli_storage', name:'Cargo Heli Storage', svg:'default', rarity:'common', price:usdToRastr(9.72)},
     {id:'army_facemask', name:'Army Facemask', svg:'mask', rarity:'common', price:usdToRastr(9.63)},
@@ -235,7 +254,7 @@ const SKINS = [
     {id:'boxers_bandages', name:'Boxer\'s Bandages', svg:'armor', rarity:'common', price:usdToRastr(8.62)},
     {id:'urban_night_door', name:'Urban Night Door', svg:'default', rarity:'common', price:usdToRastr(8.60)},
     {id:'reptile_hunter_chestplate', name:'Reptile Hunter Chestplate', svg:'armor', rarity:'common', price:usdToRastr(8.59)},
-    {id:'crypt_armored_double_door', name:'Crypt Armored Double Door', svg:'default', rarity:'common', price:usdToRastr(8.59)},
+    {id:'crypt_armored_double_door', name:'Crypt Armored Double Door', svg:'default', rarity:'common', price:usdToRastr(8.59), skinId:2254750609},
     {id:'popstar_garage_door', name:'Popstar Garage Door', svg:'default', rarity:'common', price:usdToRastr(8.57)},
     {id:'arctic_protection_burlap_pants', name:'Arctic Protection Burlap Pants', svg:'armor', rarity:'common', price:usdToRastr(8.46)},
     {id:'thundergold_roadsign_kilt', name:'Thundergold Roadsign Kilt', svg:'armor', rarity:'common', price:usdToRastr(8.41)},
@@ -383,31 +402,10 @@ const SKINS = [
     {id:'compound_bow', name:'Составной лук', svg:'crossbow', rarity:'common', price:usdToRastr(5.00)}
 ];
 
-// Кеш SVG
-const SVG_CACHE = {};
-Object.keys(ICON_SVG).forEach(function(k){ SVG_CACHE[k] = ICON_SVG[k]; });
-
-// API для іконок (YRS Project)
-function getSkinIconUrl(shortname, size) {
-    size = size || 128;
-    return 'http://api.yrsproject.ru/public/image/Resize?shortname=' + shortname + '&x=' + size + '&y=' + size;
+// Експорт для script.js
+var SKIN_BY_ID = {};
+SKINS.forEach(function(s){ SKIN_BY_ID[s.id] = s; });
+function resolveSkin(item) {
+    if (!item) return null;
+    return SKIN_BY_ID[item.id] || item;
 }
-
-function renderSkinIcon(skin) {
-    // Якщо є shortname — використовуємо API
-    if (skin.shortname) {
-        return '<div class="skin-icon"><img src="' + getSkinIconUrl(skin.shortname) + '" alt="' + skin.name + '" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display=\'none\';this.parentNode.innerHTML=\'' + SVG_CACHE[skin.svg || 'default'].replace(/'/g, "\\'") + '\'"></div>';
-    }
-    // Fallback на SVG
-    var svgKey = skin.svg || 'default';
-    return '<div class="skin-icon">' + (SVG_CACHE[svgKey] || SVG_CACHE.default) + '</div>';
-}
-
-const RARITIES = {
-    common:    { name:'Обычный',     color:'#4aa8ff' },  // синій
-    rare:      { name:'Редкий',      color:'#a55cff' },  // фіолетовий
-    legendary: { name:'Легендарный', color:'#ff3b3b' },  // красний
-    mythical:  { name:'МИФИЧЕСКИЙ',  color:'#f5c542' }   // золотий
-};
-
-// ... далі в script.js
