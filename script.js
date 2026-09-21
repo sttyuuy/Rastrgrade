@@ -204,10 +204,12 @@ function _lg(m,t){
     },3500);
 }
 
+/* ФИКС #2: House edge 10% */
 function _ch(sp,tp){var c=(sp/tp)*100*0.90;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
 
 function _tg(tp,ss){var b=null,bd=Infinity;SKINS.forEach(function(s){if(ss&&s.id===ss.id)return;if(ss&&s.price<=ss.price)return;var d=Math.abs(s.price-tp);if(d<bd){bd=d;b=s;}});return b;}
 
+/* ФИКС #1: прибрано гроші за рівень */
 function _xp(n){state.xp+=n;var p=state.level;for(var i=_L.length-1;i>=0;i--){if(state.xp>=_L[i].xp){state.level=_L[i].lvl;break;}}if(state.level>p){for(var l=p+1;l<=state.level;l++){_lg('⬆️ Уровень '+l+'!','win');}_lu();}}
 
 function _rz(){state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);if(DOM.upgradeBtn)DOM.upgradeBtn.disabled=true;}
@@ -356,9 +358,9 @@ function _hu(){
 }
 function _ipf(cid,fk,cb){var cn=$(cid);if(!cn)return;cn.innerHTML='';var a=document.createElement('button');a.className='upg-inv-filter active';a.textContent='Все';a.dataset.filter='all';cn.appendChild(a);Object.entries(RARITIES).forEach(function(kv){var b=document.createElement('button');b.className='upg-inv-filter';b.textContent=kv[1].name;b.dataset.filter=kv[0];b.style.color=kv[1].color;cn.appendChild(b);});cn.querySelectorAll('.upg-inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();cn.querySelectorAll('.upg-inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state[fk]=b.dataset.filter;cb();});});}
 var _sv=20;var _pp=null;var _pq=1;
-function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')
 
-                function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return a.price-b.price;});else if(state.shopSort==='price-desc')it.sort(function(a,b){return b.price-a.price;});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span class="price">'+formatRastr(p)+' '+_MF_ICON+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
+function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return a.price-b.price;});else if(state.shopSort==='price-desc')it.sort(function(a,b){return b.price-a.price;});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span class="price">'+formatRastr(p)+' '+_MF_ICON+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
+
 function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
 
 /* ============================================================
@@ -392,8 +394,8 @@ async function _withdraw(skin){
             }
         );
         _lg('✅ Заявка на вывод создана! Админ отправит трейд.','win');
-        renderInventory();
-        renderInvPanel();
+        _rinv();
+        _ri();
         _ui();
     }catch(e){
         console.error('Withdraw error:',e);
