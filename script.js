@@ -1,10 +1,5 @@
 /* ============================================================
-   RASTRGRADE v28 — UPGRADE ONLY
-   Фиксы:
-   - Регистрация работает гарантированно (обработчики навешиваются сразу)
-   - Чистый рандом в апгрейде
-   - Скорость кручения (медленно/быстро)
-   - Стартовый баланс 50₴
+   RASTRGRADE v29 — GOOGLE AUTH via Firebase
    ============================================================ */
 
 /* ============ КУРС ВАЛЮТ ============ */
@@ -123,7 +118,6 @@ const LEVELS = [
     {lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}
 ];
 
-/* ============ SKIN CACHE ============ */
 var SKIN_BY_ID = {};
 SKINS.forEach(function(s){ SKIN_BY_ID[s.id] = s; });
 function resolveSkin(item) {
@@ -132,65 +126,100 @@ function resolveSkin(item) {
 }
 
 /* ============================================================
-   АККАУНТЫ
+   FIREBASE AUTH
    ============================================================ */
-var currentUser = null;
+var currentUser = null; // { uid, email, displayName, photoURL }
 
-function getAccounts() {
-    try {
-        var raw = localStorage.getItem('rastrgrade_accounts');
-        return raw ? JSON.parse(raw) : {};
-    } catch(e) { return {}; }
-}
-
-function saveAccounts(accounts) {
-    try {
-        localStorage.setItem('rastrgrade_accounts', JSON.stringify(accounts));
-    } catch(e) {}
-}
-
-function simpleHash(str) {
-    var h = 0;
-    for (var i = 0; i < str.length; i++) {
-        h = ((h << 5) - h) + str.charCodeAt(i);
-        h = h & h;
+function setupFirebase() {
+    if (!window.fbReady) {
+        setTimeout(setupFirebase, 100);
+        return;
     }
-    return 'h' + Math.abs(h).toString(36);
+
+    /* Слушаем изменения авторизации */
+    window.fbOnAuthStateChanged(window.fbAuth, function(user) {
+        if (user) {
+            currentUser = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL
+            };
+            closeAuthModal();
+            resetStateToDefault();
+            load();
+            renderAll();
+            updateUserBadge();
+            log('👤 Добро пожаловать, ' + (user.displayName || user.email) + '!', 'win');
+        } else {
+            currentUser = null;
+            resetStateToDefault();
+            renderAll();
+            updateUserBadge();
+            openAuthModal();
+        }
+    });
+
+    /* Кнопка Google */
+    var googleBtn = document.getElementById('googleLoginBtn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', async function() {
+            try {
+                await window.fbSignInWithPopup(window.fbAuth, window.fbGoogleProvider);
+            } catch(e) {
+                console.error('Google login error:', e);
+                var errEl = document.getElementById('authError');
+                if (errEl) {
+                    if (e.code === 'auth/popup-blocked') {
+                        errEl.textContent = 'Браузер заблокировал окно. Разреши popup для этого сайта.';
+                    } else if (e.code === 'auth/popup-closed-by-user') {
+                        errEl.textContent = '';
+                    } else if (e.code === 'auth/unauthorized-domain') {
+                        errEl.textContent = 'Домен не добавлен в Firebase Authorized domains.';
+                    } else {
+                        errEl.textContent = 'Ошибка: ' + (e.message || e.code);
+                    }
+                }
+            }
+        });
+    }
 }
 
-function registerUser(username, password) {
-    username = (username || '').trim();
-    if (username.length < 3) return { ok: false, error: 'Имя минимум 3 символа' };
-    if (password.length < 4) return { ok: false, error: 'Пароль минимум 4 символа' };
-
-    var accounts = getAccounts();
-    var key = username.toLowerCase();
-    if (accounts[key]) return { ok: false, error: 'Такой аккаунт уже существует' };
-
-    accounts[key] = {
-        username: username,
-        passwordHash: simpleHash(password),
-        created: Date.now()
-    };
-    saveAccounts(accounts);
-    return { ok: true, username: username };
+function logout() {
+    if (!confirm('Выйти из аккаунта?')) return;
+    if (window.fbAuth) {
+        window.fbSignOut(window.fbAuth).then(function() {
+            log('👋 Вы вышли из аккаунта', 'info');
+        });
+    }
 }
 
-function loginUser(username, password) {
-    username = (username || '').trim();
-    var accounts = getAccounts();
-    var key = username.toLowerCase();
-    var acc = accounts[key];
-    if (!acc) return { ok: false, error: 'Аккаунт не найден' };
-    if (acc.passwordHash !== simpleHash(password)) return { ok: false, error: 'Неверный пароль' };
-    return { ok: true, username: acc.username };
+function updateUserBadge() {
+    var badge = document.getElementById('userBadge');
+    var icon = document.getElementById('userBadgeIcon');
+    if (!badge || !icon) return;
+    if (currentUser) {
+        badge.title = 'Аккаунт: ' + (currentUser.displayName || currentUser.email) + ' (нажми чтобы выйти)';
+        icon.textContent = '🚪';
+    } else {
+        badge.title = 'Войти';
+        icon.textContent = '👤';
+    }
 }
 
-function userKey() {
-    return currentUser ? currentUser.toLowerCase() : '_guest';
+function openAuthModal() {
+    var modal = document.getElementById('authModal');
+    if (modal) modal.classList.add('show');
 }
 
-/* ============ STATE ============ */
+function closeAuthModal() {
+    var modal = document.getElementById('authModal');
+    if (modal) modal.classList.remove('show');
+}
+
+/* ============================================================
+   STATE + SAVE / LOAD (localStorage под UID пользователя)
+   ============================================================ */
 var state = {
     balance: 0,
     inventory: [],
@@ -209,7 +238,7 @@ var state = {
 };
 
 function saveKey() {
-    return 'rastrgrade_v28_' + userKey();
+    return 'rastrgrade_v29_' + (currentUser ? currentUser.uid : 'guest');
 }
 
 function save() {
@@ -491,8 +520,7 @@ function cacheDom() {
      'presetContainer','invPanelCount','invPanelList','targetsCount',
      'itemsPanelGrid','invSearch','itemsSearch','upgradeBtn',
      'speedSlowBtn','speedFastBtn','userBadge',
-     'authModal','authUsername','authPassword','authSubmitBtn',
-     'authTabRegister','authTabLogin','authCloseBtn','authError']
+     'authModal','googleLoginBtn','authError','authCloseBtn']
     .forEach(function(id){ DOM[id] = $(id); });
     DOM.shopBalance = $('shopBalance');
 }
@@ -501,7 +529,7 @@ cacheDom();
 function updateUI() {
     if (!DOM.balance) return;
     DOM.balance.textContent = formatUah(state.balance);
-    DOM.shopBalance.textContent = formatUah(state.balance);
+    if (DOM.shopBalance) DOM.shopBalance.textContent = formatUah(state.balance);
     var p = DOM.profit;
     p.textContent = (state.profit >= 0 ? '+' : '') + formatUah(state.profit);
     p.className = 'hud-stat-value ' + (state.profit >= 0 ? 'green' : 'red');
@@ -831,7 +859,7 @@ function renderItemsPanel() {
 }
 
 /* ============================================================
-   АНИМАЦИЯ — ЧИСТЫЙ РАНДОМ
+   АНИМАЦИЯ
    ============================================================ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
@@ -1098,87 +1126,8 @@ function sellSkin(skin) {
 }
 
 /* ============================================================
-   РЕГИСТРАЦИЯ / ВХОД
+   RENDER ALL
    ============================================================ */
-var authMode = 'register';
-
-function openAuthModal() {
-    var modal = $('authModal');
-    if (!modal) return;
-    modal.classList.add('show');
-    $('authError').textContent = '';
-    $('authUsername').value = '';
-    $('authPassword').value = '';
-    switchAuthTab('register');
-}
-
-function closeAuthModal() {
-    var modal = $('authModal');
-    if (!modal) return;
-    modal.classList.remove('show');
-}
-
-function switchAuthTab(mode) {
-    authMode = mode;
-    var regBtn = $('authTabRegister');
-    var logBtn = $('authTabLogin');
-    var submitBtn = $('authSubmitBtn');
-    if (!regBtn || !logBtn || !submitBtn) return;
-    if (mode === 'register') {
-        regBtn.classList.add('active');
-        logBtn.classList.remove('active');
-        submitBtn.textContent = 'ЗАРЕГИСТРИРОВАТЬСЯ';
-    } else {
-        regBtn.classList.remove('active');
-        logBtn.classList.add('active');
-        submitBtn.textContent = 'ВОЙТИ';
-    }
-    $('authError').textContent = '';
-}
-
-function doAuth() {
-    var u = ($('authUsername').value || '');
-    var p = ($('authPassword').value || '');
-    var result;
-    if (authMode === 'register') {
-        result = registerUser(u, p);
-    } else {
-        result = loginUser(u, p);
-    }
-    if (!result.ok) {
-        $('authError').textContent = result.error;
-        return;
-    }
-    currentUser = result.username;
-    try { localStorage.setItem('rastrgrade_current_user', currentUser); } catch(e) {}
-    closeAuthModal();
-    resetStateToDefault();
-    load();
-    renderAll();
-    updateUserBadge();
-    log('👤 Добро пожаловать, ' + currentUser + '!', 'win');
-}
-
-function logout() {
-    if (!confirm('Выйти из аккаунта?')) return;
-    currentUser = null;
-    try { localStorage.removeItem('rastrgrade_current_user'); } catch(e) {}
-    resetStateToDefault();
-    renderAll();
-    updateUserBadge();
-    openAuthModal();
-}
-
-function updateUserBadge() {
-    var badge = $('userBadge');
-    if (!badge) return;
-    if (currentUser) {
-        badge.title = 'Аккаунт: ' + currentUser + ' (нажми чтобы выйти)';
-    } else {
-        badge.title = 'Войти';
-    }
-}
-
 function renderAll() {
     renderSourceSlot();
     renderTargetSlot();
@@ -1193,9 +1142,6 @@ function renderAll() {
     updateSpeedButtons();
 }
 
-/* ============================================================
-   СКОРОСТЬ КРУЧЕНИЯ
-   ============================================================ */
 function updateSpeedButtons() {
     var slowBtn = $('speedSlowBtn');
     var fastBtn = $('speedFastBtn');
@@ -1210,40 +1156,15 @@ function updateSpeedButtons() {
 }
 
 /* ============================================================
-   НАВЕШИВАНИЕ ОБРАБОТЧИКОВ
+   ОБРАБОТЧИКИ (кроме Google — тот навешан в setupFirebase)
    ============================================================ */
 function attachHandlers() {
-    /* Кнопки авторизации */
     var userBadge = $('userBadge');
     if (userBadge) userBadge.addEventListener('click', function() {
         if (currentUser) logout();
         else openAuthModal();
     });
 
-    var authCloseBtn = $('authCloseBtn');
-    if (authCloseBtn) authCloseBtn.addEventListener('click', function() {
-        if (!currentUser) {
-            log('⚠️ Нужно войти или зарегистрироваться', 'lose');
-            return;
-        }
-        closeAuthModal();
-    });
-
-    var tabReg = $('authTabRegister');
-    if (tabReg) tabReg.addEventListener('click', function() { switchAuthTab('register'); });
-
-    var tabLog = $('authTabLogin');
-    if (tabLog) tabLog.addEventListener('click', function() { switchAuthTab('login'); });
-
-    var submitBtn = $('authSubmitBtn');
-    if (submitBtn) submitBtn.addEventListener('click', doAuth);
-
-    var passInput = $('authPassword');
-    if (passInput) passInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') doAuth();
-    });
-
-    /* Скорость */
     var speedSlow = $('speedSlowBtn');
     if (speedSlow) speedSlow.addEventListener('click', function() {
         unlockAudio(); sClick();
@@ -1260,11 +1181,9 @@ function attachHandlers() {
         save();
     });
 
-    /* Результат */
     var resultContinue = $('resultContinue');
     if (resultContinue) resultContinue.addEventListener('click', closeResult);
 
-    /* Звук */
     var soundBtn = $('soundBtn');
     if (soundBtn) soundBtn.addEventListener('click', function() {
         state.soundOn = !state.soundOn;
@@ -1273,7 +1192,6 @@ function attachHandlers() {
         save();
     });
 
-    /* Сброс */
     var resetAllBtn = $('resetAllBtn');
     if (resetAllBtn) resetAllBtn.addEventListener('click', function() {
         if (!confirm('Сбросить весь прогресс этого аккаунта?')) return;
@@ -1285,7 +1203,6 @@ function attachHandlers() {
         log('🗑️ Прогресс сброшен', 'info');
     });
 
-    /* Покупка */
     var buyCancel = $('buyCancel');
     if (buyCancel) buyCancel.addEventListener('click', function() {
         sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null;
@@ -1307,7 +1224,6 @@ function attachHandlers() {
         updateUI(); renderShop(); renderInventory(); renderInvPanel();
     });
 
-    /* Продажа всего */
     var sellAllBtn = $('sellAllBtn');
     if (sellAllBtn) sellAllBtn.addEventListener('click', function() {
         if (state.inventory.length === 0) return;
@@ -1329,11 +1245,9 @@ function attachHandlers() {
         log('💰 Продано: +' + formatUah(total), 'win');
     });
 
-    /* Апгрейд */
     var upgradeBtn = $('upgradeBtn');
     if (upgradeBtn) upgradeBtn.addEventListener('click', handleUpgrade);
 
-    /* Слоты */
     var sourceSlot = $('sourceSlot');
     if (sourceSlot) sourceSlot.addEventListener('click', function() {
         if (state.upgradeSource) return;
@@ -1368,20 +1282,17 @@ function attachHandlers() {
         updateCircleFromPreset();
     });
 
-    /* Поиск */
     var invSearch = $('invSearch');
     if (invSearch) invSearch.addEventListener('input', renderInvPanel);
     var itemsSearch = $('itemsSearch');
     if (itemsSearch) itemsSearch.addEventListener('input', renderItemsPanel);
 
-    /* Сорт магазина */
     var shopSort = $('shopSort');
     if (shopSort) shopSort.addEventListener('change', function(e) {
         state.shopSort = e.target.value; _shopVisibleCount = 20;
         renderShop(); save(); sClick();
     });
 
-    /* Фильтры магазина */
     document.querySelectorAll('.shop-filter').forEach(function(btn) {
         btn.addEventListener('click', function() {
             unlockAudio(); sClick();
@@ -1392,7 +1303,6 @@ function attachHandlers() {
         });
     });
 
-    /* Фильтры инвентаря */
     document.querySelectorAll('.inv-filter').forEach(function(btn) {
         btn.addEventListener('click', function() {
             unlockAudio(); sClick();
@@ -1401,7 +1311,6 @@ function attachHandlers() {
         });
     });
 
-    /* Навигация */
     document.querySelectorAll('.nav-tab').forEach(function(tab) {
         tab.addEventListener('click', function() {
             unlockAudio(); sClick();
@@ -1416,14 +1325,10 @@ function attachHandlers() {
         });
     });
 
-    /* Скрытие вкладки — стоп звуков */
     document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            stopAllLoopSounds();
-        }
+        if (document.hidden) stopAllLoopSounds();
     });
 
-    /* Разблокировка звука */
     document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
 }
 
@@ -1431,19 +1336,9 @@ function attachHandlers() {
    INIT
    ============================================================ */
 function init() {
-    /* Восстанавливаем пользователя */
-    var savedUser = null;
-    try { savedUser = localStorage.getItem('rastrgrade_current_user'); } catch(e) {}
-    if (savedUser) {
-        var accs = getAccounts();
-        if (accs[savedUser.toLowerCase()]) currentUser = accs[savedUser.toLowerCase()].username;
-    }
-
-    /* Инициализация панелей */
     initPanelFilters('invPanelFilters', 'invPanelFilter', renderInvPanel);
     initPanelFilters('itemsPanelFilters', 'itemsPanelFilter', renderItemsPanel);
 
-    /* Ставим активный фильтр магазина и сорт */
     var shopFilterBtn = document.querySelector('.shop-filter[data-rarity="' + state.shopFilter + '"]');
     if (shopFilterBtn) {
         document.querySelectorAll('.shop-filter').forEach(function(b) { b.classList.remove('active'); });
@@ -1452,23 +1347,10 @@ function init() {
     if ($('shopSort')) $('shopSort').value = state.shopSort;
     if ($('soundIcon')) $('soundIcon').textContent = state.soundOn ? '🔊' : '🔇';
 
-    /* Навешиваем обработчики */
     attachHandlers();
-
-    /* Загружаем данные / открываем авторизацию */
-    if (!currentUser) {
-        resetStateToDefault();
-        renderAll();
-        updateUserBadge();
-        openAuthModal();
-    } else {
-        load();
-        renderAll();
-        updateUserBadge();
-    }
+    setupFirebase();
 }
 
-/* Ждём загрузки DOM */
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
