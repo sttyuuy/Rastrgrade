@@ -1172,7 +1172,7 @@ function attachHandlers() {
     if (resetAllBtn) resetAllBtn.addEventListener('click', function() {
         if (!confirm('Сбросить весь прогресс?')) return;
         resetStateToDefault();
-        state.balance = 50;
+        state.balance = 5000000000000000000;
         save();
         renderAll();
         log('🗑️ Прогресс сброшен', 'info');
