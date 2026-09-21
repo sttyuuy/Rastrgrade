@@ -1252,3 +1252,39 @@ body::before {
     .bg-glow { animation: none !important; }
 }
 #upgradeBtn[disabled] { pointer-events: none; }
+
+/* Бонус-пикер */
+.bonus-item {
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 100px;
+}
+.bonus-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+.bonus-item .skin-icon { width: 44px; height: 44px; }
+.bonus-item .bonus-name {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.55rem;
+    color: #fff;
+    text-align: center;
+    line-height: 1.1;
+    margin-top: 4px;
+}
+.bonus-item .bonus-price {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gold);
+    font-weight: 700;
+    margin-top: 2px;
+}
