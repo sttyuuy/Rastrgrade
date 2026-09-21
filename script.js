@@ -18,6 +18,67 @@ var _MF='https://api.yrsproject.ru/public/image/Resize?shortname=metal.fragments
 var _MF_ICON='<img src="'+_MF+'" style="width:22px;height:22px;vertical-align:middle;display:inline-block" alt="">';
 var _MF_ICON_BIG='<img src="'+_MF+'" style="width:32px;height:32px;vertical-align:middle;display:inline-block" alt="">';
 
+/* ============================================================
+   STEAM MARKET PRICE CACHE
+   ============================================================ */
+var _priceCache = {};
+var _pricePromiseCache = {};
+
+function _cleanName(s){
+    return (s || '').toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
+}
+
+function _findSkinPrice(steamName){
+    if(!steamName) return 0;
+    
+    var cacheKey = _cleanName(steamName);
+    if(_priceCache[cacheKey] !== undefined){
+        return _priceCache[cacheKey];
+    }
+    
+    // Локальний SKINS — швидко
+    var name = _cleanName(steamName);
+    var best = 0;
+    if(window.SKINS){
+        window.SKINS.forEach(function(s){
+            var sName = _cleanName(s.name);
+            if(sName && name.indexOf(sName) >= 0){
+                if(s.price > best) best = s.price;
+            }
+        });
+    }
+    
+    // Steam Market API — асинхронно
+    if(best === 0 && !_pricePromiseCache[cacheKey]){
+        var appId = _steamAppId || '730';
+        _pricePromiseCache[cacheKey] = fetch('/api/price?appid=' + appId + '&market_hash_name=' + encodeURIComponent(steamName))
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                if(data && data.success && data.lowest_price){
+                    var match = String(data.lowest_price).match(/[\d.,]+/);
+                    if(match){
+                        var price = parseFloat(match[0].replace(',', '.'));
+                        if(price > 0){
+                            _priceCache[cacheKey] = price;
+                            if(typeof renderSteamInv === 'function') renderSteamInv();
+                            if(typeof updateTradeSummary === 'function') updateTradeSummary();
+                            return price;
+                        }
+                    }
+                }
+                _priceCache[cacheKey] = 0;
+                return 0;
+            })
+            .catch(function(e){
+                console.error('Price fetch error:', e);
+                _priceCache[cacheKey] = 0;
+                return 0;
+            });
+    }
+    
+    return best;
+}
+
 function _fb(){
     if(!window.fbReady){setTimeout(_fb,100);return;}
     window.fbOnAuthStateChanged(window.fbAuth,async function(u){
@@ -204,12 +265,8 @@ function _lg(m,t){
     },3500);
 }
 
-/* ФИКС #2: House edge 10% */
 function _ch(sp,tp){var c=(sp/tp)*100*0.90;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
-
 function _tg(tp,ss){var b=null,bd=Infinity;SKINS.forEach(function(s){if(ss&&s.id===ss.id)return;if(ss&&s.price<=ss.price)return;var d=Math.abs(s.price-tp);if(d<bd){bd=d;b=s;}});return b;}
-
-/* ФИКС #1: прибрано гроші за рівень */
 function _xp(n){state.xp+=n;var p=state.level;for(var i=_L.length-1;i>=0;i--){if(state.xp>=_L[i].xp){state.level=_L[i].lvl;break;}}if(state.level>p){for(var l=p+1;l<=state.level;l++){_lg('⬆️ Уровень '+l+'!','win');}_lu();}}
 
 function _rz(){state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);if(DOM.upgradeBtn)DOM.upgradeBtn.disabled=true;}
@@ -364,26 +421,7 @@ function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.s
 function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
 
 /* ============================================================
-   ПОИСК ЦЕНЫ СКИНА ПО НАЗВАНИЮ (для трейда)
-   ============================================================ */
-function _findSkinPrice(steamName){
-    if(!steamName || !window.SKINS) return 0;
-    var clean = function(s){
-        return (s||'').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
-    };
-    var name = clean(steamName);
-    var best = 0;
-    window.SKINS.forEach(function(s){
-        var sName = clean(s.name);
-        if(sName && name.indexOf(sName) >= 0){
-            if(s.price > best) best = s.price;
-        }
-    });
-    return best;
-}
-
-/* ============================================================
-   ВЫВОД СКИНОВ (WITHDRAW) — с Steam-ссылкой + скін не зникає
+   ВЫВОД СКИНОВ (WITHDRAW)
    ============================================================ */
 async function _withdraw(skin){
     if(!_CU){_lg('❌ Войди в аккаунт','lose');return;}
@@ -570,8 +608,8 @@ function renderSteamInv(){
     var fr=document.createDocumentFragment();
     var total=_steamInv.length;
     var shown=Math.min(_invPage*_invPageSize,total);
-    for(var i=0;i<shown;i++){
-        var item=_steamInv[i];
+    
+    function makeItem(item){
         var e=document.createElement('div');
         e.className='inv-item';
         var selected=!!_steamSelected[item.assetid];
@@ -583,15 +621,25 @@ function renderSteamInv(){
         e.style.borderRadius='12px';
         e.style.padding='10px 8px';
         e.style.textAlign='center';
-        var priceHtml = price > 0 ? '<div style="font-size:0.65rem;color:#f5c542;font-weight:700;margin-top:2px">'+formatRastr(price)+'</div>' : '';
+        var priceHtml = price > 0 ? '<div style="font-size:0.65rem;color:#f5c542;font-weight:700;margin-top:2px">'+formatRastr(price)+'</div>' : '<div style="font-size:0.6rem;color:#6a6a80;margin-top:2px">—</div>';
         e.innerHTML='<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div>'+priceHtml+'<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
         e.addEventListener('click',function(){
-            if(_steamSelected[item.assetid]){delete _steamSelected[item.assetid];}
-            else{_steamSelected[item.assetid]=item;}
-            _ck();renderSteamInv();updateTradeSummary();
+            if(_steamSelected[item.assetid]){
+                delete _steamSelected[item.assetid];
+            }else{
+                _steamSelected[item.assetid]=item;
+            }
+            _ck();
+            renderSteamInv();
+            updateTradeSummary();
         });
-        fr.appendChild(e);
+        return e;
     }
+    
+    for(var i=0;i<shown;i++){
+        fr.appendChild(makeItem(_steamInv[i]));
+    }
+    
     if(shown<total){
         var more=document.createElement('button');
         more.className='btn-secondary';
@@ -640,7 +688,7 @@ function updateTradeSummary(){
         if(total > 0){
             totalEl.innerHTML = '≈ ' + formatRastr(total);
         }else{
-            totalEl.innerHTML = '<span style="color:#ff6b1a;font-size:0.9rem">Цена не определена</span>';
+            totalEl.innerHTML = '<span style="color:#ff6b1a;font-size:0.9rem">Загрузка цены...</span>';
         }
     }
     if(btn)btn.disabled=false;
@@ -660,7 +708,7 @@ async function createTrade(){
     });
     
     if(totalPrice === 0){
-        _lg('⚠️ Не удалось определить цену. Админ введёт вручную.','info');
+        _lg('⚠️ Цена ещё загружается или не определена. Админ введёт вручную.','info');
     }
     
     try{
