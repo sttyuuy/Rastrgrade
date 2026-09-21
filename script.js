@@ -11,6 +11,8 @@ var _steamAppId='730';
 var _steamInv=[];
 var _steamSelected={};
 var _ndl=null;
+var _invPageSize=50;
+var _invPage=1;
 
 var _MF='https://api.yrsproject.ru/public/image/Resize?shortname=metal.fragments&x=64&y=64';
 var _MF_ICON='<img src="'+_MF+'" style="width:22px;height:22px;vertical-align:middle;display:inline-block" alt="">';
@@ -201,9 +203,13 @@ function _lg(m,t){
         setTimeout(function(){e.remove();},400);
     },3500);
 }
+
+function _ch(sp,tp){var c=(sp/tp)*100*0.90;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
+
 function _tg(tp,ss){var b=null,bd=Infinity;SKINS.forEach(function(s){if(ss&&s.id===ss.id)return;if(ss&&s.price<=ss.price)return;var d=Math.abs(s.price-tp);if(d<bd){bd=d;b=s;}});return b;}
-function _ch(sp,tp){var c=(sp/tp)*100;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
-function _xp(n){state.xp+=n;var p=state.level;for(var i=_L.length-1;i>=0;i--){if(state.xp>=_L[i].xp){state.level=_L[i].lvl;break;}}if(state.level>p){for(var l=p+1;l<=state.level;l++){var r=l*usdToRastr(11);state.balance+=r;_lg('⬆️ Уровень '+l+'! +'+formatRastr(r),'win');}_lu();}}
+
+function _xp(n){state.xp+=n;var p=state.level;for(var i=_L.length-1;i>=0;i--){if(state.xp>=_L[i].xp){state.level=_L[i].lvl;break;}}if(state.level>p){for(var l=p+1;l<=state.level;l++){_lg('⬆️ Уровень '+l+'!','win');}_lu();}}
+
 function _rz(){state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);if(DOM.upgradeBtn)DOM.upgradeBtn.disabled=true;}
 
 var DOM={};
@@ -350,14 +356,79 @@ function _hu(){
 }
 function _ipf(cid,fk,cb){var cn=$(cid);if(!cn)return;cn.innerHTML='';var a=document.createElement('button');a.className='upg-inv-filter active';a.textContent='Все';a.dataset.filter='all';cn.appendChild(a);Object.entries(RARITIES).forEach(function(kv){var b=document.createElement('button');b.className='upg-inv-filter';b.textContent=kv[1].name;b.dataset.filter=kv[0];b.style.color=kv[1].color;cn.appendChild(b);});cn.querySelectorAll('.upg-inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();cn.querySelectorAll('.upg-inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state[fk]=b.dataset.filter;cb();});});}
 var _sv=20;var _pp=null;var _pq=1;
-function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return a.price-b.price;});else if(state.shopSort==='price-desc')it.sort(function(a,b){return b.price-a.price;});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span class="price">'+formatRastr(p)+' '+_MF_ICON+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
+function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')
+
+                function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return a.price-b.price;});else if(state.shopSort==='price-desc')it.sort(function(a,b){return b.price-a.price;});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span class="price">'+formatRastr(p)+' '+_MF_ICON+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
 function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
+
+/* ============================================================
+   ВЫВОД СКИНОВ (WITHDRAW)
+   ============================================================ */
+async function _withdraw(skin){
+    if(!_CU){_lg('❌ Войди в аккаунт','lose');return;}
+    var steamUrl = _steamId ? 'https://steamcommunity.com/profiles/'+_steamId : '';
+    if(!steamUrl){
+        var url = prompt('📤 Вставь свою Steam Trade-ссылку:\n(Например: https://steamcommunity.com/tradeoffer/new/?partner=...&token=...)','');
+        if(!url || url.indexOf('steamcommunity.com')<0){_lg('❌ Нужна Steam Trade-ссылка','lose');return;}
+        steamUrl = url;
+    }
+    if(!confirm('Вивести "'+skin.name+'" в Steam?\n\nСкин будет заморожен до отправки трейда.')) return;
+    try{
+        var idx = state.inventory.indexOf(skin);
+        if(idx < 0){_lg('❌ Скин не найден','lose');return;}
+        state.inventory.splice(idx, 1);
+        await _sc();
+        await window.fbAddDoc(
+            window.fbCollection(window.fbDb, 'withdrawals'),
+            {
+                uid: _CU.uid,
+                displayName: _UDN||_CU.displayName||'Игрок',
+                skinId: skin.id,
+                skinName: skin.name,
+                skinPrice: skin.price,
+                steamUrl: steamUrl,
+                status: 'pending',
+                createdAt: Date.now()
+            }
+        );
+        _lg('✅ Заявка на вывод создана! Админ отправит трейд.','win');
+        renderInventory();
+        renderInvPanel();
+        _ui();
+    }catch(e){
+        console.error('Withdraw error:',e);
+        _lg('❌ Ошибка: '+e.message,'lose');
+        state.inventory.push(skin);
+        await _sc();
+    }
+}
+
 var _ivf='all';
-function _rinv(){var iv=$('inventory');if(!iv)return;if(state.inventory.length===0){iv.innerHTML='<div class="empty-inv">Инвентарь пуст!<br><br>Купи скины в магазине.</div>';return;}var sr=state.inventory.slice().sort(function(a,b){return b.price-a.price;});if(_ivf!=='all')sr=sr.filter(function(x){return x.rarity===_ivf;});if(sr.length===0){iv.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();sr.forEach(function(sk){var e=document.createElement('div');e.className='inv-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="price">'+formatRastr(sk.price)+' '+_MF_ICON+'</div><button class="sell-btn">Продать</button>';e.querySelector('.sell-btn').addEventListener('click',function(ev){ev.stopPropagation();_ssk(sk);});fr.appendChild(e);});iv.replaceChildren(fr);}
+function _rinv(){
+    var iv=$('inventory');
+    if(!iv)return;
+    if(state.inventory.length===0){iv.innerHTML='<div class="empty-inv">Инвентарь пуст!<br><br>Купи скины в магазине.</div>';return;}
+    var sr=state.inventory.slice().sort(function(a,b){return b.price-a.price;});
+    if(_ivf!=='all')sr=sr.filter(function(x){return x.rarity===_ivf;});
+    if(sr.length===0){iv.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}
+    var fr=document.createDocumentFragment();
+    sr.forEach(function(sk){
+        var e=document.createElement('div');
+        e.className='inv-item '+sk.rarity;
+        e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="price">'+formatRastr(sk.price)+' '+_MF_ICON+'</div><button class="sell-btn">Продать</button><button class="withdraw-btn" style="position:absolute;bottom:6px;left:6px;background:#4aa8ff;border:none;color:#fff;padding:4px 10px;font-family:inherit;font-size:0.65rem;font-weight:700;cursor:pointer;border-radius:6px;opacity:0">📤 ВИВЕСТИ</button>';
+        e.querySelector('.sell-btn').addEventListener('click',function(ev){ev.stopPropagation();_ssk(sk);});
+        e.querySelector('.withdraw-btn').addEventListener('click',function(ev){ev.stopPropagation();_withdraw(sk);});
+        fr.appendChild(e);
+    });
+    iv.replaceChildren(fr);
+}
 function _ssk(sk){var i=state.inventory.indexOf(sk);if(i<0)return;state.inventory.splice(i,1);state.balance+=sk.price;if(state.upgradeSource===sk)_rz();_ui();_rinv();_ri();_ck();_lg('💰 Продано: '+sk.name+' +'+formatRastr(sk.price),'info');save();}
 function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
+/* ============================================================
+   STEAM INVENTORY — RETRY + КЕШ + ПАГИНАЦИЯ
+   ============================================================ */
 async function loadSteamInventory(appId){
     _steamAppId=appId;
     var loadEl=$('invLoading');
@@ -371,57 +442,99 @@ async function loadSteamInventory(appId){
     if(emptyEl)emptyEl.style.display='none';
     if(loadEl)loadEl.style.display='block';
     if(summary)summary.style.display='none';
+    var cacheKey='inv_'+_steamId+'_'+appId;
+    var cached=null;
+    try{
+        var c=sessionStorage.getItem(cacheKey);
+        if(c){var parsed=JSON.parse(c);if(parsed.time&&(Date.now()-parsed.time)<5*60*1000){cached=parsed.data;}}
+    }catch(e){}
+    if(cached){
+        if(loadEl)loadEl.style.display='none';
+        processInventory(cached);
+        return;
+    }
     _steamInv=[];
     _steamSelected={};
+    _invPage=1;
     updateTradeSummary();
-    try{
-        var url='/api/inventory?steamid='+_steamId+'&appid='+appId;
-        var r=await fetch(url);
-        var data=await r.json();
-        if(loadEl)loadEl.style.display='none';
-        if(data.error){
+    var attempts=0;
+    var maxAttempts=3;
+    async function tryFetch(){
+        attempts++;
+        try{
+            var url='/api/inventory?steamid='+_steamId+'&appid='+appId;
+            var r=await fetch(url);
+            var data=await r.json();
+            if(data.error){
+                if(data.private){
+                    if(loadEl)loadEl.style.display='none';
+                    if(errEl){
+                        errEl.style.display='block';
+                        errEl.innerHTML='<div style="font-size:2.5rem;margin-bottom:12px">🔒</div><div style="color:var(--text-dim);line-height:1.6">Инвентарь приватный.<br>Зайди в Steam → Настройки → Конфиденциальность → <b>Инвентарь: Открытый</b>.</div>';
+                    }
+                    return;
+                }
+                if(attempts<maxAttempts){
+                    if(loadEl)loadEl.innerHTML='Загрузка... попытка '+attempts+' из '+maxAttempts;
+                    setTimeout(tryFetch,3000);
+                    return;
+                }
+                if(loadEl)loadEl.style.display='none';
+                if(errEl){
+                    errEl.style.display='block';
+                    errEl.innerHTML='<div style="color:var(--red)">Steam не отвечает.<br>Подожди минуту и нажми «Обновить».</div>';
+                }
+                return;
+            }
+            try{sessionStorage.setItem(cacheKey,JSON.stringify({time:Date.now(),data:data}));}catch(e){}
+            if(loadEl)loadEl.style.display='none';
+            processInventory(data);
+        }catch(e){
+            console.error('loadSteamInventory error:',e);
+            if(attempts<maxAttempts){
+                if(loadEl)loadEl.innerHTML='Загрузка... попытка '+attempts+' из '+maxAttempts;
+                setTimeout(tryFetch,3000);
+                return;
+            }
+            if(loadEl)loadEl.style.display='none';
             if(errEl){
                 errEl.style.display='block';
-                if(data.private){
-                    errEl.innerHTML='<div style="font-size:2.5rem;margin-bottom:12px">🔒</div><div style="color:var(--text-dim);line-height:1.6">Инвентарь приватный.<br>Зайди в Steam → Настройки → Конфиденциальность → <b>Инвентарь: Открытый</b>.</div>';
-                }else{
-                    errEl.innerHTML='<div style="color:var(--red)">Ошибка: '+data.error+'</div>';
-                }
+                errEl.innerHTML='<div style="color:var(--red)">Ошибка: '+e.message+'<br>Попробуй ещё раз через минуту.</div>';
             }
-            return;
-        }
-        if(!data.assets||data.assets.length===0){
-            if(emptyEl)emptyEl.style.display='block';
-            return;
-        }
-        var descMap={};
-        data.descriptions.forEach(function(d){descMap[d.classid+'_'+d.instanceid]=d;});
-        _steamInv=data.assets.map(function(a){
-            var desc=descMap[a.classid+'_'+a.instanceid]||{};
-            return{
-                assetid:a.assetid,
-                classid:a.classid,
-                instanceid:a.instanceid,
-                name:desc.market_hash_name||desc.name||'Unknown',
-                icon:'https://community.cloudflare.steamstatic.com/economy/image/'+desc.icon_url,
-                tradable:desc.tradable===1,
-                marketable:desc.marketable===1,
-                type:desc.type||''
-            };
-        }).filter(function(i){return i.tradable&&i.icon.indexOf('undefined')<0;});
-        if(_steamInv.length===0){
-            if(emptyEl)emptyEl.style.display='block';
-            return;
-        }
-        renderSteamInv();
-    }catch(e){
-        console.error('loadSteamInventory error:',e);
-        if(loadEl)loadEl.style.display='none';
-        if(errEl){
-            errEl.style.display='block';
-            errEl.innerHTML='<div style="color:var(--red)">Ошибка загрузки: '+e.message+'</div>';
         }
     }
+    tryFetch();
+}
+
+function processInventory(data){
+    var emptyEl=$('invEmpty');
+    var grid=$('steamInvGrid');
+    if(!grid)return;
+    if(!data.assets||data.assets.length===0){
+        if(emptyEl)emptyEl.style.display='block';
+        return;
+    }
+    var descMap={};
+    data.descriptions.forEach(function(d){descMap[d.classid+'_'+d.instanceid]=d;});
+    _steamInv=data.assets.map(function(a){
+        var desc=descMap[a.classid+'_'+a.instanceid]||{};
+        return{
+            assetid:a.assetid,
+            classid:a.classid,
+            instanceid:a.instanceid,
+            name:desc.market_hash_name||desc.name||'Unknown',
+            icon:'https://community.cloudflare.steamstatic.com/economy/image/'+desc.icon_url,
+            tradable:desc.tradable===1,
+            marketable:desc.marketable===1,
+            type:desc.type||''
+        };
+    }).filter(function(i){return i.tradable&&i.icon.indexOf('undefined')<0;});
+    if(_steamInv.length===0){
+        if(emptyEl)emptyEl.style.display='block';
+        return;
+    }
+    _invPage=1;
+    renderSteamInv();
 }
 
 function renderSteamInv(){
@@ -429,7 +542,10 @@ function renderSteamInv(){
     if(!grid)return;
     grid.innerHTML='';
     var fr=document.createDocumentFragment();
-    _steamInv.forEach(function(item){
+    var total=_steamInv.length;
+    var shown=Math.min(_invPage*_invPageSize,total);
+    for(var i=0;i<shown;i++){
+        var item=_steamInv[i];
         var e=document.createElement('div');
         e.className='inv-item';
         var selected=!!_steamSelected[item.assetid];
@@ -447,7 +563,33 @@ function renderSteamInv(){
             _ck();renderSteamInv();updateTradeSummary();
         });
         fr.appendChild(e);
-    });
+    }
+    if(shown<total){
+        var more=document.createElement('button');
+        more.className='btn-secondary';
+        more.textContent='Показать ещё 50 ('+(total-shown)+' осталось)';
+        more.style.gridColumn='1/-1';
+        more.style.marginTop='10px';
+        more.addEventListener('click',function(){_invPage++;renderSteamInv();});
+        fr.appendChild(more);
+        var all=document.createElement('button');
+        all.className='btn-secondary';
+        all.textContent='Показать ВСЕ ('+total+')';
+        all.style.gridColumn='1/-1';
+        all.style.marginTop='10px';
+        all.addEventListener('click',function(){_invPage=Math.ceil(total/_invPageSize)+1;renderSteamInv();});
+        fr.appendChild(all);
+    }
+    if(total>0){
+        var counter=document.createElement('div');
+        counter.style.gridColumn='1/-1';
+        counter.style.textAlign='center';
+        counter.style.padding='10px';
+        counter.style.color='#6a6a80';
+        counter.style.fontSize='0.8rem';
+        counter.textContent='Показано '+shown+' из '+total;
+        fr.appendChild(counter);
+    }
     grid.replaceChildren(fr);
 }
 
