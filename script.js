@@ -1,102 +1,14 @@
 /* ============================================================
-   RASTRGRADE v32 — Google Auth + Firestore + START 50 млрд₴
-   Звуки в корне репозитория (без папки sounds/)
+   RASTRGRADE v35 — Google Auth + Firestore
+   Апгрейд топ→топ+бонус, клік замість програшу, масова покупка
+   Залежить від: skins.js (SKINS, RARITIES, renderSkinIcon)
    ============================================================ */
 
-const START_BALANCE = 50000000000;
-
-const USD_TO_UAH = 44.60;
+const USD_TO_UAH = 44.60; // залишено для сумісності, не використовується
 const NUM_FMT = new Intl.NumberFormat('ru');
-function usdToUah(usd) { return Math.round(usd * USD_TO_UAH); }
-function formatUah(v) { return NUM_FMT.format(Math.round(v)) + ' ₴'; }
+
+function formatRastr(v) { return NUM_FMT.format(Math.round(v * 100) / 100) + ' ⚙️'; }
 function getShopPrice(skin) { return Math.ceil(skin.price * 1.15); }
-
-const ICON_SVG = {
-    knife:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 54l6-6 32-32 6 6-32 32-6 6z"/><path d="M44 18l8-8 6 6-8 8z"/></svg>',
-    axe:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="28" y="6" width="6" height="52" rx="2"/><path d="M34 8l22 10-22 10z"/></svg>',
-    rifle:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="4" y="26" width="52" height="6" rx="2"/><rect x="16" y="32" width="8" height="16" rx="1"/><rect x="46" y="20" width="6" height="12" rx="1"/></svg>',
-    pistol:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="12" y="24" width="40" height="10" rx="2"/><path d="M24 34l6 16h10l-4-16z"/></svg>',
-    armor:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 6l20 10v14c0 14-10 22-20 28-10-6-20-14-20-28V16z"/></svg>',
-    helmet:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M12 34a20 20 0 0140 0v14H12z"/></svg>',
-    medkit:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="16" width="48" height="36" rx="4" fill="none" stroke="currentColor" stroke-width="4"/><path d="M28 24v20M18 34h20" stroke="currentColor" stroke-width="4"/></svg>',
-    bomb:'<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="38" r="18"/><path d="M46 22l6-6M44 14l4 4"/></svg>',
-    gem:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 6l24 18-24 34L8 24z"/></svg>',
-    crown:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 48h48l4-28-14 12L32 12 18 32 4 20z"/></svg>',
-    trophy:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M20 8h24v14c0 8-6 12-12 12s-12-4-12-12z"/><rect x="28" y="34" width="8" height="14"/><rect x="20" y="48" width="24" height="8" rx="2"/></svg>',
-    crossbow:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 32h48M32 12v40" stroke="currentColor" stroke-width="4"/></svg>',
-    mask:'<svg viewBox="0 0 64 64" fill="currentColor"><ellipse cx="32" cy="34" rx="20" ry="16"/><circle cx="24" cy="34" r="4" fill="black"/><circle cx="40" cy="34" r="4" fill="black"/></svg>',
-    rocket:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 4c8 8 12 20 12 32l-12 8-12-8c0-12 4-24 12-32z"/></svg>',
-    turret:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="8" y="28" width="40" height="8" rx="2"/><rect x="20" y="36" width="6" height="16"/></svg>',
-    default:'<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="currentColor">?</text></svg>'
-};
-
-const SKINS = [
-    {id:'rock', name:'Камень', svg:'default', rarity:'common', price:usdToUah(0.10)},
-    {id:'torch', name:'Факел', svg:'default', rarity:'common', price:usdToUah(0.15)},
-    {id:'bandage', name:'Бинты', svg:'medkit', rarity:'common', price:usdToUah(0.20)},
-    {id:'burlap', name:'Мешковина', svg:'armor', rarity:'common', price:usdToUah(0.25)},
-    {id:'box', name:'Деревянный ящик', svg:'default', rarity:'common', price:usdToUah(0.18)},
-    {id:'hatchet', name:'Каменный топор', svg:'axe', rarity:'common', price:usdToUah(0.30)},
-    {id:'spear', name:'Деревянное копьё', svg:'rifle', rarity:'common', price:usdToUah(0.35)},
-    {id:'bow', name:'Лук', svg:'crossbow', rarity:'common', price:usdToUah(0.40)},
-    {id:'revolver', name:'Револьвер', svg:'pistol', rarity:'common', price:usdToUah(0.50)},
-    {id:'knife_bone', name:'Костяной нож', svg:'knife', rarity:'common', price:usdToUah(0.20)},
-    {id:'knife_stone', name:'Каменный нож', svg:'knife', rarity:'common', price:usdToUah(0.25)},
-    {id:'shotgun_pipe', name:'Водопроводный дробовик', svg:'rifle', rarity:'common', price:usdToUah(0.50)},
-    {id:'spear_metal', name:'Металлическое копьё', svg:'rifle', rarity:'uncommon', price:usdToUah(2)},
-    {id:'shotgun_double', name:'Двойной ствол', svg:'rifle', rarity:'uncommon', price:usdToUah(3)},
-    {id:'rifle_semiauto', name:'Полуавтомат', svg:'rifle', rarity:'uncommon', price:usdToUah(4)},
-    {id:'smg_custom', name:'Самодельный ПП', svg:'rifle', rarity:'uncommon', price:usdToUah(5)},
-    {id:'hide', name:'Кожаная броня', svg:'armor', rarity:'uncommon', price:usdToUah(3)},
-    {id:'respirator', name:'Респиратор', svg:'mask', rarity:'uncommon', price:usdToUah(4)},
-    {id:'cupboard', name:'Шкаф', svg:'default', rarity:'uncommon', price:usdToUah(2)},
-    {id:'trap_bear', name:'Капкан', svg:'default', rarity:'uncommon', price:usdToUah(5)},
-    {id:'thompson', name:'Томпсон', svg:'rifle', rarity:'uncommon', price:usdToUah(8)},
-    {id:'sks', name:'SKS', svg:'rifle', rarity:'rare', price:usdToUah(10)},
-    {id:'m39', name:'M39', svg:'rifle', rarity:'rare', price:usdToUah(12)},
-    {id:'pump', name:'Дробовик', svg:'rifle', rarity:'rare', price:usdToUah(15)},
-    {id:'python', name:'Python', svg:'pistol', rarity:'rare', price:usdToUah(20)},
-    {id:'roadsign', name:'Дорожные знаки', svg:'armor', rarity:'rare', price:usdToUah(10)},
-    {id:'coffee', name:'Coffee Can Helmet', svg:'helmet', rarity:'rare', price:usdToUah(8)},
-    {id:'gas_mask', name:'Противогаз', svg:'mask', rarity:'rare', price:usdToUah(12)},
-    {id:'locker', name:'Сейф', svg:'default', rarity:'rare', price:usdToUah(15)},
-    {id:'radio', name:'Радиостанция', svg:'default', rarity:'rare', price:usdToUah(10)},
-    {id:'ak', name:'AK-47', svg:'rifle', rarity:'epic', price:usdToUah(15)},
-    {id:'lr300', name:'LR-300', svg:'rifle', rarity:'epic', price:usdToUah(25)},
-    {id:'mp5', name:'MP5A4', svg:'rifle', rarity:'epic', price:usdToUah(20)},
-    {id:'bolt', name:'Болтовка', svg:'rifle', rarity:'epic', price:usdToUah(30)},
-    {id:'m92', name:'M92 Beretta', svg:'pistol', rarity:'epic', price:usdToUah(25)},
-    {id:'metal_mask', name:'Металлическая маска', svg:'mask', rarity:'epic', price:usdToUah(35)},
-    {id:'explosive', name:'Взрывчатка', svg:'bomb', rarity:'epic', price:usdToUah(40)},
-    {id:'turret', name:'Турель', svg:'turret', rarity:'epic', price:usdToUah(45)},
-    {id:'gps', name:'GPS', svg:'default', rarity:'epic', price:usdToUah(35)},
-    {id:'l96', name:'L96', svg:'rifle', rarity:'legendary', price:usdToUah(80)},
-    {id:'m249', name:'M249', svg:'rifle', rarity:'legendary', price:usdToUah(120)},
-    {id:'spas', name:'SPAS-12', svg:'rifle', rarity:'legendary', price:usdToUah(90)},
-    {id:'c4', name:'C4', svg:'bomb', rarity:'legendary', price:usdToUah(100)},
-    {id:'rocket', name:'Ракетница', svg:'rocket', rarity:'legendary', price:usdToUah(150)},
-    {id:'ak_glory', name:'Glory AK47', svg:'rifle', rarity:'mythical', price:usdToUah(310)},
-    {id:'smg_alien', name:'Alien Relic SMG', svg:'rifle', rarity:'mythical', price:usdToUah(1816)},
-    {id:'mask_biggrin', name:'Big Grin Facemask', svg:'mask', rarity:'mythical', price:usdToUah(1323)},
-    {id:'bandana_clown', name:'Creepy Clown Bandana', svg:'mask', rarity:'mythical', price:usdToUah(1157)}
-];
-
-const SVG_CACHE = {};
-Object.keys(ICON_SVG).forEach(function(k){ SVG_CACHE[k] = ICON_SVG[k]; });
-
-function renderSkinIcon(skin) {
-    var svgKey = skin.svg || 'default';
-    return '<div class="skin-icon">' + (SVG_CACHE[svgKey] || SVG_CACHE.default) + '</div>';
-}
-
-const RARITIES = {
-    common:    { name:'Обычный',     color:'#7a7a8a' },
-    uncommon:  { name:'Необычный',   color:'#4aa8ff' },
-    rare:      { name:'Редкий',      color:'#a55cff' },
-    epic:      { name:'Эпический',   color:'#ff3d9a' },
-    legendary: { name:'Легендарный', color:'#f5c542' },
-    mythical:  { name:'МИФИЧЕСКИЙ',  color:'#ff0044' }
-};
 
 const PRESETS = [
     { mult: 1.5, label: 'x1.5' },
@@ -126,7 +38,7 @@ function resolveSkin(item) {
 }
 
 /* ============================================================
-   FIREBASE AUTH + FIRESTORE
+   FIREBASE
    ============================================================ */
 var currentUser = null;
 var cloudSaveTimer = null;
@@ -155,14 +67,12 @@ function setupFirebase() {
     var googleBtn = document.getElementById('googleLoginBtn');
     if (googleBtn) {
         googleBtn.addEventListener('click', async function() {
-            try {
-                await window.fbSignInWithPopup(window.fbAuth, window.fbGoogleProvider);
-            } catch(e) {
+            try { await window.fbSignInWithPopup(window.fbAuth, window.fbGoogleProvider); }
+            catch(e) {
                 console.error('Google login error:', e);
                 var errEl = document.getElementById('authError');
                 if (errEl) {
-                    if (e.code === 'auth/popup-blocked') errEl.textContent = 'Браузер заблокировал окно. Разреши popup.';
-                    else if (e.code === 'auth/popup-closed-by-user') errEl.textContent = '';
+                    if (e.code === 'auth/popup-blocked') errEl.textContent = 'Браузер заблокировал окно.';
                     else if (e.code === 'auth/unauthorized-domain') errEl.textContent = 'Домен не добавлен в Firebase.';
                     else errEl.textContent = 'Ошибка: ' + (e.message || e.code);
                 }
@@ -200,8 +110,7 @@ async function saveToCloud() {
             inventory: state.inventory.map(function(i){ return {id:i.id, rarity:i.rarity}; }),
             profit: state.profit,
             totalWon: state.totalWon, totalLost: state.totalLost,
-            upgrades: state.upgrades,
-            purchases: state.purchases,
+            upgrades: state.upgrades, purchases: state.purchases,
             bestDrop: state.bestDrop ? {id:state.bestDrop.id, rarity:state.bestDrop.rarity} : null,
             bestUpgrade: state.bestUpgrade ? {id:state.bestUpgrade.id, rarity:state.bestUpgrade.rarity} : null,
             housePlayerLost: state.housePlayerLost, houseCasinoWon: state.houseCasinoWon,
@@ -224,24 +133,16 @@ function save() {
 
 async function logout() {
     if (!confirm('Выйти из аккаунта?')) return;
-    try {
-        await saveToCloud();
-        await window.fbSignOut(window.fbAuth);
-        log('👋 Вы вышли из аккаунта', 'info');
-    } catch(e) { console.error(e); }
+    try { await saveToCloud(); await window.fbSignOut(window.fbAuth); log('👋 Вы вышли', 'info'); }
+    catch(e) { console.error(e); }
 }
 
 function updateUserBadge() {
     var badge = document.getElementById('userBadge');
     var icon = document.getElementById('userBadgeIcon');
     if (!badge || !icon) return;
-    if (currentUser) {
-        badge.title = 'Аккаунт: ' + (currentUser.displayName || currentUser.email) + ' (нажми чтобы выйти)';
-        icon.textContent = '🚪';
-    } else {
-        badge.title = 'Войти';
-        icon.textContent = '👤';
-    }
+    if (currentUser) { badge.title = 'Выйти'; icon.textContent = '🚪'; }
+    else { badge.title = 'Войти'; icon.textContent = '👤'; }
 }
 
 function openAuthModal() {
@@ -258,14 +159,10 @@ function closeAuthModal() {
    STATE
    ============================================================ */
 var state = {
-    balance: 0,
-    inventory: [],
-    profit: 0,
+    balance: 0, inventory: [], profit: 0,
     totalWon: 0, totalLost: 0, upgrades: 0, purchases: 0,
     bestDrop: null, bestUpgrade: null,
-    upgradeSource: null,
-    upgradeTarget: null,
-    selectedPreset: null,
+    upgradeSource: null, upgradeTarget: null, selectedPreset: null,
     spinSpeed: 'slow',
     housePlayerLost: 0, houseCasinoWon: 0,
     xp: 0, level: 1,
@@ -275,9 +172,7 @@ var state = {
 };
 
 function resetStateToDefault() {
-    state.balance = 0;
-    state.inventory = [];
-    state.profit = 0;
+    state.balance = 0; state.inventory = []; state.profit = 0;
     state.totalWon = 0; state.totalLost = 0; state.upgrades = 0; state.purchases = 0;
     state.bestDrop = null; state.bestUpgrade = null;
     state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
@@ -291,16 +186,11 @@ function resetStateToDefault() {
 function $(id){ return document.getElementById(id); }
 
 /* ============================================================
-   ЗВУКИ — файлы лежат в корне репозитория (без папки sounds/)
+   ЗВУКИ
    ============================================================ */
 const SOUND_FILES = {
-    spin: 'spin.mp3',
-    win_common: 'win_common.mp3',
-    win_legendary: 'win_legendary.mp3',
-    lose: 'lose.mp3',
-    click: 'click.mp3',
-    buy: 'buy.mp3',
-    levelup: 'levelup.mp3'
+    spin: 'spin.mp3', win_common: 'win_common.mp3', win_legendary: 'win_legendary.mp3',
+    lose: 'lose.mp3', click: 'click.mp3', buy: 'buy.mp3', levelup: 'levelup.mp3'
 };
 
 var SOUNDS = {};
@@ -377,9 +267,7 @@ function startLoopSound(name, vol) {
     c.play().catch(function(){});
     _loopAudio[name] = c;
     return {
-        stop: function() {
-            if (_loopAudio[name]) { try { _loopAudio[name].pause(); } catch(e){} _loopAudio[name] = null; }
-        },
+        stop: function() { if (_loopAudio[name]) { try { _loopAudio[name].pause(); } catch(e){} _loopAudio[name] = null; } },
         fadeStop: function(duration) {
             duration = duration || 800;
             var audio = _loopAudio[name];
@@ -434,6 +322,7 @@ function findTargetByPrice(targetPrice, sourceSkin) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
         if (sourceSkin && s.id === sourceSkin.id) return;
+        if (sourceSkin && s.price <= sourceSkin.price) return;
         var d = Math.abs(s.price - targetPrice);
         if (d < bestDiff) { bestDiff = d; best = s; }
     });
@@ -452,20 +341,16 @@ function addXP(n) {
     var prev = state.level;
     for (var i = LEVELS.length - 1; i >= 0; i--) { if (state.xp >= LEVELS[i].xp) { state.level = LEVELS[i].lvl; break; } }
     if (state.level > prev) {
-        var reward = state.level * usdToUah(11);
+        var reward = state.level * usdToRastr(11);
         state.balance += reward;
-        log('⬆️ Уровень ' + state.level + '! +' + formatUah(reward), 'win');
+        log('⬆️ Уровень ' + state.level + '! +' + formatRastr(reward), 'win');
         sLevelUp();
     }
 }
 
 function resetUpgradeSlots() {
-    state.upgradeSource = null;
-    state.upgradeTarget = null;
-    state.selectedPreset = null;
-    renderSourceSlot();
-    renderTargetSlot();
-    renderPresets();
+    state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
+    renderSourceSlot(); renderTargetSlot(); renderPresets();
     updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
     setNeedleAngle(0);
     if (DOM.upgradeBtn) DOM.upgradeBtn.disabled = true;
@@ -489,21 +374,21 @@ cacheDom();
 
 function updateUI() {
     if (!DOM.balance) return;
-    DOM.balance.textContent = formatUah(state.balance);
-    if (DOM.shopBalance) DOM.shopBalance.textContent = formatUah(state.balance);
+    DOM.balance.textContent = formatRastr(state.balance);
+    if (DOM.shopBalance) DOM.shopBalance.textContent = formatRastr(state.balance);
     var p = DOM.profit;
-    p.textContent = (state.profit >= 0 ? '+' : '') + formatUah(state.profit);
+    p.textContent = (state.profit >= 0 ? '+' : '') + formatRastr(state.profit);
     p.className = 'hud-stat-value ' + (state.profit >= 0 ? 'green' : 'red');
     DOM.invCount.textContent = state.inventory.length;
-    DOM.invValue.textContent = formatUah(state.inventory.reduce(function(s,i){return s+i.price},0));
-    DOM.statTotalWon.textContent = formatUah(state.totalWon);
-    DOM.statTotalLost.textContent = formatUah(state.totalLost);
+    DOM.invValue.textContent = formatRastr(state.inventory.reduce(function(s,i){return s+i.price},0));
+    DOM.statTotalWon.textContent = formatRastr(state.totalWon);
+    DOM.statTotalLost.textContent = formatRastr(state.totalLost);
     DOM.statUpgrades.textContent = state.upgrades;
     DOM.statPurchases.textContent = state.purchases;
-    DOM.statBestDrop.textContent = state.bestDrop ? state.bestDrop.name + ' ' + formatUah(state.bestDrop.price) : '—';
-    DOM.statBestUpgrade.textContent = state.bestUpgrade ? state.bestUpgrade.name + ' ' + formatUah(state.bestUpgrade.price) : '—';
-    DOM.housePlayer.textContent = formatUah(state.housePlayerLost);
-    DOM.houseCasino.textContent = formatUah(state.houseCasinoWon);
+    DOM.statBestDrop.textContent = state.bestDrop ? state.bestDrop.name + ' ' + formatRastr(state.bestDrop.price) : '—';
+    DOM.statBestUpgrade.textContent = state.bestUpgrade ? state.bestUpgrade.name + ' ' + formatRastr(state.bestUpgrade.price) : '—';
+    DOM.housePlayer.textContent = formatRastr(state.housePlayerLost);
+    DOM.houseCasino.textContent = formatRastr(state.houseCasinoWon);
     DOM.levelBadge.textContent = state.level;
     var lvlIdx = LEVELS.findIndex(function(l){return l.lvl===state.level});
     var lvl = LEVELS[lvlIdx]; var next = LEVELS[lvlIdx+1];
@@ -515,6 +400,7 @@ function updateUI() {
     save();
 }
 
+/* ============ RESULT ============ */
 function showResult(o) {
     var inner = $('resultInner');
     inner.className = 'modal-inner result-inner ' + o.type;
@@ -524,7 +410,7 @@ function showResult(o) {
         $('resultSkin').innerHTML =
             '<div class="item ' + o.skin.rarity + '" style="margin:0 auto;display:inline-flex;border:none;background:transparent;min-width:auto;height:auto;padding:0">' +
                 renderSkinIcon(o.skin) +
-                '<div style="margin-top:12px"><div class="name" style="font-size:0.85rem">' + o.skin.name + '</div><div class="price" style="font-size:1rem;margin-top:6px">' + formatUah(o.skin.price) + '</div></div>' +
+                '<div style="margin-top:12px"><div class="name" style="font-size:0.85rem">' + o.skin.name + '</div><div class="price" style="font-size:1rem;margin-top:6px">' + formatRastr(o.skin.price) + '</div></div>' +
             '</div>';
     } else {
         $('resultIcon').textContent = o.icon;
@@ -596,7 +482,7 @@ function renderSourceSlot() {
     if (state.upgradeSource) {
         slot.className = 'upg-item-slot filled ' + state.upgradeSource.rarity;
         slot.innerHTML = renderSkinIcon(state.upgradeSource) + '<div class="upg-item-name">' + state.upgradeSource.name + '</div><div class="upg-item-rarity" style="color:' + RARITIES[state.upgradeSource.rarity].color + '">' + RARITIES[state.upgradeSource.rarity].name + '</div>';
-        $('sourcePriceLabel').textContent = formatUah(state.upgradeSource.price);
+        $('sourcePriceLabel').textContent = formatRastr(state.upgradeSource.price);
         $('sourceRemoveBtn').style.display = 'block';
     } else {
         slot.className = 'upg-item-slot';
@@ -612,7 +498,7 @@ function renderTargetSlot() {
     if (state.upgradeTarget) {
         slot.className = 'upg-item-slot filled ' + state.upgradeTarget.rarity;
         slot.innerHTML = renderSkinIcon(state.upgradeTarget) + '<div class="upg-item-name">' + state.upgradeTarget.name + '</div><div class="upg-item-rarity" style="color:' + RARITIES[state.upgradeTarget.rarity].color + '">' + RARITIES[state.upgradeTarget.rarity].name + '</div>';
-        $('targetPriceLabel').textContent = formatUah(state.upgradeTarget.price);
+        $('targetPriceLabel').textContent = formatRastr(state.upgradeTarget.price);
         $('targetRemoveBtn').style.display = 'block';
     } else {
         slot.className = 'upg-item-slot';
@@ -672,21 +558,24 @@ function renderPresets() {
 }
 
 function selectPreset(idx) {
-    if (!state.upgradeSource) { log('❌ Сначала выбери предмет', 'lose'); return; }
+    if (!state.upgradeSource) { log('❌ Сначала выбери предмет', 'lose'); sClick(); return; }
     unlockAudio(); sClick();
     var p = PRESETS[idx];
     var sourcePrice = state.upgradeSource.price;
     var desiredTargetPrice = sourcePrice * p.mult;
     var target = findTargetByPrice(desiredTargetPrice, state.upgradeSource);
-    if (!target || target.price <= sourcePrice) { log('❌ Нет подходящей цели для ' + p.label, 'lose'); return; }
+    if (!target || target.price <= sourcePrice) {
+        log('❌ Нет подходящей цели дороже твоего предмета', 'lose');
+        sClick();
+        return;
+    }
     state.upgradeTarget = target;
     state.selectedPreset = idx;
     state.upgradeTarget._realChance = calcRealChance(sourcePrice, target.price);
-    renderTargetSlot();
-    renderPresets();
-    updateCircleFromPreset();
+    renderTargetSlot(); renderPresets(); updateCircleFromPreset();
 }
 
+/* ============ INVENTORY PANEL ============ */
 function renderInvPanel() {
     var list = $('invPanelList');
     if (!list) return;
@@ -702,17 +591,12 @@ function renderInvPanel() {
         var el = document.createElement('div');
         el.className = 'upg-inv-item ' + skin.rarity;
         if (state.upgradeSource && state.upgradeSource === skin) el.classList.add('used');
-        el.innerHTML = renderSkinIcon(skin) + '<div class="upg-inv-name">' + skin.name + '</div><div class="upg-inv-price">' + formatUah(skin.price) + '</div>';
+        el.innerHTML = renderSkinIcon(skin) + '<div class="upg-inv-name">' + skin.name + '</div><div class="upg-inv-price">' + formatRastr(skin.price) + '</div>';
         el.addEventListener('click', function() {
             unlockAudio(); sClick();
             state.upgradeSource = skin;
-            state.upgradeTarget = null;
-            state.selectedPreset = null;
-            renderSourceSlot();
-            renderTargetSlot();
-            renderInvPanel();
-            renderPresets();
-            updateCircleFromPreset();
+            state.upgradeTarget = null; state.selectedPreset = null;
+            renderSourceSlot(); renderTargetSlot(); renderInvPanel(); renderPresets(); updateCircleFromPreset();
         });
         frag.appendChild(el);
     });
@@ -733,22 +617,22 @@ function renderItemsPanel() {
     items.forEach(function(skin) {
         var el = document.createElement('div');
         el.className = 'upg-target-item ' + skin.rarity;
-        el.innerHTML = renderSkinIcon(skin) + '<div class="upg-target-name">' + skin.name + '</div><div class="upg-target-price">' + formatUah(skin.price) + '</div>';
+        el.innerHTML = renderSkinIcon(skin) + '<div class="upg-target-name">' + skin.name + '</div><div class="upg-target-price">' + formatRastr(skin.price) + '</div>';
         el.addEventListener('click', function() {
-            if (!state.upgradeSource) { log('❌ Сначала выбери свой предмет', 'lose'); return; }
+            if (!state.upgradeSource) { log('❌ Сначала выбери свой предмет', 'lose'); sClick(); return; }
+            if (skin.id === state.upgradeSource.id) { log('❌ Нельзя апгрейдить предмет в самого себя', 'lose'); sClick(); return; }
+            if (skin.price <= state.upgradeSource.price) { log('❌ Цель должна быть дороже твоего предмета', 'lose'); sClick(); return; }
             unlockAudio(); sClick();
-            state.upgradeTarget = skin;
-            state.selectedPreset = null;
+            state.upgradeTarget = skin; state.selectedPreset = null;
             state.upgradeTarget._realChance = calcRealChance(state.upgradeSource.price, skin.price);
-            renderTargetSlot();
-            renderPresets();
-            updateCircleFromPreset();
+            renderTargetSlot(); renderPresets(); updateCircleFromPreset();
         });
         frag.appendChild(el);
     });
     grid.replaceChildren(frag);
 }
 
+/* ============ ANIMATION ============ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
         var duration = state.spinSpeed === 'fast' ? 2000 : 4000;
@@ -785,10 +669,16 @@ function playUpgradeAnimation(chance, willWin) {
     });
 }
 
+/* ============ ФИКС: апгрейд топ→топ+бонус ============ */
 function handleUpgrade() {
     if (!state.upgradeSource || !state.upgradeTarget) return;
     if (state.upgrading) return;
     if (state.inventory.indexOf(state.upgradeSource) < 0) { resetUpgradeSlots(); log('❌ Предмет больше не в инвентаре', 'lose'); return; }
+    if (state.upgradeTarget.id === state.upgradeSource.id || state.upgradeTarget.price <= state.upgradeSource.price) {
+        log('❌ Недопустимая цель апгрейда', 'lose');
+        resetUpgradeSlots();
+        return;
+    }
     unlockAudio();
     var btn = $('upgradeBtn');
     btn.style.pointerEvents = 'none';
@@ -803,7 +693,13 @@ function handleUpgrade() {
     var targetSkin = state.upgradeTarget;
     var sourceValue = sourceSkin.price;
     var targetValue = targetSkin.price;
+
+    // ФИКС: если source — самый крутой скин, даём бонус
+    var maxPrice = Math.max.apply(null, SKINS.map(function(s){return s.price;}));
+    var isTopSkin = sourceValue >= maxPrice * 0.95;
+
     addXP(20);
+
     playUpgradeAnimation(chance, success).then(function() {
         var srcIdx = state.inventory.indexOf(sourceSkin);
         if (srcIdx >= 0) state.inventory.splice(srcIdx, 1);
@@ -814,15 +710,28 @@ function handleUpgrade() {
             state.houseCasinoWon += targetValue;
             if (!state.bestUpgrade || targetValue > state.bestUpgrade.price) state.bestUpgrade = targetSkin;
             sWin(targetSkin.rarity);
+
+            // БОНУС: если апгрейдили топ-скин, даём ещё один случайный
+            var bonusMsg = '';
+            if (isTopSkin) {
+                var bonusPool = SKINS.filter(function(s){ return s.price < sourceValue && s.rarity !== 'mythical'; });
+                var bonusSkin = bonusPool[Math.floor(Math.random() * bonusPool.length)];
+                if (bonusSkin) {
+                    state.inventory.push(bonusSkin);
+                    bonusMsg = ' 🎁 БОНУС: +' + bonusSkin.name;
+                }
+            }
+
             showResult({
                 type: 'result-win', icon: '🏆', title: '✅ УСПЕХ', skin: targetSkin,
-                value: '+' + formatUah(targetValue), canSell: true,
+                value: '+' + formatRastr(targetValue) + (bonusMsg ? '<br><span style="font-size:0.9rem;color:#f5c542">' + bonusMsg + '</span>' : ''),
+                canSell: true,
                 sellCallback: function() {
                     var i = state.inventory.indexOf(targetSkin);
                     if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); save(); }
                 }
             });
-            log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
+            log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅' + bonusMsg, 'win');
         } else {
             state.totalLost += sourceValue;
             state.profit -= sourceValue;
@@ -830,26 +739,18 @@ function handleUpgrade() {
             sLose();
             showResult({
                 type: 'result-lose', icon: '💀', title: '❌ ПРОВАЛ',
-                skin: null, value: 'Потеряно: ' + formatUah(sourceValue), canSell: false
+                skin: null, value: 'Потеряно: ' + formatRastr(sourceValue), canSell: false
             });
             log('⚡ ' + sourceSkin.name + ' → провал ❌', 'lose');
         }
-        state.upgradeSource = null;
-        state.upgradeTarget = null;
-        state.selectedPreset = null;
+        state.upgradeSource = null; state.upgradeTarget = null; state.selectedPreset = null;
         state.upgrading = false;
         btn.style.pointerEvents = '';
         btn.disabled = true;
-        renderSourceSlot();
-        renderTargetSlot();
-        renderInvPanel();
-        renderItemsPanel();
-        renderPresets();
+        renderSourceSlot(); renderTargetSlot(); renderInvPanel(); renderItemsPanel(); renderPresets();
         updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
         setNeedleAngle(0);
-        updateUI();
-        renderInventory();
-        save();
+        updateUI(); renderInventory(); save();
     });
 }
 
@@ -881,13 +782,17 @@ function initPanelFilters(containerId, filterKey, callback) {
     });
 }
 
+/* ============ SHOP ============ */
 var _shopVisibleCount = 20;
+var pendingPurchase = null;
+var pendingQuantity = 1;
+
 function renderShop() {
     var grid = $('shopGrid');
     if (!grid) return;
     var items = SKINS.slice();
     if (state.shopFilter !== 'all') items = items.filter(function(s) { return s.rarity === state.shopFilter; });
-    var rarityOrder = {common:0,uncommon:1,rare:2,epic:3,legendary:4,mythical:5};
+    var rarityOrder = {common:0, rare:1, legendary:2, mythical:3};
     if (state.shopSort === 'price-asc') items.sort(function(a,b) { return a.price - b.price; });
     else if (state.shopSort === 'price-desc') items.sort(function(a,b) { return b.price - a.price; });
     else if (state.shopSort === 'rarity') items.sort(function(a,b) { return rarityOrder[a.rarity] - rarityOrder[b.rarity]; });
@@ -900,7 +805,7 @@ function renderShop() {
         var canAfford = state.balance >= shopPrice;
         var el = document.createElement('div');
         el.className = 'shop-item ' + skin.rarity;
-        el.innerHTML = renderSkinIcon(skin) + '<div class="name">' + skin.name + '</div><div class="rarity-label" style="color:' + RARITIES[skin.rarity].color + '">' + RARITIES[skin.rarity].name + '</div><div class="price-row"><span style="font-size:0.9rem">💰</span><span class="price">' + formatUah(shopPrice) + '</span></div><button class="buy-btn" ' + (canAfford ? '' : 'disabled') + '>' + (canAfford ? 'КУПИТЬ' : 'НЕ ХВАТАЕТ') + '</button>';
+        el.innerHTML = renderSkinIcon(skin) + '<div class="name">' + skin.name + '</div><div class="rarity-label" style="color:' + RARITIES[skin.rarity].color + '">' + RARITIES[skin.rarity].name + '</div><div class="price-row"><span style="font-size:0.9rem">⚙️</span><span class="price">' + formatRastr(shopPrice) + '</span></div><button class="buy-btn" ' + (canAfford ? '' : 'disabled') + '>' + (canAfford ? 'КУПИТЬ' : 'НЕ ХВАТАЕТ') + '</button>';
         el.querySelector('.buy-btn').addEventListener('click', function(e) {
             e.stopPropagation();
             if (!canAfford) { log('❌ Недостаточно средств', 'lose'); sLose(); return; }
@@ -912,8 +817,7 @@ function renderShop() {
         var more = document.createElement('button');
         more.className = 'btn-secondary';
         more.textContent = 'Показать ещё (' + (items.length - _shopVisibleCount) + ')';
-        more.style.gridColumn = '1/-1';
-        more.style.marginTop = '16px';
+        more.style.gridColumn = '1/-1'; more.style.marginTop = '16px';
         more.addEventListener('click', function() { _shopVisibleCount += 20; renderShop(); });
         frag.appendChild(more);
     }
@@ -923,14 +827,44 @@ function renderShop() {
 function openBuyModal(skin, price) {
     unlockAudio(); sClick();
     pendingPurchase = { skin: skin, price: price };
+    pendingQuantity = 1;
     $('buyIcon').innerHTML = renderSkinIcon(skin);
     $('buyTitle').textContent = skin.name;
-    $('buySub').textContent = RARITIES[skin.rarity].name + ' · Купить?';
-    $('buyPrice').textContent = formatUah(price);
+    $('buySub').textContent = RARITIES[skin.rarity].name + ' · Выбери количество:';
+    $('buyPrice').textContent = formatRastr(price);
+    var inner = $('buyInner');
+    if (!inner) return;
+    var qtyRow = inner.querySelector('.buy-qty-row');
+    if (!qtyRow) {
+        qtyRow = document.createElement('div');
+        qtyRow.className = 'buy-qty-row';
+        qtyRow.style.cssText = 'display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';
+        [1,5,10,50].forEach(function(q){
+            var b = document.createElement('button');
+            b.className = 'btn-secondary';
+            b.style.padding = '8px 16px';
+            b.textContent = 'x' + q;
+            b.dataset.qty = q;
+            b.addEventListener('click', function() {
+                pendingQuantity = q;
+                qtyRow.querySelectorAll('button').forEach(function(x){ x.style.borderColor=''; x.style.color=''; });
+                b.style.borderColor = 'var(--accent)'; b.style.color = 'var(--accent)';
+                $('buyPrice').textContent = formatRastr(price * q);
+                sClick();
+            });
+            qtyRow.appendChild(b);
+        });
+        var actions = inner.querySelector('.buy-actions');
+        if (actions) inner.insertBefore(qtyRow, actions);
+        else inner.appendChild(qtyRow);
+    }
+    qtyRow.querySelectorAll('button').forEach(function(x){ x.style.borderColor=''; x.style.color=''; });
+    var firstBtn = qtyRow.querySelector('button[data-qty="1"]');
+    if (firstBtn) { firstBtn.style.borderColor = 'var(--accent)'; firstBtn.style.color = 'var(--accent)'; }
     $('buyModal').classList.add('show');
 }
-var pendingPurchase = null;
 
+/* ============ INVENTORY PAGE ============ */
 var invFilter = 'all';
 function renderInventory() {
     var inv = $('inventory');
@@ -943,7 +877,7 @@ function renderInventory() {
     sorted.forEach(function(skin) {
         var el = document.createElement('div');
         el.className = 'inv-item ' + skin.rarity;
-        el.innerHTML = renderSkinIcon(skin) + '<div class="name">' + skin.name + '</div><div class="price">' + formatUah(skin.price) + '</div><button class="sell-btn">Продать</button>';
+        el.innerHTML = renderSkinIcon(skin) + '<div class="name">' + skin.name + '</div><div class="price">' + formatRastr(skin.price) + '</div><button class="sell-btn">Продать</button>';
         el.querySelector('.sell-btn').addEventListener('click', function(e) { e.stopPropagation(); sellSkin(skin); });
         frag.appendChild(el);
     });
@@ -956,19 +890,15 @@ function sellSkin(skin) {
     state.balance += skin.price;
     if (state.upgradeSource === skin) resetUpgradeSlots();
     updateUI(); renderInventory(); renderInvPanel(); sClick();
-    log('💰 Продано: ' + skin.name + ' +' + formatUah(skin.price), 'info');
+    log('💰 Продано: ' + skin.name + ' +' + formatRastr(skin.price), 'info');
     save();
 }
 
+/* ============ RENDER ALL ============ */
 function renderAll() {
-    renderSourceSlot();
-    renderTargetSlot();
-    renderPresets();
-    renderInvPanel();
-    renderItemsPanel();
-    renderShop();
-    updateUI();
-    renderInventory();
+    renderSourceSlot(); renderTargetSlot(); renderPresets();
+    renderInvPanel(); renderItemsPanel(); renderShop();
+    updateUI(); renderInventory();
     updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
     setNeedleAngle(0);
     updateSpeedButtons();
@@ -982,6 +912,7 @@ function updateSpeedButtons() {
     else { slowBtn.classList.add('active'); fastBtn.classList.remove('active'); }
 }
 
+/* ============ HANDLERS ============ */
 function attachHandlers() {
     var userBadge = $('userBadge');
     if (userBadge) userBadge.addEventListener('click', function() { if (currentUser) logout(); else openAuthModal(); });
@@ -1006,43 +937,37 @@ function attachHandlers() {
     var resetAllBtn = $('resetAllBtn');
     if (resetAllBtn) resetAllBtn.addEventListener('click', function() {
         if (!confirm('Сбросить весь прогресс?')) return;
-        resetStateToDefault();
-        state.balance = START_BALANCE;
-        save();
-        renderAll();
-        log('🗑️ Прогресс сброшен', 'info');
+        resetStateToDefault(); state.balance = START_BALANCE;
+        save(); renderAll(); log('🗑️ Прогресс сброшен', 'info');
     });
 
     var buyCancel = $('buyCancel');
-    if (buyCancel) buyCancel.addEventListener('click', function() { sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null; });
+    if (buyCancel) buyCancel.addEventListener('click', function() { sClick(); $('buyModal').classList.remove('show'); pendingPurchase = null; pendingQuantity = 1; });
 
     var buyConfirm = $('buyConfirm');
     if (buyConfirm) buyConfirm.addEventListener('click', function() {
         if (!pendingPurchase) return;
-        var skin = pendingPurchase.skin; var price = pendingPurchase.price;
-        if (state.balance < price) { log('❌ Недостаточно средств', 'lose'); sLose(); return; }
-        state.balance -= price;
-        state.inventory.push(skin);
-        state.purchases++;
-        state.totalLost += price; state.profit -= price;
-        state.housePlayerLost += price;
-        addXP(10); sBuy();
-        log('🛒 Куплено: ' + skin.name + ' за ' + formatUah(price), 'win');
-        $('buyModal').classList.remove('show'); pendingPurchase = null;
-        updateUI(); renderShop(); renderInventory(); renderInvPanel();
-        save();
+        var skin = pendingPurchase.skin; var unitPrice = pendingPurchase.price;
+        var qty = pendingQuantity || 1;
+        var totalPrice = unitPrice * qty;
+        if (state.balance < totalPrice) { log('❌ Недостаточно средств для x' + qty, 'lose'); sLose(); return; }
+        state.balance -= totalPrice;
+        for (var i = 0; i < qty; i++) state.inventory.push(skin);
+        state.purchases += qty;
+        state.totalLost += totalPrice; state.profit -= totalPrice; state.housePlayerLost += totalPrice;
+        addXP(10 * qty); sBuy();
+        log('🛒 Куплено: ' + skin.name + ' x' + qty + ' за ' + formatRastr(totalPrice), 'win');
+        $('buyModal').classList.remove('show'); pendingPurchase = null; pendingQuantity = 1;
+        updateUI(); renderShop(); renderInventory(); renderInvPanel(); save();
     });
 
     var sellAllBtn = $('sellAllBtn');
     if (sellAllBtn) sellAllBtn.addEventListener('click', function() {
         if (state.inventory.length === 0) return;
         var total = state.inventory.reduce(function(s, i) { return s + i.price; }, 0);
-        state.balance += total;
-        state.inventory = [];
-        resetUpgradeSlots();
-        updateUI(); renderInventory(); renderInvPanel(); sBuy();
-        log('💰 Продано: +' + formatUah(total), 'win');
-        save();
+        state.balance += total; state.inventory = [];
+        resetUpgradeSlots(); updateUI(); renderInventory(); renderInvPanel(); sBuy();
+        log('💰 Продано: +' + formatRastr(total), 'win'); save();
     });
 
     var upgradeBtn = $('upgradeBtn');
@@ -1070,11 +995,8 @@ function attachHandlers() {
     var targetRemoveBtn = $('targetRemoveBtn');
     if (targetRemoveBtn) targetRemoveBtn.addEventListener('click', function(e) {
         e.stopPropagation(); unlockAudio(); sClick();
-        state.upgradeTarget = null;
-        state.selectedPreset = null;
-        renderTargetSlot();
-        renderPresets();
-        updateCircleFromPreset();
+        state.upgradeTarget = null; state.selectedPreset = null;
+        renderTargetSlot(); renderPresets(); updateCircleFromPreset();
     });
 
     var invSearch = $('invSearch');
@@ -1090,8 +1012,7 @@ function attachHandlers() {
             unlockAudio(); sClick();
             document.querySelectorAll('.shop-filter').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active'); state.shopFilter = btn.dataset.rarity;
-            _shopVisibleCount = 20;
-            renderShop(); save();
+            _shopVisibleCount = 20; renderShop(); save();
         });
     });
 
@@ -1105,8 +1026,7 @@ function attachHandlers() {
 
     document.querySelectorAll('.nav-tab').forEach(function(tab) {
         tab.addEventListener('click', function() {
-            unlockAudio(); sClick();
-            stopAllLoopSounds();
+            unlockAudio(); sClick(); stopAllLoopSounds();
             document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
             document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
             tab.classList.add('active');
@@ -1121,6 +1041,7 @@ function attachHandlers() {
     document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
 }
 
+/* ============ INIT ============ */
 function init() {
     initPanelFilters('invPanelFilters', 'invPanelFilter', renderInvPanel);
     initPanelFilters('itemsPanelFilters', 'itemsPanelFilter', renderItemsPanel);
