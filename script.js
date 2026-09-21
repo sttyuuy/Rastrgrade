@@ -6,12 +6,17 @@ var _L=[{lvl:1,xp:0,name:'НОВИЧОК'},{lvl:2,xp:1000,name:'ЛЮБИТЕЛЬ
 var _MX=Math.max.apply(null,SKINS.map(function(s){return s.price;}));
 var _CU=null,_CT=null;
 var _UDN='';var _UPA='';
+var _tradeSelectedSkin=null;
+
 function _fb(){
     if(!window.fbReady){setTimeout(_fb,100);return;}
     window.fbOnAuthStateChanged(window.fbAuth,async function(u){
         if(u){
             _CU={uid:u.uid,email:u.email,displayName:u.displayName,photoURL:u.photoURL};
             _ca();_rs();await _lc();_ra();_ub();
+            renderTradeSkinList();
+            renderMyTrades();
+            checkExpiredTrades();
             _lg('👤 Добро пожаловать!','win');
         }else{
             _CU=null;_UDN='';_UPA='';
@@ -32,6 +37,7 @@ function _fb(){
         }
     });
 }
+
 async function _lc(){
     if(!_CU||!window.fbDb)return;
     try{
@@ -51,6 +57,7 @@ async function _lc(){
         }
     }catch(e){console.error(e);state.balance=START_BALANCE;}
 }
+
 async function _sc(){
     if(!_CU||!window.fbDb)return;
     try{
@@ -73,10 +80,12 @@ async function _sc(){
         await window.fbSetDoc(r,d);
     }catch(e){console.error(e);}
 }
+
 function save(){if(!_CU)return;if(_CT)clearTimeout(_CT);_CT=setTimeout(_sc,800);}
 function _ol(){var m=document.getElementById('logoutModal');if(m)m.classList.add('show');}
 function _cl(){var m=document.getElementById('logoutModal');if(m)m.classList.remove('show');}
 async function _lo(){_cl();try{await _sc();await window.fbSignOut(window.fbAuth);_lg('👋 Вы вышли','info');}catch(e){console.error(e);}}
+
 function _ub(){
     var b=document.getElementById('userBadge');
     var i=document.getElementById('userBadgeIcon');
@@ -89,6 +98,7 @@ function _ub(){
 }
 function _oa(){var m=document.getElementById('authModal');if(m)m.classList.add('show');}
 function _ca(){var m=document.getElementById('authModal');if(m)m.classList.remove('show');}
+
 var state={
     balance:0,inventory:[],profit:0,
     totalWon:0,totalLost:0,upgrades:0,purchases:0,
@@ -102,6 +112,7 @@ var state={
     invPanelFilter:'all',itemsPanelFilter:'all',
     upgrading:false
 };
+
 function _rs(){
     state.balance=0;state.inventory=[];state.profit=0;
     state.totalWon=0;state.totalLost=0;state.upgrades=0;state.purchases=0;
@@ -115,6 +126,7 @@ function _rs(){
     state.upgrading=false;
 }
 function $(i){return document.getElementById(i);}
+
 var _SF={spin:'spin.mp3',win_common:'win_common.mp3',win_legendary:'win_legendary.mp3',lose:'lose.mp3',click:'click.mp3',buy:'buy.mp3',levelup:'levelup.mp3'};
 var _SD={};var _AU=false;
 function _pl(){Object.keys(_SF).forEach(function(k){var a=new Audio();a.src=_SF[k];a.preload='auto';a.volume=0.7;a.load();_SD[k]=a;});}
@@ -148,6 +160,7 @@ function _sp(n,v){
 function _sl(){Object.keys(_LP).forEach(function(k){if(_LP[k]){try{_LP[k].pause();}catch(e){}_LP[k]=null;}});}
 function _us(d){d=d||4000;var h=_sp('spin',0.55);if(!h)return null;setTimeout(function(){h.fadeStop(800);},d-800);return h;}
 _pl();
+
 function _lg(m,t){
     t=t||'info';
     var w=$('toastWrap');if(!w)return;
@@ -167,9 +180,11 @@ function _tg(tp,ss){var b=null,bd=Infinity;SKINS.forEach(function(s){if(ss&&s.id
 function _ch(sp,tp){var c=(sp/tp)*100;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
 function _xp(n){state.xp+=n;var p=state.level;for(var i=_L.length-1;i>=0;i--){if(state.xp>=_L[i].xp){state.level=_L[i].lvl;break;}}if(state.level>p){for(var l=p+1;l<=state.level;l++){var r=l*usdToRastr(11);state.balance+=r;_lg('⬆️ Уровень '+l+'! +'+formatRastr(r),'win');}_lu();}}
 function _rz(){state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;_rs1();_rt1();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);if(DOM.upgradeBtn)DOM.upgradeBtn.disabled=true;}
+
 var DOM={};
 function _cd(){['balance','profit','invCount','invValue','statTotalWon','statTotalLost','statUpgrades','statPurchases','statBestDrop','statBestUpgrade','housePlayer','houseCasino','levelBadge','levelName','levelBarFill','sourcePriceLabel','targetPriceLabel','sourceSlot','targetSlot','sourceRemoveBtn','targetRemoveBtn','circlePercent','circleStatus','presetContainer','invPanelCount','invPanelList','targetsCount','itemsPanelGrid','invSearch','itemsSearch','upgradeBtn','speedSlowBtn','speedFastBtn','userBadge'].forEach(function(i){DOM[i]=$(i);});DOM.shopBalance=$('shopBalance');}
 _cd();
+
 function _ui(){
     if(!DOM.balance)return;
     DOM.balance.textContent=formatRastr(state.balance);
@@ -195,6 +210,7 @@ function _ui(){
     else DOM.levelBarFill.style.width='100%';
     save();
 }
+
 function _sr(o){
     var inn=$('resultInner');
     inn.className='modal-inner result-inner '+o.type;
@@ -226,6 +242,7 @@ function _sr(o){
     $('resultModal').classList.add('show');
 }
 function _cr(){_ck();$('resultModal').classList.remove('show');}
+
 var _CR=100;var _CC=2*Math.PI*_CR;
 function _dc(c){c=Math.max(0,Math.min(100,c));var l=(c/100)*_CC;$('chanceSector').setAttribute('stroke-dasharray',l+' '+_CC);var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';$('chanceSector').style.color=co;}
 function _na(d){$('circleNeedle').style.transform='rotate('+d+'deg)';}
@@ -278,6 +295,234 @@ function _rinv(){var iv=$('inventory');if(!iv)return;if(state.inventory.length==
 function _ssk(sk){var i=state.inventory.indexOf(sk);if(i<0)return;state.inventory.splice(i,1);state.balance+=sk.price;if(state.upgradeSource===sk)_rz();_ui();_rinv();_ri();_ck();_lg('💰 Продано: '+sk.name+' +'+formatRastr(sk.price),'info');save();}
 function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
+
+/* ============================================================
+   СИСТЕМА ОБМЕНОВ (TRADES)
+   ============================================================ */
+
+async function createTrade() {
+    if (!_CU) { _lg('❌ Войди в аккаунт', 'lose'); return; }
+    if (!_tradeSelectedSkin) { _lg('❌ Выбери скин', 'lose'); return; }
+    
+    var steamUrl = ($('tradeSteamUrl').value || '').trim();
+    if (!steamUrl || steamUrl.indexOf('steamcommunity.com') < 0) {
+        _lg('❌ Вставь корректную Steam-ссылку', 'lose');
+        return;
+    }
+    
+    var skin = _tradeSelectedSkin;
+    var idx = state.inventory.indexOf(skin);
+    if (idx < 0) { _lg('❌ Скин не найден в инвентаре', 'lose'); return; }
+    
+    var price = Math.round(skin.price * 0.9 * 100) / 100;
+    
+    try {
+        state.inventory.splice(idx, 1);
+        await _sc();
+        
+        await window.fbAddDoc(
+            window.fbCollection(window.fbDb, 'trades'),
+            {
+                uid: _CU.uid,
+                email: _CU.email || '',
+                displayName: _UDN || _CU.displayName || 'Игрок',
+                steamUrl: steamUrl,
+                skinId: skin.id,
+                skinName: skin.name,
+                skinPrice: price,
+                status: 'pending',
+                createdAt: Date.now(),
+                expiresAt: Date.now() + (3 * 24 * 60 * 60 * 1000)
+            }
+        );
+        
+        _lg('✅ Заявка создана! Отправь трейд на профиль сайта', 'win');
+        _tradeSelectedSkin = null;
+        $('tradeSteamUrl').value = '';
+        $('createTradeBtn').disabled = true;
+        renderTradeSkinList();
+        renderMyTrades();
+        _ui(); _rinv(); _ri();
+    } catch (e) {
+        console.error('Trade error:', e);
+        _lg('❌ Ошибка: ' + e.message, 'lose');
+        state.inventory.push(skin);
+        await _sc();
+    }
+}
+
+async function cancelTrade(tradeId) {
+    if (!_CU) return;
+    if (!confirm('Отменить заявку? Скин вернётся в инвентарь.')) return;
+    
+    try {
+        var tradeRef = window.fbDoc(window.fbDb, 'trades', tradeId);
+        var tradeSnap = await window.fbGetDoc(tradeRef);
+        if (!tradeSnap.exists()) { _lg('❌ Заявка не найдена', 'lose'); return; }
+        
+        var trade = tradeSnap.data();
+        if (trade.uid !== _CU.uid) { _lg('❌ Это не твоя заявка', 'lose'); return; }
+        if (trade.status !== 'pending') { _lg('❌ Заявка уже не активна', 'lose'); return; }
+        
+        var skin = SKIN_BY_ID[trade.skinId];
+        if (skin) state.inventory.push(skin);
+        await _sc();
+        
+        await window.fbDeleteDoc(tradeRef);
+        
+        _lg('✅ Заявка отменена, скин возвращён', 'info');
+        renderMyTrades(); renderTradeSkinList();
+        _ui(); _rinv(); _ri();
+    } catch (e) {
+        console.error('Cancel error:', e);
+        _lg('❌ Ошибка отмены: ' + e.message, 'lose');
+    }
+}
+
+async function checkExpiredTrades() {
+    if (!_CU) return;
+    try {
+        var q = window.fbQuery(
+            window.fbCollection(window.fbDb, 'trades'),
+            window.fbWhere('uid', '==', _CU.uid),
+            window.fbWhere('status', '==', 'pending')
+        );
+        var snap = await window.fbGetDocs(q);
+        var now = Date.now();
+        var expired = [];
+        
+        snap.forEach(function(docSnap) {
+            var trade = docSnap.data();
+            if (trade.expiresAt && now > trade.expiresAt) {
+                expired.push({ id: docSnap.id, data: trade });
+            }
+        });
+        
+        for (var i = 0; i < expired.length; i++) {
+            var ex = expired[i];
+            var skin = SKIN_BY_ID[ex.data.skinId];
+            if (skin) state.inventory.push(skin);
+            await window.fbDeleteDoc(window.fbDoc(window.fbDb, 'trades', ex.id));
+            _lg('⏰ Заявка истекла — скин возвращён', 'info');
+        }
+        
+        if (expired.length > 0) {
+            await _sc();
+            renderMyTrades(); renderTradeSkinList();
+            _ui(); _rinv(); _ri();
+        }
+    } catch (e) {
+        console.error('Check expired error:', e);
+    }
+}
+
+function renderTradeSkinList() {
+    var list = $('tradeSkinList');
+    if (!list) return;
+    
+    if (state.inventory.length === 0) {
+        list.innerHTML = '<div class="upg-inv-empty">Инвентарь пуст</div>';
+        return;
+    }
+    
+    var sorted = state.inventory.slice().sort(function(a, b) { return b.price - a.price; });
+    var frag = document.createDocumentFragment();
+    
+    sorted.forEach(function(skin) {
+        var el = document.createElement('div');
+        el.className = 'upg-inv-item ' + skin.rarity;
+        if (_tradeSelectedSkin && _tradeSelectedSkin.id === skin.id) {
+            el.style.borderColor = '#f5c542';
+            el.style.boxShadow = '0 0 15px rgba(245,197,66,0.5)';
+        }
+        el.innerHTML = renderSkinIcon(skin) +
+            '<div class="upg-inv-name">' + skin.name + '</div>' +
+            '<div class="upg-inv-price">' + formatRastr(Math.round(skin.price * 0.9 * 100) / 100) + '</div>';
+        el.addEventListener('click', function() {
+            _ck();
+            _tradeSelectedSkin = skin;
+            $('createTradeBtn').disabled = false;
+            renderTradeSkinList();
+        });
+        frag.appendChild(el);
+    });
+    
+    list.replaceChildren(frag);
+}
+
+async function renderMyTrades() {
+    var wrap = $('myTrades');
+    if (!wrap) return;
+    
+    if (!_CU) {
+        wrap.innerHTML = '<div class="empty-inv" style="padding:30px">Войди в аккаунт</div>';
+        return;
+    }
+    
+    try {
+        var q = window.fbQuery(
+            window.fbCollection(window.fbDb, 'trades'),
+            window.fbWhere('uid', '==', _CU.uid)
+        );
+        var snap = await window.fbGetDocs(q);
+        
+        var trades = [];
+        snap.forEach(function(d) { trades.push(Object.assign({ _id: d.id }, d.data())); });
+        trades.sort(function(a, b) { return b.createdAt - a.createdAt; });
+        
+        if (trades.length === 0) {
+            wrap.innerHTML = '<div class="empty-inv" style="padding:30px">Заявок пока нет</div>';
+            return;
+        }
+        
+        var frag = document.createDocumentFragment();
+        trades.forEach(function(t) {
+            var skin = SKIN_BY_ID[t.skinId];
+            var el = document.createElement('div');
+            el.className = 'trade-item ' + t.status;
+            
+            var statusText = {
+                pending: 'ОЖИДАЕТ',
+                confirmed: 'ПОДТВЕРЖДЕНО',
+                declined: 'ОТКЛОНЕНО',
+                cancelled: 'ОТМЕНЕНО'
+            }[t.status] || t.status;
+            
+            var html = '';
+            if (skin) html += renderSkinIcon(skin);
+            html += '<div class="trade-info">';
+            html += '<div class="name">' + t.skinName + '</div>';
+            html += '<div class="price">' + formatRastr(t.skinPrice) + '</div>';
+            html += '<div class="steam-url">' + t.steamUrl + '</div>';
+            html += '</div>';
+            html += '<div class="trade-status ' + t.status + '">' + statusText + '</div>';
+            
+            if (t.status === 'pending') {
+                html += '<div class="trade-actions"><button data-cancel="' + t._id + '">Отменить</button></div>';
+            }
+            
+            el.innerHTML = html;
+            
+            if (t.status === 'pending') {
+                el.querySelector('[data-cancel]').addEventListener('click', function() {
+                    cancelTrade(t._id);
+                });
+            }
+            
+            frag.appendChild(el);
+        });
+        wrap.replaceChildren(frag);
+    } catch (e) {
+        console.error('Render trades error:', e);
+        wrap.innerHTML = '<div class="empty-inv" style="padding:30px">Ошибка загрузки</div>';
+    }
+}
+
+function _initTradeHandlers() {
+    var btn = $('createTradeBtn');
+    if (btn) btn.addEventListener('click', createTrade);
+}
+
 function _ah(){
     var ub=$('userBadge');if(ub)ub.addEventListener('click',function(){if(_CU)_ol();else _oa();});
     var lc=$('logoutConfirm');if(lc)lc.addEventListener('click',_lo);
@@ -300,11 +545,13 @@ function _ah(){
     var so=$('shopSort');if(so)so.addEventListener('change',function(e){state.shopSort=e.target.value;_sv=20;_rsh();save();_ck();});
     document.querySelectorAll('.shop-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.shop-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state.shopFilter=b.dataset.rarity;_sv=20;_rsh();save();});});
     document.querySelectorAll('.inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');_ivf=b.dataset.rarity;_rinv();});});
-    document.querySelectorAll('.nav-tab').forEach(function(t){t.addEventListener('click',function(){_un();_ck();_sl();document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});t.classList.add('active');$('page-'+t.dataset.page).classList.add('active');if(t.dataset.page==='shop'){_sv=20;_rsh();}if(t.dataset.page==='inventory')_rinv();if(t.dataset.page==='upgrade'){_ri();_rt2();}});});
+    document.querySelectorAll('.nav-tab').forEach(function(t){t.addEventListener('click',function(){_un();_ck();_sl();document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});t.classList.add('active');$('page-'+t.dataset.page).classList.add('active');if(t.dataset.page==='shop'){_sv=20;_rsh();}if(t.dataset.page==='inventory')_rinv();if(t.dataset.page==='trade'){renderTradeSkinList();renderMyTrades();}if(t.dataset.page==='upgrade'){_ri();_rt2();}});});
     document.addEventListener('visibilitychange',function(){if(document.hidden)_sl();});
     document.body.addEventListener('click',function(){_un();},{once:true});
     var stb=$('steamLoginBtn');if(stb)stb.addEventListener('click',function(){window.location.href='/api/steam';});
+    _initTradeHandlers();
 }
+
 function _checkSteamToken(){
     var p=new URLSearchParams(window.location.search);
     var t=p.get('steam_token');
@@ -346,6 +593,11 @@ window.SKINS=SKINS;
 window.RARITIES=RARITIES;
 window.renderSkinIcon=renderSkinIcon;
 window.currentUser=function(){return _CU;};
+window.createTrade=createTrade;
+window.cancelTrade=cancelTrade;
+window.renderMyTrades=renderMyTrades;
+window.renderTradeSkinList=renderTradeSkinList;
+window.checkExpiredTrades=checkExpiredTrades;
 if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',function(){
         _init();
