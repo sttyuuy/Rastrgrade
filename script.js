@@ -1,15 +1,13 @@
 /* ============================================================
-   RASTRGRADE v29 — GOOGLE AUTH via Firebase
+   RASTRGRADE v30 — Google Auth + Firestore Cloud Sync
    ============================================================ */
 
-/* ============ КУРС ВАЛЮТ ============ */
 const USD_TO_UAH = 44.60;
 const NUM_FMT = new Intl.NumberFormat('ru');
 function usdToUah(usd) { return Math.round(usd * USD_TO_UAH); }
 function formatUah(v) { return NUM_FMT.format(Math.round(v)) + ' ₴'; }
 function getShopPrice(skin) { return Math.ceil(skin.price * 1.15); }
 
-/* ============ SVG ФОЛБЭКИ ============ */
 const ICON_SVG = {
     knife:'<svg viewBox="0 0 64 64" fill="currentColor"><path d="M8 54l6-6 32-32 6 6-32 32-6 6z"/><path d="M44 18l8-8 6 6-8 8z"/></svg>',
     axe:'<svg viewBox="0 0 64 64" fill="currentColor"><rect x="28" y="6" width="6" height="52" rx="2"/><path d="M34 8l22 10-22 10z"/></svg>',
@@ -29,7 +27,6 @@ const ICON_SVG = {
     default:'<svg viewBox="0 0 64 64" fill="currentColor"><circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="currentColor">?</text></svg>'
 };
 
-/* ============ SKINS ============ */
 const SKINS = [
     {id:'rock', name:'Камень', svg:'default', rarity:'common', price:usdToUah(0.10)},
     {id:'torch', name:'Факел', svg:'default', rarity:'common', price:usdToUah(0.15)},
@@ -126,9 +123,10 @@ function resolveSkin(item) {
 }
 
 /* ============================================================
-   FIREBASE AUTH
+   FIREBASE AUTH + FIRESTORE
    ============================================================ */
-var currentUser = null; // { uid, email, displayName, photoURL }
+var currentUser = null;
+var cloudSaveTimer = null;
 
 function setupFirebase() {
     if (!window.fbReady) {
@@ -136,8 +134,7 @@ function setupFirebase() {
         return;
     }
 
-    /* Слушаем изменения авторизации */
-    window.fbOnAuthStateChanged(window.fbAuth, function(user) {
+    window.fbOnAuthStateChanged(window.fbAuth, async function(user) {
         if (user) {
             currentUser = {
                 uid: user.uid,
@@ -147,7 +144,7 @@ function setupFirebase() {
             };
             closeAuthModal();
             resetStateToDefault();
-            load();
+            await loadFromCloud();
             renderAll();
             updateUserBadge();
             log('👤 Добро пожаловать, ' + (user.displayName || user.email) + '!', 'win');
@@ -160,7 +157,6 @@ function setupFirebase() {
         }
     });
 
-    /* Кнопка Google */
     var googleBtn = document.getElementById('googleLoginBtn');
     if (googleBtn) {
         googleBtn.addEventListener('click', async function() {
@@ -171,11 +167,11 @@ function setupFirebase() {
                 var errEl = document.getElementById('authError');
                 if (errEl) {
                     if (e.code === 'auth/popup-blocked') {
-                        errEl.textContent = 'Браузер заблокировал окно. Разреши popup для этого сайта.';
+                        errEl.textContent = 'Браузер заблокировал окно. Разреши popup.';
                     } else if (e.code === 'auth/popup-closed-by-user') {
                         errEl.textContent = '';
                     } else if (e.code === 'auth/unauthorized-domain') {
-                        errEl.textContent = 'Домен не добавлен в Firebase Authorized domains.';
+                        errEl.textContent = 'Домен не добавлен в Firebase.';
                     } else {
                         errEl.textContent = 'Ошибка: ' + (e.message || e.code);
                     }
@@ -185,12 +181,67 @@ function setupFirebase() {
     }
 }
 
-function logout() {
+async function loadFromCloud() {
+    if (!currentUser || !window.fbDb) return;
+    try {
+        var ref = window.fbDoc(window.fbDb, 'users', currentUser.uid);
+        var snap = await window.fbGetDoc(ref);
+        if (snap.exists()) {
+            var s = snap.data();
+            Object.keys(s).forEach(function(k){ state[k] = s[k]; });
+            state.inventory = (state.inventory||[]).map(resolveSkin).filter(Boolean);
+            if (state.bestDrop) state.bestDrop = resolveSkin(state.bestDrop);
+            if (state.bestUpgrade) state.bestUpgrade = resolveSkin(state.bestUpgrade);
+        } else {
+            state.balance = 50;
+            await saveToCloud();
+        }
+    } catch(e) {
+        console.error('Load from cloud failed:', e);
+        state.balance = 50;
+    }
+}
+
+async function saveToCloud() {
+    if (!currentUser || !window.fbDb) return;
+    try {
+        var data = {
+            balance: state.balance,
+            inventory: state.inventory.map(function(i){ return {id:i.id, rarity:i.rarity}; }),
+            profit: state.profit,
+            totalWon: state.totalWon, totalLost: state.totalLost,
+            upgrades: state.upgrades,
+            purchases: state.purchases,
+            bestDrop: state.bestDrop ? {id:state.bestDrop.id, rarity:state.bestDrop.rarity} : null,
+            bestUpgrade: state.bestUpgrade ? {id:state.bestUpgrade.id, rarity:state.bestUpgrade.rarity} : null,
+            housePlayerLost: state.housePlayerLost, houseCasinoWon: state.houseCasinoWon,
+            xp: state.xp, level: state.level,
+            soundOn: state.soundOn,
+            shopFilter: state.shopFilter, shopSort: state.shopSort,
+            spinSpeed: state.spinSpeed,
+            updatedAt: Date.now()
+        };
+        var ref = window.fbDoc(window.fbDb, 'users', currentUser.uid);
+        await window.fbSetDoc(ref, data);
+    } catch(e) {
+        console.error('Save to cloud failed:', e);
+    }
+}
+
+function save() {
+    if (!currentUser) return;
+    if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(saveToCloud, 800);
+}
+
+async function logout() {
     if (!confirm('Выйти из аккаунта?')) return;
-    if (window.fbAuth) {
-        window.fbSignOut(window.fbAuth).then(function() {
-            log('👋 Вы вышли из аккаунта', 'info');
-        });
+    try {
+        await saveToCloud();
+        await window.fbSignOut(window.fbAuth);
+        log('👋 Вы вышли из аккаунта', 'info');
+    } catch(e) {
+        console.error(e);
     }
 }
 
@@ -218,7 +269,7 @@ function closeAuthModal() {
 }
 
 /* ============================================================
-   STATE + SAVE / LOAD (localStorage под UID пользователя)
+   STATE
    ============================================================ */
 var state = {
     balance: 0,
@@ -236,55 +287,6 @@ var state = {
     shopFilter: 'all', shopSort: 'price-asc',
     invPanelFilter: 'all', itemsPanelFilter: 'all'
 };
-
-function saveKey() {
-    return 'rastrgrade_v29_' + (currentUser ? currentUser.uid : 'guest');
-}
-
-function save() {
-    if (!currentUser) return;
-    try {
-        var save_data = {
-            balance: state.balance,
-            inventory: state.inventory.map(function(i){ return {id:i.id, rarity:i.rarity}; }),
-            profit: state.profit,
-            totalWon: state.totalWon, totalLost: state.totalLost,
-            upgrades: state.upgrades,
-            purchases: state.purchases,
-            bestDrop: state.bestDrop ? {id:state.bestDrop.id, rarity:state.bestDrop.rarity} : null,
-            bestUpgrade: state.bestUpgrade ? {id:state.bestUpgrade.id, rarity:state.bestUpgrade.rarity} : null,
-            housePlayerLost: state.housePlayerLost, houseCasinoWon: state.houseCasinoWon,
-            xp: state.xp, level: state.level,
-            soundOn: state.soundOn,
-            shopFilter: state.shopFilter, shopSort: state.shopSort,
-            spinSpeed: state.spinSpeed
-        };
-        localStorage.setItem(saveKey(), JSON.stringify(save_data));
-    } catch(e) {}
-}
-
-function load() {
-    if (!currentUser) {
-        resetStateToDefault();
-        return;
-    }
-    try {
-        var raw = localStorage.getItem(saveKey());
-        if (!raw) {
-            state.balance = 50;
-            save();
-            return;
-        }
-        var s = JSON.parse(raw);
-        Object.keys(s).forEach(function(k){ state[k] = s[k]; });
-        state.inventory = (state.inventory||[]).map(resolveSkin).filter(Boolean);
-        if (state.bestDrop) state.bestDrop = resolveSkin(state.bestDrop);
-        if (state.bestUpgrade) state.bestUpgrade = resolveSkin(state.bestUpgrade);
-    } catch(e) {
-        state.balance = 50;
-        save();
-    }
-}
 
 function resetStateToDefault() {
     state.balance = 0;
@@ -465,9 +467,7 @@ function log(msg, type) {
     }, 3500);
 }
 
-/* ============================================================
-   УТИЛИТЫ
-   ============================================================ */
+/* ============ УТИЛИТЫ ============ */
 function findTargetByPrice(targetPrice, sourceSkin) {
     var best = null, bestDiff = Infinity;
     SKINS.forEach(function(s){
@@ -519,8 +519,7 @@ function cacheDom() {
      'sourceRemoveBtn','targetRemoveBtn','circlePercent','circleStatus',
      'presetContainer','invPanelCount','invPanelList','targetsCount',
      'itemsPanelGrid','invSearch','itemsSearch','upgradeBtn',
-     'speedSlowBtn','speedFastBtn','userBadge',
-     'authModal','googleLoginBtn','authError','authCloseBtn']
+     'speedSlowBtn','speedFastBtn','userBadge']
     .forEach(function(id){ DOM[id] = $(id); });
     DOM.shopBalance = $('shopBalance');
 }
@@ -554,9 +553,7 @@ function updateUI() {
     save();
 }
 
-/* ============================================================
-   SHOW RESULT
-   ============================================================ */
+/* ============ SHOW RESULT ============ */
 function showResult(o) {
     var inner = $('resultInner');
     inner.className = 'modal-inner result-inner ' + o.type;
@@ -606,9 +603,7 @@ function closeResult() {
     $('resultModal').classList.remove('show');
 }
 
-/* ============================================================
-   UPGRADE — CIRCLE
-   ============================================================ */
+/* ============ UPGRADE ============ */
 var CIRCLE_RADIUS = 100;
 var CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
@@ -773,9 +768,7 @@ function selectPreset(idx) {
     updateCircleFromPreset();
 }
 
-/* ============================================================
-   INVENTORY PANEL
-   ============================================================ */
+/* ============ INVENTORY PANEL ============ */
 function renderInvPanel() {
     var list = $('invPanelList');
     if (!list) return;
@@ -848,7 +841,6 @@ function renderItemsPanel() {
             state.upgradeTarget = skin;
             state.selectedPreset = null;
             state.upgradeTarget._realChance = calcRealChance(state.upgradeSource.price, skin.price);
-
             renderTargetSlot();
             renderPresets();
             updateCircleFromPreset();
@@ -858,13 +850,10 @@ function renderItemsPanel() {
     grid.replaceChildren(frag);
 }
 
-/* ============================================================
-   АНИМАЦИЯ
-   ============================================================ */
+/* ============ ANIMATION ============ */
 function playUpgradeAnimation(chance, willWin) {
     return new Promise(function(resolve) {
         var duration = state.spinSpeed === 'fast' ? 2000 : 4000;
-
         var sectorEnd = chance * 3.6;
         var finalAngle;
 
@@ -920,7 +909,6 @@ function handleUpgrade() {
     }
 
     unlockAudio();
-
     var btn = $('upgradeBtn');
     btn.style.pointerEvents = 'none';
 
@@ -959,7 +947,7 @@ function handleUpgrade() {
                 value: '+' + formatUah(targetValue), canSell: true,
                 sellCallback: function() {
                     var i = state.inventory.indexOf(targetSkin);
-                    if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); }
+                    if (i >= 0) { state.inventory.splice(i, 1); state.balance += targetSkin.price; updateUI(); renderInventory(); renderInvPanel(); save(); }
                 }
             });
             log('⚡ ' + sourceSkin.name + ' → ' + targetSkin.name + ' ✅', 'win');
@@ -993,12 +981,11 @@ function handleUpgrade() {
         setNeedleAngle(0);
         updateUI();
         renderInventory();
+        save();
     });
 }
 
-/* ============================================================
-   ФИЛЬТРЫ ПАНЕЛЕЙ
-   ============================================================ */
+/* ============ FILTERS ============ */
 function initPanelFilters(containerId, filterKey, callback) {
     var container = $(containerId);
     if (!container) return;
@@ -1027,9 +1014,7 @@ function initPanelFilters(containerId, filterKey, callback) {
     });
 }
 
-/* ============================================================
-   МАГАЗИН
-   ============================================================ */
+/* ============ SHOP ============ */
 var _shopVisibleCount = 20;
 function renderShop() {
     var grid = $('shopGrid');
@@ -1087,9 +1072,7 @@ function openBuyModal(skin, price) {
 }
 var pendingPurchase = null;
 
-/* ============================================================
-   ИНВЕНТАРЬ (page)
-   ============================================================ */
+/* ============ INVENTORY ============ */
 var invFilter = 'all';
 function renderInventory() {
     var inv = $('inventory');
@@ -1116,18 +1099,13 @@ function sellSkin(skin) {
     var idx = state.inventory.indexOf(skin); if (idx < 0) return;
     state.inventory.splice(idx, 1);
     state.balance += skin.price;
-
-    if (state.upgradeSource === skin) {
-        resetUpgradeSlots();
-    }
-
+    if (state.upgradeSource === skin) resetUpgradeSlots();
     updateUI(); renderInventory(); renderInvPanel(); sClick();
     log('💰 Продано: ' + skin.name + ' +' + formatUah(skin.price), 'info');
+    save();
 }
 
-/* ============================================================
-   RENDER ALL
-   ============================================================ */
+/* ============ RENDER ALL ============ */
 function renderAll() {
     renderSourceSlot();
     renderTargetSlot();
@@ -1155,9 +1133,7 @@ function updateSpeedButtons() {
     }
 }
 
-/* ============================================================
-   ОБРАБОТЧИКИ (кроме Google — тот навешан в setupFirebase)
-   ============================================================ */
+/* ============ HANDLERS ============ */
 function attachHandlers() {
     var userBadge = $('userBadge');
     if (userBadge) userBadge.addEventListener('click', function() {
@@ -1194,8 +1170,7 @@ function attachHandlers() {
 
     var resetAllBtn = $('resetAllBtn');
     if (resetAllBtn) resetAllBtn.addEventListener('click', function() {
-        if (!confirm('Сбросить весь прогресс этого аккаунта?')) return;
-        try { localStorage.removeItem(saveKey()); } catch(e) {}
+        if (!confirm('Сбросить весь прогресс?')) return;
         resetStateToDefault();
         state.balance = 50;
         save();
@@ -1222,6 +1197,7 @@ function attachHandlers() {
         log('🛒 Куплено: ' + skin.name + ' за ' + formatUah(price), 'win');
         $('buyModal').classList.remove('show'); pendingPurchase = null;
         updateUI(); renderShop(); renderInventory(); renderInvPanel();
+        save();
     });
 
     var sellAllBtn = $('sellAllBtn');
@@ -1230,19 +1206,10 @@ function attachHandlers() {
         var total = state.inventory.reduce(function(s, i) { return s + i.price; }, 0);
         state.balance += total;
         state.inventory = [];
-
-        state.upgradeSource = null;
-        state.upgradeTarget = null;
-        state.selectedPreset = null;
-        renderSourceSlot();
-        renderTargetSlot();
-        renderPresets();
-        updateCircleChance(0, 'ВЫБЕРИ ПРЕДМЕТ', '');
-        setNeedleAngle(0);
-        if (DOM.upgradeBtn) DOM.upgradeBtn.disabled = true;
-
+        resetUpgradeSlots();
         updateUI(); renderInventory(); renderInvPanel(); sBuy();
         log('💰 Продано: +' + formatUah(total), 'win');
+        save();
     });
 
     var upgradeBtn = $('upgradeBtn');
@@ -1266,15 +1233,12 @@ function attachHandlers() {
 
     var sourceRemoveBtn = $('sourceRemoveBtn');
     if (sourceRemoveBtn) sourceRemoveBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        unlockAudio(); sClick();
-        resetUpgradeSlots();
+        e.stopPropagation(); unlockAudio(); sClick(); resetUpgradeSlots();
     });
 
     var targetRemoveBtn = $('targetRemoveBtn');
     if (targetRemoveBtn) targetRemoveBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        unlockAudio(); sClick();
+        e.stopPropagation(); unlockAudio(); sClick();
         state.upgradeTarget = null;
         state.selectedPreset = null;
         renderTargetSlot();
@@ -1332,9 +1296,7 @@ function attachHandlers() {
     document.body.addEventListener('click', function() { unlockAudio(); }, { once: true });
 }
 
-/* ============================================================
-   INIT
-   ============================================================ */
+/* ============ INIT ============ */
 function init() {
     initPanelFilters('invPanelFilters', 'invPanelFilter', renderInvPanel);
     initPanelFilters('itemsPanelFilters', 'itemsPanelFilter', renderItemsPanel);
