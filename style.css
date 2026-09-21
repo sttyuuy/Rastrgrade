@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
 :root {
     --bg:#050508;
     --bg-2:#0a0a10;
@@ -30,7 +32,9 @@ html, body {
     font-weight: 500;
     min-height: 100vh;
     overflow-x: hidden;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body::before {
@@ -104,7 +108,7 @@ body::before {
     z-index: 100;
     gap: 16px;
     flex-wrap: wrap;
-    box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.6), 0 1px 0 rgba(255,107,26,0.1) inset;
 }
 .hud-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 .hud-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -116,7 +120,7 @@ body::before {
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;
     font-size: 1.4rem;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
 }
 .logo-icon {
     font-size: 1.3rem;
@@ -206,6 +210,7 @@ body::before {
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+    letter-spacing: 1px;
 }
 .hud-stat-value.gold { color: var(--gold); text-shadow: 0 0 15px rgba(245,197,66,0.7); }
 .hud-stat-value.green { color: var(--green); }
@@ -229,6 +234,7 @@ body::before {
     border-color: var(--accent);
     background: rgba(255,107,26,0.12);
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,107,26,0.35);
 }
 
 .nav-tabs {
@@ -248,10 +254,10 @@ body::before {
     border: none;
     color: var(--text-dim);
     font-family: 'Rajdhani', sans-serif;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.25s;
     border-bottom: 3px solid transparent;
@@ -265,6 +271,7 @@ body::before {
     color: var(--accent);
     border-bottom-color: var(--accent);
     background: linear-gradient(180deg, transparent, rgba(255,107,26,0.08));
+    text-shadow: 0 0 20px rgba(255,107,26,0.8);
 }
 .nav-tab-icon { font-size: 1.15rem; }
 
@@ -298,11 +305,12 @@ body::before {
     flex-wrap: wrap;
 }
 .card-title {
+    font-family: 'Orbitron', sans-serif;
     font-size: 1.3rem;
     text-transform: uppercase;
-    letter-spacing: 2.5px;
+    letter-spacing: 3px;
     color: #fff;
-    font-weight: 700;
+    font-weight: 900;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -396,7 +404,7 @@ body::before {
     position: relative;
 }
 
-.upg-item-slot:hover { border-color: var(--accent); background: rgba(255,107,26,0.05); }
+.upg-item-slot:hover { border-color: var(--accent); background: rgba(255,107,26,0.05); box-shadow: 0 0 30px rgba(255,107,26,0.2); }
 .upg-item-slot.filled { border-style: solid; }
 .upg-item-slot .skin-icon { width: 120px; height: 120px; }
 
@@ -532,6 +540,7 @@ body::before {
     color: #fff;
     line-height: 1;
     transition: color 0.3s;
+    letter-spacing: 1px;
 }
 
 .upg-status {
@@ -592,20 +601,33 @@ body::before {
     background: linear-gradient(135deg, #ff3b3b, #ff6b1a);
     border: none;
     color: #fff;
-    padding: 16px 32px;
+    padding: 17px 32px;
     font-family: 'Rajdhani', sans-serif;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     cursor: pointer;
-    border-radius: 10px;
-    transition: all 0.25s;
-    box-shadow: 0 6px 25px rgba(255,59,59,0.4);
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 8px 30px rgba(255,59,59,0.45);
+    position: relative;
+    overflow: hidden;
+}
+.upg-action-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+.upg-action-btn:hover:not(:disabled)::before {
+    transform: translateX(100%);
 }
 .upg-action-btn:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 10px 40px rgba(255,59,59,0.7);
+    box-shadow: 0 14px 45px rgba(255,59,59,0.75);
 }
 .upg-action-btn:disabled {
     opacity: 0.35;
@@ -721,7 +743,7 @@ body::before {
     outline: none;
 }
 .upg-inv-input:focus,
-.upg-items-input:focus { border-color: var(--accent); }
+.upg-items-input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(255,107,26,0.25); }
 
 .upg-inv-filters,
 .upg-items-filters { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -731,12 +753,14 @@ body::before {
     border: 1px solid var(--border);
     color: var(--text-dim);
     padding: 4px 10px;
-    font-family: inherit;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     border-radius: 6px;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
 }
 .upg-inv-filter:hover,
 .upg-inv-filter.active { border-color: currentColor; }
@@ -756,7 +780,10 @@ body::before {
 .upg-inv-list::-webkit-scrollbar-track,
 .upg-items-grid::-webkit-scrollbar-track { background: transparent; }
 .upg-inv-list::-webkit-scrollbar-thumb,
-.upg-items-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.upg-items-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff6b1a, #a55cff);
+    border-radius: 3px;
+}
 
 .upg-inv-empty {
     grid-column: 1/-1;
@@ -854,16 +881,18 @@ body::before {
     border: 1px solid var(--border);
     color: var(--text-dim);
     padding: 8px 16px;
-    font-family: inherit;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 0.78rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     border-radius: 8px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+    transition: all 0.2s;
 }
 .shop-filter:hover, .shop-filter.active { border-color: var(--accent); color: var(--accent); }
-.shop-filter.active { background: rgba(255,107,26,0.12); }
+.shop-filter:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,26,0.25); }
+.shop-filter.active { background: rgba(255,107,26,0.12); box-shadow: 0 0 20px rgba(255,107,26,0.4); }
 .shop-sort {
     margin-left: auto;
     background: rgba(0,0,0,0.4);
@@ -915,23 +944,26 @@ body::before {
     display: flex;
     align-items: center;
     gap: 4px;
+    letter-spacing: 1px;
 }
 .shop-item .buy-btn {
     width: 100%;
     background: linear-gradient(135deg, #ff6b1a, #ff8c42);
     border: none;
     color: #000;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 11px 14px;
+    border-radius: 10px;
     font-family: 'Rajdhani', sans-serif;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 4px 15px rgba(255,107,26,0.35);
 }
-.shop-item .buy-btn:hover { transform: scale(1.05); }
-.shop-item .buy-btn:disabled { background: linear-gradient(135deg, #333, #444); color: #666; cursor: not-allowed; transform: none; }
+.shop-item .buy-btn:hover:not(:disabled) { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 25px rgba(255,107,26,0.6); }
+.shop-item .buy-btn:disabled { background: linear-gradient(135deg, #2a2a35, #3a3a45); color: #555; cursor: not-allowed; box-shadow: none; transform: none; }
 .shop-info-bar {
     background: linear-gradient(135deg, rgba(255,107,26,0.1), rgba(245,197,66,0.05));
     border: 1px solid rgba(255,107,26,0.3);
@@ -953,6 +985,7 @@ body::before {
     display: flex;
     align-items: center;
     gap: 6px;
+    letter-spacing: 1px;
 }
 .shop-info-bar .shop-info-value img {
     width: 20px;
@@ -967,16 +1000,18 @@ body::before {
     border: 1px solid var(--border);
     color: var(--text-dim);
     padding: 8px 16px;
-    font-family: inherit;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 0.78rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     border-radius: 8px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+    transition: all 0.2s;
 }
 .inv-filter:hover, .inv-filter.active { border-color: var(--accent); color: var(--accent); }
-.inv-filter.active { background: rgba(255,107,26,0.12); }
+.inv-filter:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,26,0.25); }
+.inv-filter.active { background: rgba(255,107,26,0.12); box-shadow: 0 0 20px rgba(255,107,26,0.4); }
 
 .inventory-grid {
     display: grid;
@@ -994,7 +1029,7 @@ body::before {
     position: relative;
     overflow: hidden;
 }
-.inv-item:hover { transform: translateY(-4px); }
+.inv-item:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
 .inv-item .skin-icon { width: 80px; height: 80px; margin: 0 auto 8px; }
 .inv-item .name {
     font-weight: 700;
@@ -1015,24 +1050,26 @@ body::before {
     align-items: center;
     justify-content: center;
     gap: 4px;
+    letter-spacing: 1px;
 }
 .inv-item .sell-btn {
     width: 100%;
     background: linear-gradient(135deg, #ff6b1a, #ff8c42);
     border: none;
     color: #000;
-    padding: 8px 10px;
-    border-radius: 8px;
+    padding: 9px 12px;
+    border-radius: 10px;
     font-family: 'Rajdhani', sans-serif;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 3px 12px rgba(255,107,26,0.3);
 }
-.inv-item .sell-btn:hover { transform: scale(1.03); }
+.inv-item .sell-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,26,0.55); }
 
-/* ===== КНОПКА ВИВЕСТИ (WITHDRAW) ===== */
 .inv-item .withdraw-btn {
     transition: opacity 0.25s, transform 0.25s;
 }
@@ -1063,20 +1100,24 @@ body::before {
     background: rgba(0,0,0,0.5);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 600;
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
     cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.2s;
+    letter-spacing: 1.5px;
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+    overflow: hidden;
 }
 .btn-secondary:hover {
     border-color: var(--accent);
     color: var(--accent);
-    background: rgba(255,107,26,0.08);
+    background: rgba(255,107,26,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255,107,26,0.3);
 }
 
 .trade-layout { display: flex; flex-direction: column; gap: 16px; }
@@ -1087,11 +1128,13 @@ body::before {
     padding: 20px;
 }
 .trade-header h2 {
+    font-family: 'Orbitron', sans-serif;
     font-size: 1.1rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: #fff;
     margin-bottom: 8px;
+    font-weight: 900;
 }
 .trade-header p { font-size: 0.8rem; color: var(--text-dim); line-height: 1.6; }
 
@@ -1103,15 +1146,15 @@ body::before {
     padding: 10px 18px;
     border-radius: 10px;
     cursor: pointer;
-    font-family: inherit;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
     transition: all 0.2s;
 }
-.game-tab:hover { border-color: var(--accent); color: var(--text); }
-.game-tab.active { border-color: var(--accent); background: rgba(255,107,26,0.15); color: var(--accent); }
+.game-tab:hover { border-color: var(--accent); color: var(--text); transform: translateY(-2px); }
+.game-tab.active { border-color: var(--accent); background: rgba(255,107,26,0.15); color: var(--accent); box-shadow: 0 0 20px rgba(255,107,26,0.4); }
 
 .steam-inv-grid {
     display: grid;
@@ -1123,7 +1166,7 @@ body::before {
 }
 .steam-inv-grid::-webkit-scrollbar { width: 8px; }
 .steam-inv-grid::-webkit-scrollbar-track { background: transparent; }
-.steam-inv-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.steam-inv-grid::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff6b1a, #a55cff); border-radius: 4px; }
 
 .inv-loading {
     text-align: center;
@@ -1161,12 +1204,12 @@ body::before {
 }
 .trade-summary-info { display: flex; flex-direction: column; gap: 4px; }
 .trade-summary-info .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-.trade-summary-info .value { font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; color: var(--gold); font-weight: 700; }
+.trade-summary-info .value { font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; color: var(--gold); font-weight: 700; letter-spacing: 1px; }
 .trade-summary button {
     background: linear-gradient(135deg, #00e676, #00b85c);
     border: none;
     color: #000;
-    padding: 12px 28px;
+    padding: 13px 28px;
     border-radius: 10px;
     font-family: 'Rajdhani', sans-serif;
     font-weight: 700;
@@ -1174,8 +1217,10 @@ body::before {
     text-transform: uppercase;
     letter-spacing: 2px;
     cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 6px 20px rgba(0,230,118,0.35);
 }
-.trade-summary button:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,230,118,0.5); }
+.trade-summary button:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(0,230,118,0.65); }
 
 .my-trades { display: flex; flex-direction: column; gap: 10px; }
 .trade-item {
@@ -1210,13 +1255,15 @@ body::before {
     color: var(--red);
     padding: 6px 14px;
     border-radius: 6px;
-    font-family: inherit;
+    font-family: 'Rajdhani', sans-serif;
     font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
 }
-.trade-actions button:hover { background: var(--red); color: #fff; }
+.trade-actions button:hover { background: var(--red); color: #fff; transform: translateY(-1px); }
 
 .stats-grid {
     display: grid;
@@ -1247,6 +1294,7 @@ body::before {
     display: flex;
     align-items: center;
     gap: 6px;
+    letter-spacing: 1px;
 }
 .stat-card-value.gold { color: var(--gold); }
 .stat-card-value.green { color: var(--green); }
@@ -1278,6 +1326,11 @@ body::before {
     box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     animation: toastIn 0.4s ease;
     pointer-events: auto;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 @keyframes toastIn {
     from { opacity: 0; transform: translateX(120%); }
@@ -1311,38 +1364,137 @@ body::before {
     position: relative;
     box-shadow: 0 20px 80px rgba(0,0,0,0.8);
     animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 @keyframes modalIn {
     from { opacity: 0; transform: scale(0.85) translateY(30px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.auth-inner { max-width: 400px; text-align: center; }
-.auth-logo { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 900; margin-bottom: 8px; }
-.auth-sub { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 24px; }
+/* ============================================================
+   КРАСИВА МОДАЛКА РЕЄСТРАЦІЇ
+   ============================================================ */
+.auth-inner {
+    max-width: 420px;
+    text-align: center;
+    padding: 40px 34px 34px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(15,15,24,0.98), rgba(10,10,18,0.98));
+    border: 1px solid rgba(255,107,26,0.35);
+    border-radius: 24px;
+    box-shadow:
+        0 0 0 1px rgba(255,107,26,0.15),
+        0 30px 80px rgba(0,0,0,0.9),
+        0 0 100px rgba(255,107,26,0.15);
+}
+.auth-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #ff6b1a, #f5c542, #ff6b1a, transparent);
+    animation: authLine 3s linear infinite;
+    background-size: 200% 100%;
+}
+@keyframes authLine {
+    0% { background-position: 0% 0; }
+    100% { background-position: 200% 0; }
+}
+.auth-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 6px;
+    letter-spacing: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.auth-logo::before {
+    content: '⚡';
+    font-size: 1.6rem;
+    filter: drop-shadow(0 0 15px #ff6b1a);
+    animation: boltPulse 2s infinite;
+}
+.auth-logo .logo-rust {
+    color: #ff6b1a;
+    text-shadow: 0 0 30px rgba(255,107,26,0.9), 0 0 60px rgba(255,107,26,0.5);
+}
+.auth-logo .logo-grade {
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255,255,255,0.4);
+}
+.auth-sub {
+    font-size: 0.85rem;
+    color: #6a6a80;
+    margin-bottom: 28px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
 .auth-btn {
     width: 100%;
     background: linear-gradient(135deg, #4285f4, #357ae8);
     border: none;
     color: #fff;
-    padding: 14px 20px;
-    border-radius: 10px;
+    padding: 15px 22px;
+    border-radius: 14px;
     font-family: 'Rajdhani', sans-serif;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1rem;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 12px;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(66,133,244,0.3);
 }
-.auth-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(66,133,244,0.5); }
-.auth-btn.steam { background: linear-gradient(135deg, #1b2838, #2a475e); }
-.auth-btn.steam:hover { box-shadow: 0 8px 30px rgba(42,71,94,0.7); }
-.auth-error { color: var(--red); font-size: 0.78rem; margin-top: 10px; min-height: 1em; }
+.auth-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transition: left 0.6s;
+}
+.auth-btn:hover::before {
+    left: 100%;
+}
+.auth-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(66,133,244,0.55);
+}
+.auth-btn:active {
+    transform: translateY(-1px);
+}
+.auth-btn.steam {
+    background: linear-gradient(135deg, #1b2838, #2a475e);
+    box-shadow: 0 6px 20px rgba(42,71,94,0.5);
+}
+.auth-btn.steam:hover {
+    box-shadow: 0 12px 35px rgba(42,71,94,0.8);
+}
+.auth-error {
+    color: #ff3b3b;
+    font-size: 0.8rem;
+    margin-top: 14px;
+    min-height: 1.2em;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
 
 .result-inner { max-width: 420px; text-align: center; position: relative; overflow: hidden; }
 .result-inner.result-win { border-color: rgba(0,230,118,0.5); }
@@ -1369,6 +1521,7 @@ body::before {
     align-items: center;
     justify-content: center;
     gap: 6px;
+    letter-spacing: 1px;
 }
 .result-skin { margin: 14px 0; }
 .result-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
@@ -1399,13 +1552,17 @@ body::before {
     text-transform: uppercase;
     letter-spacing: 1.5px;
     cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 4px 15px rgba(255,107,26,0.35);
 }
-.result-actions button:hover { transform: translateY(-2px); }
+.result-actions button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,107,26,0.55); }
 .result-actions button.secondary {
     background: rgba(0,0,0,0.5);
     border: 1px solid var(--border);
     color: var(--text);
+    box-shadow: none;
 }
+.result-actions button.secondary:hover { border-color: var(--accent); color: var(--accent); }
 
 .buy-inner { max-width: 440px; text-align: center; }
 .buy-icon { width: 110px; height: 110px; margin: 0 auto 12px; }
@@ -1422,6 +1579,7 @@ body::before {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    letter-spacing: 2px;
 }
 .buy-qty-row { display: flex; gap: 8px; justify-content: center; margin: 16px 0; flex-wrap: wrap; }
 .buy-actions { display: flex; gap: 10px; margin-top: 10px; }
@@ -1438,11 +1596,13 @@ body::before {
     text-transform: uppercase;
     letter-spacing: 1.5px;
     cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 4px 15px rgba(0,230,118,0.3);
 }
 .buy-actions .btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,230,118,0.5); }
 
 .logout-inner { max-width: 360px; text-align: center; }
-.logout-inner .modal-title { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; color: #fff; }
+.logout-inner .modal-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; color: #fff; font-weight: 900; }
 .logout-inner p { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 20px; }
 .logout-actions { display: flex; gap: 10px; }
 .logout-actions button { flex: 1; }
@@ -1476,6 +1636,8 @@ body::before {
     .toast { min-width: auto; max-width: none; width: 100%; }
     .nav-tabs { top: 58px; }
     .inv-item .withdraw-btn { opacity: 1 !important; }
+    .auth-inner { padding: 30px 20px 24px; }
+    .auth-logo { font-size: 1.6rem; }
 }
 
 @media (max-width: 480px) {
@@ -1490,5 +1652,10 @@ body::before {
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: #353548; }
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff6b1a, #a55cff);
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ff8c42, #b56cff);
+}
