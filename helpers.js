@@ -4,7 +4,6 @@
 (function(){
 'use strict';
 
-/* ---------- Обфускація ключових імен ---------- */
 var _0x7f = 'admin_panel_rastr';
 var _0x4a = ['moc.liamg', '9oklesahsim'];
 
@@ -12,7 +11,6 @@ function _0xr(s){
     return s.split('').reverse().join('');
 }
 
-/* ---------- Перевірка адміна ---------- */
 function _0xAdm(){
     try{
         var u = (typeof window.currentUser === 'function') ? window.currentUser() : window.currentUser;
@@ -24,7 +22,6 @@ function _0xAdm(){
     }catch(e){ return false; }
 }
 
-/* ---------- Відкриття/закриття адмінки ---------- */
 var _0xOpen = false;
 
 function _0xToggle(){
@@ -44,7 +41,6 @@ function _0xToggle(){
     }
 }
 
-/* ---------- Хоткей: правий Shift ---------- */
 document.addEventListener('keydown', function(e){
     if(e.code === 'ShiftRight' && !e.repeat){
         if(!_0xAdm()) return;
@@ -55,7 +51,6 @@ document.addEventListener('keyup', function(e){
     if(e.code === 'ShiftRight'){}
 });
 
-/* ---------- Головна функція рендеру адмінки ---------- */
 function _0xa1(){
     var el = document.getElementById(_0x7f);
     if(!el) return;
@@ -279,6 +274,7 @@ async function _0xs(){
 
 /* ============================================================
    ЗАЯВКИ НА ВЫВОД (WITHDRAWALS) — _0xw()
+   Скин удаляется ТОЛЬКО при "sent"
    ============================================================ */
 async function _0xw(){
     var wrap = document.getElementById(_0x7f + '_withdrawals');
@@ -329,7 +325,7 @@ async function _0xw(){
 async function _0xwt(id, action){
     if(!confirm(action === 'sent'
         ? 'Подтвердить отправку? Скин будет удалён окончательно.'
-        : 'Отменить? Скин вернётся игроку.')) return;
+        : 'Отменить? Скин останется у игрока.')) return;
     try{
         var wRef = window.fbDoc(window.fbDb, 'withdrawals', id);
         var wSnap = await window.fbGetDoc(wRef);
@@ -337,19 +333,25 @@ async function _0xwt(id, action){
         var w = wSnap.data();
 
         if(action === 'sent'){
-            await window.fbUpdateDoc(wRef, { status: 'sent', resolvedAt: Date.now() });
-            alert('✅ Отправлено! Скин удалён.');
-        }else{
-            var userRef = window.fbDoc(window.fbDb, 'users', w.uid);
-            var userSnap = await window.fbGetDoc(userRef);
-            if(userSnap.exists()){
-                var ud = userSnap.data();
-                var inv = ud.inventory || [];
-                inv.push({ id: w.skinId, rarity: 'common' });
-                await window.fbUpdateDoc(userRef, { inventory: inv, updatedAt: Date.now() });
+            // Удаляем скин из инвентаря игрока
+            var userRef2 = window.fbDoc(window.fbDb, 'users', w.uid);
+            var userSnap2 = await window.fbGetDoc(userRef2);
+            if(userSnap2.exists()){
+                var ud2 = userSnap2.data();
+                var inv2 = ud2.inventory || [];
+                var removed = false;
+                inv2 = inv2.filter(function(it){
+                    if(!removed && it.id === w.skinId){ removed = true; return false; }
+                    return true;
+                });
+                await window.fbUpdateDoc(userRef2, { inventory: inv2, updatedAt: Date.now() });
             }
+            await window.fbUpdateDoc(wRef, { status: 'sent', resolvedAt: Date.now() });
+            alert('✅ Отправлено! Скин удалён из инвентаря игрока.');
+        }else{
+            // Просто отменяем — скин и так на месте
             await window.fbUpdateDoc(wRef, { status: 'cancelled', resolvedAt: Date.now() });
-            alert('❌ Отменено. Скин возвращён игроку.');
+            alert('❌ Отменено. Скин остался у игрока.');
         }
         _0xw();
     }catch(e){
@@ -358,7 +360,6 @@ async function _0xwt(id, action){
     }
 }
 
-/* ---------- Експорт у window ---------- */
 window._0xToggle = _0xToggle;
 window._0xAdm = _0xAdm;
 window._0xa1 = _0xa1;
