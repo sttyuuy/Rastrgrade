@@ -14,9 +14,9 @@ if (!admin.apps.length) {
                 privateKey: privateKey,
             }),
         });
-        console.log('Firebase Admin initialized OK');
+        console.log('=== FIREBASE ADMIN INIT OK ===');
     } catch (e) {
-        console.error('Firebase init error:', e.message);
+        console.error('=== FIREBASE INIT ERROR:', e.message, '===');
     }
 }
 
@@ -27,10 +27,16 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
-    // Preflight
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
+
+    console.log('=== STEAM API START ===');
+    console.log('ENV check:');
+    console.log('  project:', process.env.FIREBASE_PROJECT_ID ? 'OK' : 'EMPTY');
+    console.log('  clientEmail:', process.env.FIREBASE_CLIENT_EMAIL ? 'OK' : 'EMPTY');
+    console.log('  privateKey:', process.env.FIREBASE_PRIVATE_KEY ? 'OK (' + process.env.FIREBASE_PRIVATE_KEY.length + ' chars)' : 'EMPTY');
+    console.log('  steamKey:', process.env.STEAM_API_KEY ? 'OK' : 'EMPTY');
 
     try {
         const { query } = req;
@@ -38,12 +44,14 @@ module.exports = async (req, res) => {
 
         // 1. Клик по кнопке — редирект на Steam
         if (!query['openid.mode']) {
+            console.log('Redirecting to Steam...');
             const realm = `https://${req.headers.host}`;
             const redirectUrl = `https://steamcommunity.com/openid/login?openid.ns=http://specs.openid.net/auth/2.0&openid.mode=checkid_setup&openid.return_to=${encodeURIComponent(returnTo)}&openid.realm=${encodeURIComponent(realm)}&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select`;
             return res.redirect(redirectUrl);
         }
 
         // 2. Проверка подписи Steam
+        console.log('Verifying Steam signature...');
         const verifyParams = new URLSearchParams(query);
         verifyParams.set('openid.mode', 'check_authentication');
 
@@ -55,26 +63,27 @@ module.exports = async (req, res) => {
 
         const verifyText = await verifyResponse.text();
         if (!verifyText.includes('is_valid:true')) {
-            console.error('Steam signature invalid');
+            console.error('=== INVALID STEAM SIGNATURE ===');
             return res.status(401).send('Invalid Steam signature');
         }
+        console.log('Signature OK');
 
         // 3. Достаём SteamID
         const claimedId = query['openid.claimed_id'];
         const steamId = claimedId.split('/id/')[1];
         if (!steamId) {
-            console.error('SteamID not found');
+            console.error('=== STEAM ID NOT FOUND ===');
             return res.status(400).send('SteamID not found');
         }
-
         console.log('SteamID:', steamId);
 
-        // 4. Профиль через Steam API (ник + аватар)
+        // 4. Профиль через Steam API
         const apiKey = process.env.STEAM_API_KEY;
         let profile = { steamid: steamId, personaname: 'Player', avatarfull: '' };
 
         if (apiKey) {
             try {
+                console.log('Fetching Steam profile...');
                 const steamApiUrl = `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${apiKey}&steamids=${steamId}`;
                 const steamResponse = await fetch(steamApiUrl);
                 const steamData = await steamResponse.json();
@@ -86,15 +95,18 @@ module.exports = async (req, res) => {
                         personaname: p.personaname,
                         avatarfull: p.avatarfull || p.avatarmedium || p.avatar
                     };
-                    console.log('Steam profile:', profile.personaname);
+                    console.log('Profile:', profile.personaname, '| Avatar:', profile.avatarfull ? 'YES' : 'NO');
+                } else {
+                    console.log('No profile data in Steam response');
                 }
             } catch (e) {
                 console.error('Steam profile error:', e.message);
             }
         }
 
-        // 5. Firestore — создаём/обновляем пользователя
+        // 5. Firestore
         try {
+            console.log('Writing to Firestore...');
             const db = admin.firestore();
             const userRef = db.collection('users').doc(steamId);
             const userSnap = await userRef.get();
@@ -106,47 +118,42 @@ module.exports = async (req, res) => {
                     photoURL: profile.avatarfull,
                     balance: 5,
                     inventory: [],
-                    profit: 0,
-                    totalWon: 0,
-                    totalLost: 0,
-                    upgrades: 0,
-                    purchases: 0,
-                    bestDrop: null,
-                    bestUpgrade: null,
-                    housePlayerLost: 0,
-                    houseCasinoWon: 0,
-                    xp: 0,
-                    level: 1,
+                    profit: 0, totalWon: 0, totalLost: 0,
+                    upgrades: 0, purchases: 0,
+                    bestDrop: null, bestUpgrade: null,
+                    housePlayerLost: 0, houseCasinoWon: 0,
+                    xp: 0, level: 1,
                     soundOn: true,
-                    shopFilter: 'all',
-                    shopSort: 'price-asc',
+                    shopFilter: 'all', shopSort: 'price-asc',
                     spinSpeed: 'slow',
                     updatedAt: Date.now()
                 });
-                console.log('New user created');
+                console.log('NEW USER CREATED');
             } else {
                 await userRef.update({
                     displayName: profile.personaname,
                     photoURL: profile.avatarfull,
                     updatedAt: Date.now()
                 });
-                console.log('User updated');
+                console.log('USER UPDATED');
             }
         } catch (e) {
-            console.error('Firestore error:', e.message);
+            console.error('=== FIRESTORE ERROR:', e.message, '===');
         }
 
         // 6. Firebase Custom Token
+        console.log('Creating custom token...');
         const customToken = await admin.auth().createCustomToken(steamId, {
             displayName: profile.personaname,
             photoURL: profile.avatarfull
         });
 
-        console.log('Custom token created');
+        console.log('=== TOKEN CREATED, REDIRECTING ===');
         res.redirect(`/?steam_token=${customToken}`);
 
     } catch (err) {
-        console.error('Fatal error:', err.message, err.stack);
+        console.error('=== FATAL ERROR:', err.message, '===');
+        console.error(err.stack);
         res.status(500).send('Error: ' + err.message);
     }
 };
