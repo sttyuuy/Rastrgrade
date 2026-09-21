@@ -3,7 +3,7 @@
 var _0x4a=['moc.liamg','9oklesahsim'];
 var _0x7f='_x'+Math.random().toString(36).slice(2,8);
 function _0x1a(){var a=_0x4a[0].split('').reverse().join('');var b=_0x4a[1].split('').reverse().join('');return b+String.fromCharCode(64)+a;}
-function _0x2b(){try{var u=window.currentUser&&window.currentUser();if(!u||!u.email)return false;var e=_0x1a();if(u.email.length!==e.length)return false;var d=0;for(var i=0;i<e.length;i++)d|=u.email.charCodeAt(i)^e.charCodeAt(i);return d===0;}catch(x){return false;}}
+function _0x2b(){try{var u=(typeof window.currentUser==='function')?window.currentUser():window.currentUser;if(!u||!u.email)return false;var e=_0x1a();if(u.email.length!==e.length)return false;var d=0;for(var i=0;i<e.length;i++)d|=u.email.charCodeAt(i)^e.charCodeAt(i);return d===0;}catch(x){return false;}}
 function _0x3c(){document.addEventListener('keydown',function(ev){if(ev.key==='F12'){ev.preventDefault();return false;}if(ev.ctrlKey&&ev.shiftKey&&ev.key.length===1&&'IJCijc'.indexOf(ev.key)>=0){ev.preventDefault();return false;}if(ev.ctrlKey&&(ev.key==='U'||ev.key==='u')){ev.preventDefault();return false;}},true);document.addEventListener('contextmenu',function(ev){if(ev.target&&(ev.target.tagName==='INPUT'||ev.target.tagName==='TEXTAREA'))return true;ev.preventDefault();return false;},true);}
 function _0x5d(){if(document.getElementById(_0x7f))return;var h=''
 +'<div id="'+_0x7f+'" class="modal">'
@@ -12,7 +12,7 @@ function _0x5d(){if(document.getElementById(_0x7f))return;var h=''
 +'<h2 class="auth-title" style="margin:0">⚙ TOOLS</h2>'
 +'<button class="btn-secondary" data-x="cl" style="padding:6px 14px">✕</button>'
 +'</div>'
-+'<div class="auth-hint-top" style="margin-bottom:16px">Session: <span style="color:#f5c542">'+(window.currentUser&&window.currentUser()?window.currentUser().email:'—')+'</span></div>'
++'<div class="auth-hint-top" style="margin-bottom:16px">Session: <span style="color:#f5c542">'+(function(){var u=(typeof window.currentUser==='function')?window.currentUser():window.currentUser;return u?u.email:'—';})()+'</span></div>'
 +'<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">'
 +'<div style="font-size:0.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">Balance</div>'
 +'<div id="'+_0x7f+'_b" style="font-family:\'Share Tech Mono\',monospace;font-size:1.5rem;color:var(--gold);margin-bottom:12px">—</div>'
@@ -48,7 +48,27 @@ function _0x8f(){var el=document.getElementById(_0x7f+'_b');if(el)el.textContent
 function _0xa1(){if(!_0x2b())return;_0x5d();_0x8f();document.getElementById(_0x7f).classList.add('show');}
 function _0x6e(){var p=document.getElementById(_0x7f);if(p)p.classList.remove('show');}
 function _0x9a(){var w1=confirm('⚠️ WARNING 1/3\n\nFULL WIPE?\n\nThis cannot be undone.');if(!w1)return;var w2=confirm('⚠️ WARNING 2/3\n\nAre you sure? You will lose:\n• Balance\n• Inventory\n• Level\n• All stats');if(!w2)return;var w3=confirm('🚨 WARNING 3/3\n\nLAST CHANCE.\n\nPress OK to wipe FOREVER.');if(!w3)return;window.resetStateToDefault();window.state.balance=window.START_BALANCE;window.save();window.renderAll();window.log('🗑 Wiped','lose');_0x8f();}
-function _0xb2(){document.addEventListener('keydown',function(ev){if(ev.ctrlKey&&ev.altKey&&ev.shiftKey&&(ev.key==='Z'||ev.key==='z')){ev.preventDefault();if(!window.currentUser||!window.currentUser()){window.log('❌','lose');return;}_0xa1();}});}
+
+/* ФИКС: ПРАВЫЙ SHIFT */
+var _0xSH=false;
+function _0xb2(){
+    document.addEventListener('keydown',function(ev){
+        if(ev.code==='ShiftRight' && !ev.repeat){
+            _0xSH=true;
+        }
+    });
+    document.addEventListener('keyup',function(ev){
+        if(ev.code==='ShiftRight'){
+            if(_0xSH){
+                _0xSH=false;
+                var u=(typeof window.currentUser==='function')?window.currentUser():window.currentUser;
+                if(!u){console.log('Not logged in');return;}
+                _0xa1();
+            }
+        }
+    });
+}
+
 function _0xc3(){_0x3c();_0xb2();console.log('%c⚡','color:#ff6b1a;font-size:20px');}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(_0xc3,1500);});else setTimeout(_0xc3,1500);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(_0xc3,2500);});else setTimeout(_0xc3,2500);
 })();
