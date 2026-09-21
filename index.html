@@ -69,17 +69,17 @@ window.dispatchEvent(new Event('fb-ready'));
 </div>
 <div class="hud-right">
 <div class="hud-stat">
-<div class="hud-stat-icon">⚙️</div>
+<div class="hud-stat-icon" id="balanceIcon"></div>
 <div>
 <div class="hud-stat-label">Баланс</div>
-<div class="hud-stat-value gold" id="balance">0 ⚙️</div>
+<div class="hud-stat-value gold" id="balance">0</div>
 </div>
 </div>
 <div class="hud-stat">
-<div class="hud-stat-icon">📈</div>
+<div class="hud-stat-icon" id="profitIcon"></div>
 <div>
 <div class="hud-stat-label">Профит</div>
-<div class="hud-stat-value" id="profit">0 ⚙️</div>
+<div class="hud-stat-value" id="profit">0</div>
 </div>
 </div>
 <button class="hud-btn" id="userBadge" title="Аккаунт"><span id="userBadgeIcon">👤</span></button>
@@ -185,11 +185,11 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="card">
 <div class="card-head">
 <h2 class="card-title"><span class="card-title-icon">🛒</span> Магазин скинов</h2>
-<div class="card-sub">Цены в RASTR ⚙️</div>
+<div class="card-sub">Цены в Metal Fragments</div>
 </div>
 <div class="shop-info-bar">
-<div class="shop-info-text"><span style="font-size:1.5rem">⚙️</span><span>Твой баланс:</span></div>
-<div class="shop-info-value" id="shopBalance">0 ⚙️</div>
+<div class="shop-info-text"><span>Твой баланс:</span></div>
+<div class="shop-info-value" id="shopBalance">0</div>
 </div>
 <div class="shop-filters">
 <button class="shop-filter active" data-rarity="all">Все</button>
@@ -211,7 +211,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="card">
 <div class="card-head">
 <h2 class="card-title"><span class="card-title-icon">🎒</span> Инвентарь</h2>
-<div class="card-sub">Предметов: <span id="invCount" class="gold">0</span> • Стоимость: <span id="invValue" class="gold">0 ⚙️</span></div>
+<div class="card-sub">Предметов: <span id="invCount" class="gold">0</span> • Стоимость: <span id="invValue" class="gold">0</span></div>
 </div>
 <div class="inv-filters">
 <button class="inv-filter active" data-rarity="all">Все</button>
@@ -227,11 +227,11 @@ window.dispatchEvent(new Event('fb-ready'));
 <section class="page" id="page-trade">
 <div class="card">
 <div class="card-head">
-<h2 class="card-title"><span class="card-title-icon">🔄</span> Купить RASTR за скины</h2>
-<div class="card-sub">Обменяй скины CS2 / Rust / Dota 2 на RASTR ⚙️</div>
+<h2 class="card-title"><span class="card-title-icon">🔄</span> Купить Metal Fragments за скины</h2>
+<div class="card-sub">Обменяй скины CS2 / Rust / Dota 2 на Metal Fragments</div>
 </div>
 <div class="shop-info-bar">
-<div class="shop-info-text"><span style="font-size:1.5rem">👤</span><span>Куда отправлять трейд:</span></div>
+<div class="shop-info-text"><span>Куда отправлять трейд:</span></div>
 <div class="shop-info-value" style="font-size:0.85rem">
 <a href="https://steamcommunity.com/tradeoffer/new/?partner=1073064847&token=Jjv7evlj" target="_blank" style="color:var(--gold)">Открыть Trade-ссылку</a>
 </div>
@@ -260,7 +260,7 @@ window.dispatchEvent(new Event('fb-ready'));
 </div>
 <div>
 <div style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px">Получишь</div>
-<div style="font-size:1.4rem;font-weight:700;color:var(--gold)" id="tradeTotal">0 ⚙️</div>
+<div style="font-size:1.4rem;font-weight:700;color:var(--gold)" id="tradeTotal">0</div>
 </div>
 <button class="btn-primary" id="createTradeBtn" disabled style="padding:14px 32px">ОБМЕНЯТЬ</button>
 </div>
@@ -279,7 +279,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="card">
 <div class="card-head">
 <h2 class="card-title"><span class="card-title-icon">📊</span> Статистика</h2>
-<div class="card-sub">Курс: 1 USD = 0.95 RASTR ⚙️</div>
+<div class="card-sub">Курс: 1 USD = 0.95 Metal Fragments</div>
 </div>
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-card-icon">💵</div><div class="stat-card-value" id="statTotalWon">0</div><div class="stat-card-label">Выиграно</div></div>
@@ -292,8 +292,8 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="house-balance">
 <div class="house-balance-title">📉 Твой баланс</div>
 <div class="house-balance-row">
-<span>Потрачено: <span class="red" id="housePlayer">0 ⚙️</span></span>
-<span>Получено: <span class="green" id="houseCasino">0 ⚙️</span></span>
+<span>Потрачено: <span class="red" id="housePlayer">0</span></span>
+<span>Получено: <span class="green" id="houseCasino">0</span></span>
 </div>
 </div>
 </div>
@@ -305,7 +305,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="result-icon" id="resultIcon">🎁</div>
 <h2 class="result-title" id="resultTitle">ПОБЕДА</h2>
 <div class="result-skin" id="resultSkin"></div>
-<div class="result-value" id="resultValue">+0 ⚙️</div>
+<div class="result-value" id="resultValue">+0</div>
 <div class="result-actions">
 <button class="btn-primary" id="resultContinue">ПРОДОЛЖИТЬ</button>
 <button class="btn-secondary" id="resultSell" style="display:none">💰 ПРОДАТЬ</button>
@@ -317,7 +317,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="buy-icon-slot" id="buyIcon"><div class="skin-icon">🎁</div></div>
 <h2 class="buy-title" id="buyTitle">Покупка</h2>
 <div class="buy-sub" id="buySub">Подтвердить покупку?</div>
-<div class="buy-price" id="buyPrice">0 ⚙️</div>
+<div class="buy-price" id="buyPrice">0</div>
 <div class="buy-actions">
 <button class="btn-primary" id="buyConfirm">КУПИТЬ</button>
 <button class="btn-secondary" id="buyCancel">ОТМЕНА</button>
