@@ -1,96 +1,59 @@
-const { getFirestore, getAuth } = require('../lib/firebase-admin');
-
-const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
-
-function setHeaders(res) {
-    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-}
-
-async function getUidFromRequest(req) {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!token) return null;
-
-    try {
-        const decoded = await getAuth().verifyIdToken(token);
-        return decoded.uid;
-    } catch {
-        return null;
-    }
-}
+/**
+ * Продаж одного предмета
+ */
+const { getFirestore } = require('../lib/firebase-admin');
+const { isValidSteamId, isValidMarketHashName } = require('../lib/validation');
+const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
 
 module.exports = async (req, res) => {
-    setHeaders(res);
-
-    if (req.method === 'OPTIONS') return res.status(204).end();
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const uid = await getUidFromRequest(req);
-    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
-
-    let body;
-    try {
-        body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    } catch {
-        return res.status(400).json({ error: 'Invalid JSON' });
+    const ip = getClientIp(req);
+    if (!checkRateLimit(`sell:${ip}`, 30, 60 * 1000)) {
+        return res.status(429).json({ error: 'Too many requests' });
     }
 
-    const { itemUid } = body || {};
-    if (!itemUid || typeof itemUid !== 'string') {
-        return res.status(400).json({ error: 'Missing itemUid' });
+    const { steamId, marketHashName, sellPrice } = req.body || {};
+
+    if (!isValidSteamId(steamId)) {
+        return res.status(400).json({ error: 'Invalid SteamID' });
+    }
+    if (!isValidMarketHashName(marketHashName)) {
+        return res.status(400).json({ error: 'Invalid item name' });
+    }
+    const price = Number(sellPrice);
+    if (!Number.isFinite(price) || price <= 0 || price > 100000) {
+        return res.status(400).json({ error: 'Invalid price' });
     }
 
     try {
         const db = getFirestore();
-        const userRef = db.collection('users').doc(uid);
+        const userRef = db.collection('users').doc(steamId);
 
-        const result = await db.runTransaction(async (tx) => {
-            const snap = await tx.get(userRef);
-            if (!snap.exists) throw new Error('User not found');
+        await db.runTransaction(async (tx) => {
+            const doc = await tx.get(userRef);
+            if (!doc.exists) throw new Error('User not found');
 
-            const data = snap.data();
-            const balance = data.balance || 0;
+            const data = doc.data();
             const inventory = Array.isArray(data.inventory) ? [...data.inventory] : [];
 
-            const index = inventory.findIndex(i => i.uid === itemUid);
-            if (index === -1) throw new Error('Item not found');
+            const idx = inventory.findIndex(i => i.marketHashName === marketHashName);
+            if (idx === -1) throw new Error('Item not in inventory');
 
-            const item = inventory[index];
-            const sellPrice = item.price || 0;
-
-            inventory.splice(index, 1);
-            const newBalance = Math.round((balance + sellPrice) * 100) / 100;
+            inventory.splice(idx, 1);
 
             tx.update(userRef, {
-                balance: newBalance,
                 inventory,
-                totalWon: (data.totalWon || 0) + sellPrice,
-                updatedAt: Date.now()
+                balance: (data.balance || 0) + price,
+                totalSold: (data.totalSold || 0) + price,
             });
-
-            return {
-                balance: newBalance,
-                inventory,
-                soldPrice: sellPrice
-            };
         });
 
-        return res.status(200).json(result);
-    } catch (err) {
-        if (err.message === 'Item not found') {
-            return res.status(404).json({ error: 'Предмет не знайдено' });
-        }
-        if (err.message === 'User not found') {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        console.error('Sell error:', err);
-        return res.status(500).json({ error: 'Internal server error' });
+        return res.status(200).json({ ok: true });
+    } catch (e) {
+        console.error('[sell] error:', e.message);
+        return res.status(400).json({ error: e.message });
     }
 };
