@@ -326,6 +326,7 @@ body::before {
     width: 70px;
     height: 70px;
     flex-shrink: 0;
+    transition: filter 0.3s;
 }
 .skin-icon svg {
     width: 100%;
@@ -339,15 +340,96 @@ body::before {
     filter: drop-shadow(0 4px 12px rgba(0,0,0,0.7));
 }
 
-.common { border-color: var(--r-common); }
-.uncommon { border-color: var(--r-uncommon); }
-.rare { border-color: var(--r-rare); }
-.epic { border-color: var(--r-epic); }
-.legendary { border-color: var(--r-legendary); }
-.mythical { border-color: var(--r-mythical); }
+/* ============================================================
+   КОЛЬОРИ ПО РІДКОСТІ — з фоном і світінням
+   ============================================================ */
 
+/* COMMON — сірий */
+.common { 
+    border-color: var(--r-common);
+    background: linear-gradient(180deg, 
+        rgba(122, 122, 138, 0.18) 0%, 
+        rgba(122, 122, 138, 0.05) 50%,
+        rgba(20, 20, 30, 0.95) 100%) !important;
+}
+.common .skin-icon {
+    filter: drop-shadow(0 0 12px rgba(122, 122, 138, 0.5));
+}
+
+/* UNCOMMON — голубий */
+.uncommon { 
+    border-color: var(--r-uncommon);
+    background: linear-gradient(180deg, 
+        rgba(74, 168, 255, 0.22) 0%, 
+        rgba(74, 168, 255, 0.06) 50%,
+        rgba(20, 20, 30, 0.95) 100%) !important;
+    box-shadow: 0 0 20px rgba(74, 168, 255, 0.15), inset 0 0 30px rgba(74, 168, 255, 0.05);
+}
+.uncommon .skin-icon {
+    filter: drop-shadow(0 0 20px rgba(74, 168, 255, 0.7));
+}
+
+/* RARE — фіолетовий */
+.rare { 
+    border-color: var(--r-rare);
+    background: linear-gradient(180deg, 
+        rgba(165, 92, 255, 0.25) 0%, 
+        rgba(165, 92, 255, 0.08) 50%,
+        rgba(20, 20, 30, 0.95) 100%) !important;
+    box-shadow: 0 0 25px rgba(165, 92, 255, 0.2), inset 0 0 30px rgba(165, 92, 255, 0.06);
+}
+.rare .skin-icon {
+    filter: drop-shadow(0 0 22px rgba(165, 92, 255, 0.8));
+}
+
+/* EPIC — рожевий */
+.epic { 
+    border-color: var(--r-epic);
+    background: linear-gradient(180deg, 
+        rgba(255, 61, 154, 0.25) 0%, 
+        rgba(255, 61, 154, 0.08) 50%,
+        rgba(20, 20, 30, 0.95) 100%) !important;
+    box-shadow: 0 0 25px rgba(255, 61, 154, 0.25), inset 0 0 30px rgba(255, 61, 154, 0.06);
+}
+.epic .skin-icon {
+    filter: drop-shadow(0 0 22px rgba(255, 61, 154, 0.8));
+}
+
+/* LEGENDARY — золотий */
+.legendary { 
+    border-color: var(--r-legendary);
+    background: linear-gradient(180deg, 
+        rgba(245, 197, 66, 0.28) 0%, 
+        rgba(245, 197, 66, 0.09) 50%,
+        rgba(30, 25, 15, 0.95) 100%) !important;
+    box-shadow: 0 0 30px rgba(245, 197, 66, 0.3), inset 0 0 40px rgba(245, 197, 66, 0.08);
+}
+.legendary .skin-icon {
+    filter: drop-shadow(0 0 25px rgba(245, 197, 66, 0.9));
+}
+
+/* MYTHICAL — червоний з пульсацією */
+.mythical { 
+    border-color: var(--r-mythical);
+    background: linear-gradient(180deg, 
+        rgba(255, 0, 68, 0.32) 0%, 
+        rgba(255, 0, 68, 0.1) 50%,
+        rgba(30, 10, 15, 0.95) 100%) !important;
+    box-shadow: 0 0 35px rgba(255, 0, 68, 0.35), inset 0 0 45px rgba(255, 0, 68, 0.1);
+    animation: mythicPulse 3s ease-in-out infinite;
+}
+.mythical .skin-icon {
+    filter: drop-shadow(0 0 28px rgba(255, 0, 68, 0.95));
+}
+@keyframes mythicPulse {
+    0%, 100% { box-shadow: 0 0 35px rgba(255, 0, 68, 0.35), inset 0 0 45px rgba(255, 0, 68, 0.1); }
+    50% { box-shadow: 0 0 55px rgba(255, 0, 68, 0.6), inset 0 0 65px rgba(255, 0, 68, 0.18); }
+}
+
+/* ============================================================
+   UPGRADE
+   ============================================================ */
 .upg-wrap { display: flex; flex-direction: column; gap: 16px; }
-
 .upg-top {
     display: grid;
     grid-template-columns: 1fr 380px 1fr;
@@ -358,7 +440,6 @@ body::before {
     border-radius: 18px;
     padding: 24px;
 }
-
 .upg-panel {
     display: flex;
     flex-direction: column;
@@ -372,7 +453,6 @@ body::before {
     padding: 50px 20px 20px;
     position: relative;
 }
-
 .upg-panel-head {
     position: absolute;
     top: 14px;
@@ -385,7 +465,6 @@ body::before {
     font-size: 0.75rem;
     letter-spacing: 1px;
 }
-
 .upg-panel-label { color: var(--text-dim); text-transform: uppercase; }
 .upg-panel-price { color: var(--gold); font-weight: 700; font-size: 0.85rem; }
 
@@ -403,11 +482,9 @@ body::before {
     background: rgba(0,0,0,0.3);
     position: relative;
 }
-
 .upg-item-slot:hover { border-color: var(--accent); background: rgba(255,107,26,0.05); box-shadow: 0 0 30px rgba(255,107,26,0.2); }
 .upg-item-slot.filled { border-style: solid; }
 .upg-item-slot .skin-icon { width: 120px; height: 120px; }
-
 .upg-item-slot .upg-item-name {
     font-weight: 700;
     text-transform: uppercase;
@@ -418,7 +495,6 @@ body::before {
     letter-spacing: 1px;
     padding: 0 8px;
 }
-
 .upg-item-slot .upg-item-rarity {
     font-size: 0.6rem;
     text-transform: uppercase;
@@ -426,7 +502,6 @@ body::before {
     margin-top: 4px;
     font-weight: 700;
 }
-
 .upg-item-empty {
     display: flex;
     flex-direction: column;
@@ -436,7 +511,6 @@ body::before {
 }
 .upg-item-empty-icon { font-size: 3rem; opacity: 0.4; line-height: 1; }
 .upg-item-empty-text { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; }
-
 .upg-btn-remove {
     background: rgba(255,59,59,0.15);
     border: 1px solid rgba(255,59,59,0.4);
@@ -459,7 +533,6 @@ body::before {
     justify-content: center;
     gap: 14px;
 }
-
 .upg-circle-wrap {
     position: relative;
     width: 300px;
@@ -468,7 +541,6 @@ body::before {
     align-items: center;
     justify-content: center;
 }
-
 .upg-circle-svg {
     position: absolute;
     inset: 0;
@@ -477,9 +549,7 @@ body::before {
     transform: rotate(-90deg);
     overflow: visible;
 }
-
 .upg-circle-bg { fill: none; stroke: #1a1a26; stroke-width: 14; }
-
 .upg-circle-sector {
     fill: none;
     stroke: url(#chanceGradient);
@@ -487,7 +557,6 @@ body::before {
     stroke-linecap: butt;
     filter: drop-shadow(0 0 15px currentColor);
 }
-
 .upg-needle {
     position: absolute;
     inset: 0;
@@ -495,7 +564,6 @@ body::before {
     transform-origin: center center;
     z-index: 5;
 }
-
 .upg-needle-head {
     position: absolute;
     top: 8px;
@@ -508,7 +576,6 @@ body::before {
     border-top: 20px solid var(--accent);
     filter: drop-shadow(0 0 12px var(--accent));
 }
-
 .upg-needle-body {
     position: absolute;
     top: 28px;
@@ -519,7 +586,6 @@ body::before {
     background: linear-gradient(180deg, var(--accent), transparent);
     border-radius: 3px;
 }
-
 .upg-circle-center {
     position: absolute;
     inset: 32%;
@@ -532,7 +598,6 @@ body::before {
     border-radius: 50%;
     background: radial-gradient(circle, rgba(0,0,0,0.85) 0%, transparent 80%);
 }
-
 .upg-percent {
     font-family: 'Share Tech Mono', monospace;
     font-size: 3rem;
@@ -542,7 +607,6 @@ body::before {
     transition: color 0.3s;
     letter-spacing: 1px;
 }
-
 .upg-status {
     font-size: 0.75rem;
     color: var(--text-dim);
@@ -563,7 +627,6 @@ body::before {
     max-width: 300px;
     justify-content: center;
 }
-
 .upg-speed-btn {
     flex: 1;
     background: rgba(0,0,0,0.4);
@@ -583,16 +646,13 @@ body::before {
     justify-content: center;
     gap: 6px;
 }
-
 .upg-speed-btn:hover { border-color: var(--accent); color: var(--text); }
-
 .upg-speed-btn.active {
     border-color: var(--accent);
     background: rgba(255,107,26,0.15);
     color: var(--accent);
     box-shadow: 0 0 15px rgba(255,107,26,0.3);
 }
-
 .upg-speed-label { font-size: 0.7rem; }
 
 .upg-action-btn {
@@ -645,7 +705,6 @@ body::before {
     border-radius: 14px;
     padding: 14px;
 }
-
 .upg-preset-btn {
     background: rgba(0,0,0,0.4);
     border: 2px solid var(--border);
@@ -686,7 +745,6 @@ body::before {
     gap: 16px;
     min-height: 500px;
 }
-
 .upg-inv-panel,
 .upg-items-panel {
     background: linear-gradient(180deg, var(--panel), var(--panel-2));
@@ -697,7 +755,6 @@ body::before {
     flex-direction: column;
     gap: 10px;
 }
-
 .upg-inv-head,
 .upg-items-head {
     display: flex;
@@ -706,7 +763,6 @@ body::before {
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
 }
-
 .upg-inv-title,
 .upg-items-title {
     font-size: 0.85rem;
@@ -715,21 +771,18 @@ body::before {
     letter-spacing: 2px;
     color: #fff;
 }
-
 .upg-inv-count {
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.75rem;
     color: var(--accent);
     font-weight: 700;
 }
-
 .upg-items-count {
     font-family: 'Share Tech Mono', monospace;
     font-size: 0.75rem;
     color: var(--green);
     font-weight: 700;
 }
-
 .upg-inv-input,
 .upg-items-input {
     width: 100%;
@@ -747,7 +800,6 @@ body::before {
 
 .upg-inv-filters,
 .upg-items-filters { display: flex; gap: 4px; flex-wrap: wrap; }
-
 .upg-inv-filter {
     background: transparent;
     border: 1px solid var(--border);
@@ -784,7 +836,6 @@ body::before {
     background: linear-gradient(180deg, #ff6b1a, #a55cff);
     border-radius: 3px;
 }
-
 .upg-inv-empty {
     grid-column: 1/-1;
     text-align: center;
@@ -793,7 +844,6 @@ body::before {
     font-style: italic;
     font-size: 0.85rem;
 }
-
 .upg-inv-item {
     background: rgba(0,0,0,0.4);
     border: 2px solid var(--border);
@@ -829,7 +879,6 @@ body::before {
     align-items: center;
     gap: 2px;
 }
-
 .upg-items-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -839,7 +888,6 @@ body::before {
     max-height: 480px;
     padding-right: 4px;
 }
-
 .upg-target-item {
     background: rgba(0,0,0,0.4);
     border: 2px solid var(--border);
@@ -875,6 +923,9 @@ body::before {
     gap: 2px;
 }
 
+/* ============================================================
+   SHOP
+   ============================================================ */
 .shop-filters { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
 .shop-filter {
     background: transparent;
@@ -910,14 +961,14 @@ body::before {
     gap: 14px;
 }
 .shop-item {
-    background: linear-gradient(180deg, #14141e, #0a0a14);
+    /* фон — з класу рідкості */
     border: 2px solid;
     border-radius: 14px;
     padding: 18px 12px;
     text-align: center;
     transition: all 0.3s;
 }
-.shop-item:hover { transform: translateY(-5px) scale(1.03); }
+.shop-item:hover { transform: translateY(-5px) scale(1.03); filter: brightness(1.1); }
 .shop-item .skin-icon { width: 90px; height: 90px; margin: 0 auto 10px; }
 .shop-item .name {
     font-weight: 700;
@@ -994,6 +1045,9 @@ body::before {
     display: inline-block;
 }
 
+/* ============================================================
+   INVENTORY
+   ============================================================ */
 .inv-filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .inv-filter {
     background: transparent;
@@ -1018,9 +1072,8 @@ body::before {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
 }
-
 .inv-item {
-    background: linear-gradient(180deg, #14141e, #0a0a14);
+    /* фон — з класу рідкості */
     border: 2px solid;
     border-radius: 14px;
     padding: 14px 10px;
@@ -1029,7 +1082,7 @@ body::before {
     position: relative;
     overflow: hidden;
 }
-.inv-item:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+.inv-item:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.6); filter: brightness(1.1); }
 .inv-item .skin-icon { width: 80px; height: 80px; margin: 0 auto 8px; }
 .inv-item .name {
     font-weight: 700;
@@ -1069,7 +1122,6 @@ body::before {
     box-shadow: 0 3px 12px rgba(255,107,26,0.3);
 }
 .inv-item .sell-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,26,0.55); }
-
 .inv-item .withdraw-btn {
     transition: opacity 0.25s, transform 0.25s;
 }
@@ -1080,7 +1132,6 @@ body::before {
 .inv-item:hover .withdraw-btn {
     opacity: 1;
 }
-
 .empty-inv {
     grid-column: 1/-1;
     text-align: center;
@@ -1089,12 +1140,7 @@ body::before {
     font-style: italic;
     font-size: 0.9rem;
 }
-
-.sell-all-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 14px;
-}
+.sell-all-row { display: flex; justify-content: flex-end; margin-bottom: 14px; }
 
 .btn-secondary {
     background: rgba(0,0,0,0.5);
@@ -1120,6 +1166,9 @@ body::before {
     box-shadow: 0 6px 20px rgba(255,107,26,0.3);
 }
 
+/* ============================================================
+   TRADE
+   ============================================================ */
 .trade-layout { display: flex; flex-direction: column; gap: 16px; }
 .trade-header {
     background: linear-gradient(135deg, rgba(74,168,255,0.1), rgba(165,92,255,0.05));
@@ -1137,7 +1186,6 @@ body::before {
     font-weight: 900;
 }
 .trade-header p { font-size: 0.8rem; color: var(--text-dim); line-height: 1.6; }
-
 .game-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 .game-tab {
     background: rgba(0,0,0,0.4);
@@ -1155,7 +1203,6 @@ body::before {
 }
 .game-tab:hover { border-color: var(--accent); color: var(--text); transform: translateY(-2px); }
 .game-tab.active { border-color: var(--accent); background: rgba(255,107,26,0.15); color: var(--accent); box-shadow: 0 0 20px rgba(255,107,26,0.4); }
-
 .steam-inv-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -1167,7 +1214,6 @@ body::before {
 .steam-inv-grid::-webkit-scrollbar { width: 8px; }
 .steam-inv-grid::-webkit-scrollbar-track { background: transparent; }
 .steam-inv-grid::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff6b1a, #a55cff); border-radius: 4px; }
-
 .inv-loading {
     text-align: center;
     padding: 40px;
@@ -1190,7 +1236,6 @@ body::before {
     font-size: 0.9rem;
     line-height: 1.6;
 }
-
 .trade-summary {
     background: linear-gradient(135deg, rgba(245,197,66,0.1), rgba(255,107,26,0.05));
     border: 1px solid rgba(245,197,66,0.3);
@@ -1221,7 +1266,6 @@ body::before {
     box-shadow: 0 6px 20px rgba(0,230,118,0.35);
 }
 .trade-summary button:hover { transform: translateY(-3px); box-shadow: 0 10px 35px rgba(0,230,118,0.65); }
-
 .my-trades { display: flex; flex-direction: column; gap: 10px; }
 .trade-item {
     background: rgba(0,0,0,0.4);
@@ -1265,6 +1309,9 @@ body::before {
 }
 .trade-actions button:hover { background: var(--red); color: #fff; transform: translateY(-1px); }
 
+/* ============================================================
+   STATS
+   ============================================================ */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1300,6 +1347,9 @@ body::before {
 .stat-card-value.green { color: var(--green); }
 .stat-card-value.red { color: var(--red); }
 
+/* ============================================================
+   TOAST
+   ============================================================ */
 .toast-wrap {
     position: fixed;
     top: 90px;
@@ -1341,6 +1391,9 @@ body::before {
 .toast.jackpot { border-left-color: var(--gold); background: linear-gradient(135deg, rgba(245,197,66,0.15), rgba(10,10,18,0.98)); }
 .toast-icon { font-size: 1.2rem; flex-shrink: 0; }
 
+/* ============================================================
+   MODAL
+   ============================================================ */
 .modal {
     position: fixed;
     inset: 0;
@@ -1372,9 +1425,7 @@ body::before {
     to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* ============================================================
-   КРАСИВА МОДАЛКА РЕЄСТРАЦІЇ
-   ============================================================ */
+/* AUTH */
 .auth-inner {
     max-width: 420px;
     text-align: center;
@@ -1470,23 +1521,14 @@ body::before {
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
     transition: left 0.6s;
 }
-.auth-btn:hover::before {
-    left: 100%;
-}
-.auth-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(66,133,244,0.55);
-}
-.auth-btn:active {
-    transform: translateY(-1px);
-}
+.auth-btn:hover::before { left: 100%; }
+.auth-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(66,133,244,0.55); }
+.auth-btn:active { transform: translateY(-1px); }
 .auth-btn.steam {
     background: linear-gradient(135deg, #1b2838, #2a475e);
     box-shadow: 0 6px 20px rgba(42,71,94,0.5);
 }
-.auth-btn.steam:hover {
-    box-shadow: 0 12px 35px rgba(42,71,94,0.8);
-}
+.auth-btn.steam:hover { box-shadow: 0 12px 35px rgba(42,71,94,0.8); }
 .auth-error {
     color: #ff3b3b;
     font-size: 0.8rem;
@@ -1496,6 +1538,7 @@ body::before {
     letter-spacing: 0.5px;
 }
 
+/* RESULT */
 .result-inner { max-width: 420px; text-align: center; position: relative; overflow: hidden; }
 .result-inner.result-win { border-color: rgba(0,230,118,0.5); }
 .result-inner.result-lose { border-color: rgba(255,59,59,0.5); }
@@ -1536,7 +1579,6 @@ body::before {
     from { transform: translate(0,0) scale(1); opacity: 1; }
     to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
 }
-
 .result-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
 .result-actions button {
     flex: 1;
@@ -1564,6 +1606,7 @@ body::before {
 }
 .result-actions button.secondary:hover { border-color: var(--accent); color: var(--accent); }
 
+/* BUY */
 .buy-inner { max-width: 440px; text-align: center; }
 .buy-icon { width: 110px; height: 110px; margin: 0 auto 12px; }
 .buy-icon .skin-icon { width: 100%; height: 100%; }
@@ -1607,12 +1650,14 @@ body::before {
 .logout-actions { display: flex; gap: 10px; }
 .logout-actions button { flex: 1; }
 
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 1200px) {
     .upg-top { grid-template-columns: 1fr; }
     .upg-panel { min-height: 320px; }
     .upg-bottom { grid-template-columns: 1fr; }
 }
-
 @media (max-width: 768px) {
     .hud-header { padding: 10px 12px; }
     .hud-left { gap: 10px; }
@@ -1639,7 +1684,6 @@ body::before {
     .auth-inner { padding: 30px 20px 24px; }
     .auth-logo { font-size: 1.6rem; }
 }
-
 @media (max-width: 480px) {
     .hud-stat-label { display: none; }
     .hud-stat { min-width: auto; padding: 5px 8px; }
@@ -1649,7 +1693,6 @@ body::before {
     .result-actions { flex-direction: column; }
     .logout-actions { flex-direction: column; }
 }
-
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb {
