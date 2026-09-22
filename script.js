@@ -9,12 +9,18 @@ var _firestorePrices = {};
 function _findSkinPrice(steamName){
     if(!steamName) return 0;
     var key = (steamName || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
+    
+    // 1. Firestore (точне співпадіння)
     if(_firestorePrices[key] !== undefined) return _firestorePrices[key];
+    
+    // 2. Firestore (часткове)
     for(var k in _firestorePrices){
         if(key.indexOf(k) >= 0 || k.indexOf(key) >= 0){
             return _firestorePrices[k];
         }
     }
+    
+    // 3. Локальний SKINS (fallback)
     var localPrice = 0;
     if(window.SKINS){
         window.SKINS.forEach(function(s){
@@ -24,6 +30,7 @@ function _findSkinPrice(steamName){
             }
         });
     }
+    
     return localPrice;
 }
 
@@ -489,7 +496,7 @@ function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'В�
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
-   STEAM INVENTORY — тільки трейдабельні скіни
+   STEAM INVENTORY — тільки трейдабельні скіни, ціни з Firestore
    ============================================================ */
 async function loadSteamInventory(appId){
     _steamAppId=appId;
@@ -591,9 +598,8 @@ function processInventory(data){
             type:desc.type||''
         };
     }).filter(function(i){
-        // ✅ Показуємо ТІЛЬКИ трейдабельні предмети
+        // ✅ Тільки трейдабельні
         if(!i.tradable) return false;
-        // І тільки ті, у яких є іконка
         if(!i.icon || i.icon.indexOf('undefined') >= 0) return false;
         return true;
     });
@@ -629,10 +635,18 @@ function renderSteamInv(){
         e.style.borderRadius='12px';
         e.style.padding='10px 8px';
         e.style.textAlign='center';
+        e.style.position='relative';
         
-        var priceHtml = price > 0 ? '<div style="font-size:0.65rem;color:#f5c542;font-weight:700;margin-top:2px">'+formatRastr(price)+'</div>' : '';
+        var priceHtml = '';
+        if(price > 0){
+            priceHtml = '<div style="font-size:0.75rem;color:#f5c542;font-weight:700;margin-top:4px">'+formatRastr(price)+'</div>';
+        }else{
+            priceHtml = '<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">—</div>';
+        }
         
-        e.innerHTML='<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div>'+priceHtml+'<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
+        var badgeHtml = selected ? '<div style="position:absolute;top:6px;right:6px;background:#f5c542;color:#000;font-size:0.6rem;font-weight:900;padding:2px 6px;border-radius:4px">✓</div>' : '';
+        
+        e.innerHTML=badgeHtml+'<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div>'+priceHtml+'<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'✅ ВЫБРАНО':'Нажми')+'</div>';
         
         e.addEventListener('click',function(){
             if(_steamSelected[item.assetid]){
