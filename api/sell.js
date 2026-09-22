@@ -1,8 +1,7 @@
 /**
- * Продаж одного предмета
+ * Продаж одного предмета за uid.
  */
-const { getFirestore } = require('../lib/firebase-admin');
-const { isValidSteamId, isValidMarketHashName } = require('../lib/validation');
+const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
 
 module.exports = async (req, res) => {
@@ -15,43 +14,54 @@ module.exports = async (req, res) => {
         return res.status(429).json({ error: 'Too many requests' });
     }
 
-    const { steamId, marketHashName, sellPrice } = req.body || {};
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-    if (!isValidSteamId(steamId)) {
-        return res.status(400).json({ error: 'Invalid SteamID' });
+    let steamId;
+    try {
+        const decoded = await getAuth().verifyIdToken(token);
+        steamId = decoded.uid;
+    } catch {
+        return res.status(401).json({ error: 'Invalid token' });
     }
-    if (!isValidMarketHashName(marketHashName)) {
-        return res.status(400).json({ error: 'Invalid item name' });
-    }
-    const price = Number(sellPrice);
-    if (!Number.isFinite(price) || price <= 0 || price > 100000) {
-        return res.status(400).json({ error: 'Invalid price' });
+
+    const { itemUid } = req.body || {};
+    if (!itemUid || typeof itemUid !== 'string') {
+        return res.status(400).json({ error: 'Missing itemUid' });
     }
 
     try {
         const db = getFirestore();
         const userRef = db.collection('users').doc(steamId);
 
-        await db.runTransaction(async (tx) => {
+        const result = await db.runTransaction(async (tx) => {
             const doc = await tx.get(userRef);
             if (!doc.exists) throw new Error('User not found');
 
             const data = doc.data();
             const inventory = Array.isArray(data.inventory) ? [...data.inventory] : [];
 
-            const idx = inventory.findIndex(i => i.marketHashName === marketHashName);
+            const idx = inventory.findIndex(i => i.uid === itemUid);
             if (idx === -1) throw new Error('Item not in inventory');
 
+            const item = inventory[idx];
+            const price = Number(item.price) || 0;
             inventory.splice(idx, 1);
+
+            const newBalance = Math.round(((data.balance || 0) + price) * 100) / 100;
 
             tx.update(userRef, {
                 inventory,
-                balance: (data.balance || 0) + price,
-                totalSold: (data.totalSold || 0) + price,
+                balance: newBalance,
+                totalSold: Math.round(((data.totalSold || 0) + price) * 100) / 100,
+                updatedAt: Date.now(),
             });
+
+            return { balance: newBalance, sold: price, inventory };
         });
 
-        return res.status(200).json({ ok: true });
+        return res.status(200).json(result);
     } catch (e) {
         console.error('[sell] error:', e.message);
         return res.status(400).json({ error: e.message });
