@@ -341,12 +341,12 @@ body::before {
 }
 
 /* ============================================================
-   КОЛЬОРИ ПО РІДКОСТІ — з фоном і світінням
+   КОЛЬОРИ ПО РІДКОСТІ — красиві фони
    ============================================================ */
 
 /* COMMON — сірий */
 .common { 
-    border-color: var(--r-common);
+    border-color: #7a7a8a;
     background: linear-gradient(180deg, 
         rgba(122, 122, 138, 0.18) 0%, 
         rgba(122, 122, 138, 0.05) 50%,
@@ -358,7 +358,7 @@ body::before {
 
 /* UNCOMMON — голубий */
 .uncommon { 
-    border-color: var(--r-uncommon);
+    border-color: #4aa8ff;
     background: linear-gradient(180deg, 
         rgba(74, 168, 255, 0.22) 0%, 
         rgba(74, 168, 255, 0.06) 50%,
@@ -371,7 +371,7 @@ body::before {
 
 /* RARE — фіолетовий */
 .rare { 
-    border-color: var(--r-rare);
+    border-color: #a55cff;
     background: linear-gradient(180deg, 
         rgba(165, 92, 255, 0.25) 0%, 
         rgba(165, 92, 255, 0.08) 50%,
@@ -384,7 +384,7 @@ body::before {
 
 /* EPIC — рожевий */
 .epic { 
-    border-color: var(--r-epic);
+    border-color: #ff3d9a;
     background: linear-gradient(180deg, 
         rgba(255, 61, 154, 0.25) 0%, 
         rgba(255, 61, 154, 0.08) 50%,
@@ -395,35 +395,40 @@ body::before {
     filter: drop-shadow(0 0 22px rgba(255, 61, 154, 0.8));
 }
 
-/* LEGENDARY — золотий */
+/* LEGENDARY — ЖОВТИЙ (з пульсацією) */
 .legendary { 
-    border-color: var(--r-legendary);
+    border-color: #f5c542;
     background: linear-gradient(180deg, 
-        rgba(245, 197, 66, 0.28) 0%, 
-        rgba(245, 197, 66, 0.09) 50%,
+        rgba(245, 197, 66, 0.35) 0%, 
+        rgba(245, 197, 66, 0.1) 50%,
         rgba(30, 25, 15, 0.95) 100%) !important;
-    box-shadow: 0 0 30px rgba(245, 197, 66, 0.3), inset 0 0 40px rgba(245, 197, 66, 0.08);
+    box-shadow: 0 0 35px rgba(245, 197, 66, 0.35), inset 0 0 45px rgba(245, 197, 66, 0.1);
+    animation: legendaryGlow 3s ease-in-out infinite;
 }
 .legendary .skin-icon {
-    filter: drop-shadow(0 0 25px rgba(245, 197, 66, 0.9));
+    filter: drop-shadow(0 0 28px rgba(245, 197, 66, 0.95));
+}
+@keyframes legendaryGlow {
+    0%, 100% { box-shadow: 0 0 35px rgba(245, 197, 66, 0.35), inset 0 0 45px rgba(245, 197, 66, 0.1); }
+    50% { box-shadow: 0 0 55px rgba(245, 197, 66, 0.6), inset 0 0 65px rgba(245, 197, 66, 0.18); }
 }
 
-/* MYTHICAL — червоний з пульсацією */
+/* MYTHICAL — ЧЕРВОНИЙ (з пульсацією) */
 .mythical { 
-    border-color: var(--r-mythical);
+    border-color: #ff0044;
     background: linear-gradient(180deg, 
-        rgba(255, 0, 68, 0.32) 0%, 
-        rgba(255, 0, 68, 0.1) 50%,
+        rgba(255, 0, 68, 0.4) 0%, 
+        rgba(255, 0, 68, 0.12) 50%,
         rgba(30, 10, 15, 0.95) 100%) !important;
-    box-shadow: 0 0 35px rgba(255, 0, 68, 0.35), inset 0 0 45px rgba(255, 0, 68, 0.1);
+    box-shadow: 0 0 40px rgba(255, 0, 68, 0.4), inset 0 0 50px rgba(255, 0, 68, 0.12);
     animation: mythicPulse 3s ease-in-out infinite;
 }
 .mythical .skin-icon {
-    filter: drop-shadow(0 0 28px rgba(255, 0, 68, 0.95));
+    filter: drop-shadow(0 0 30px rgba(255, 0, 68, 1));
 }
 @keyframes mythicPulse {
-    0%, 100% { box-shadow: 0 0 35px rgba(255, 0, 68, 0.35), inset 0 0 45px rgba(255, 0, 68, 0.1); }
-    50% { box-shadow: 0 0 55px rgba(255, 0, 68, 0.6), inset 0 0 65px rgba(255, 0, 68, 0.18); }
+    0%, 100% { box-shadow: 0 0 40px rgba(255, 0, 68, 0.4), inset 0 0 50px rgba(255, 0, 68, 0.12); }
+    50% { box-shadow: 0 0 65px rgba(255, 0, 68, 0.65), inset 0 0 75px rgba(255, 0, 68, 0.2); }
 }
 
 /* ============================================================
@@ -619,7 +624,6 @@ body::before {
 .upg-status.win { color: var(--green); }
 .upg-status.lose { color: var(--red); }
 .upg-status.spinning { color: var(--accent); }
-
 .upg-speed-row {
     display: flex;
     gap: 8px;
@@ -654,7 +658,6 @@ body::before {
     box-shadow: 0 0 15px rgba(255,107,26,0.3);
 }
 .upg-speed-label { font-size: 0.7rem; }
-
 .upg-action-btn {
     width: 100%;
     max-width: 300px;
@@ -695,7 +698,6 @@ body::before {
     box-shadow: none;
     background: linear-gradient(135deg, #333, #555);
 }
-
 .upg-presets-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
@@ -738,7 +740,6 @@ body::before {
 .upg-preset-btn.active .upg-preset-mult { color: var(--accent); }
 .upg-preset-chance { font-size: 0.65rem; color: var(--text-dim); display: block; }
 .upg-preset-btn.active .upg-preset-chance { color: var(--gold); }
-
 .upg-bottom {
     display: grid;
     grid-template-columns: 380px 1fr;
@@ -797,7 +798,6 @@ body::before {
 }
 .upg-inv-input:focus,
 .upg-items-input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(255,107,26,0.25); }
-
 .upg-inv-filters,
 .upg-items-filters { display: flex; gap: 4px; flex-wrap: wrap; }
 .upg-inv-filter {
@@ -817,7 +817,6 @@ body::before {
 .upg-inv-filter:hover,
 .upg-inv-filter.active { border-color: currentColor; }
 .upg-inv-filter.active { background: rgba(255,255,255,0.06); }
-
 .upg-inv-list {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -961,7 +960,6 @@ body::before {
     gap: 14px;
 }
 .shop-item {
-    /* фон — з класу рідкості */
     border: 2px solid;
     border-radius: 14px;
     padding: 18px 12px;
@@ -1066,14 +1064,12 @@ body::before {
 .inv-filter:hover, .inv-filter.active { border-color: var(--accent); color: var(--accent); }
 .inv-filter:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,26,0.25); }
 .inv-filter.active { background: rgba(255,107,26,0.12); box-shadow: 0 0 20px rgba(255,107,26,0.4); }
-
 .inventory-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
 }
 .inv-item {
-    /* фон — з класу рідкості */
     border: 2px solid;
     border-radius: 14px;
     padding: 14px 10px;
@@ -1141,7 +1137,6 @@ body::before {
     font-size: 0.9rem;
 }
 .sell-all-row { display: flex; justify-content: flex-end; margin-bottom: 14px; }
-
 .btn-secondary {
     background: rgba(0,0,0,0.5);
     border: 1px solid var(--border);
@@ -1424,8 +1419,6 @@ body::before {
     from { opacity: 0; transform: scale(0.85) translateY(30px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
 }
-
-/* AUTH */
 .auth-inner {
     max-width: 420px;
     text-align: center;
@@ -1537,8 +1530,6 @@ body::before {
     font-weight: 600;
     letter-spacing: 0.5px;
 }
-
-/* RESULT */
 .result-inner { max-width: 420px; text-align: center; position: relative; overflow: hidden; }
 .result-inner.result-win { border-color: rgba(0,230,118,0.5); }
 .result-inner.result-lose { border-color: rgba(255,59,59,0.5); }
@@ -1605,8 +1596,6 @@ body::before {
     box-shadow: none;
 }
 .result-actions button.secondary:hover { border-color: var(--accent); color: var(--accent); }
-
-/* BUY */
 .buy-inner { max-width: 440px; text-align: center; }
 .buy-icon { width: 110px; height: 110px; margin: 0 auto 12px; }
 .buy-icon .skin-icon { width: 100%; height: 100%; }
@@ -1643,7 +1632,6 @@ body::before {
     box-shadow: 0 4px 15px rgba(0,230,118,0.3);
 }
 .buy-actions .btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,230,118,0.5); }
-
 .logout-inner { max-width: 360px; text-align: center; }
 .logout-inner .modal-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; color: #fff; font-weight: 900; }
 .logout-inner p { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 20px; }
