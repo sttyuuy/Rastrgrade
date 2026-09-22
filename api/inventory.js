@@ -35,7 +35,6 @@ module.exports = async (req, res) => {
 
     const clientIp = getClientIp(req);
 
-    // Rate limit по IP
     if (!checkRateLimit(`ip:${clientIp}`, 30, 60 * 1000)) {
         res.setHeader('Retry-After', '60');
         return res.status(429).json({
@@ -67,7 +66,6 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: countResult.error });
     }
 
-    // Додатковий rate limit по SteamID
     if (!checkRateLimit(`steam:${steamid}`, 20, 60 * 1000)) {
         res.setHeader('Retry-After', '60');
         return res.status(429).json({
@@ -77,50 +75,43 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const response = await fetchSteamInventory(
+        const result = await fetchSteamInventory(
             steamid,
             RUST_APP_ID,
             RUST_CONTEXT_ID,
             countResult.value
         );
 
-        if (response.status === 429) {
-            res.setHeader('Retry-After', '60');
-            return res.status(429).json({
-                error: 'Steam rate limit reached. Please try again later.',
-                rateLimited: true
-            });
-        }
+        if (!result.ok) {
+            // Розрізняємо типи помилок
+            const msg = result.error || 'Steam error';
 
-        if (response.status === 403) {
-            return res.status(403).json({
-                error: 'Steam inventory is private or Steam blocked the request.',
-                private: true
-            });
-        }
+            if (msg.includes('429')) {
+                res.setHeader('Retry-After', '60');
+                return res.status(429).json({
+                    error: 'Steam rate limit reached. Please try again later.',
+                    rateLimited: true
+                });
+            }
+            if (msg.includes('403')) {
+                return res.status(403).json({
+                    error: 'Steam inventory is private or Steam blocked the request.',
+                    private: true
+                });
+            }
+            if (msg.includes('404')) {
+                return res.status(404).json({ error: 'Steam inventory not found.' });
+            }
+            if (msg.includes('timeout')) {
+                return res.status(504).json({ error: 'Steam inventory request timed out.' });
+            }
 
-        if (response.status === 404) {
-            return res.status(404).json({ error: 'Steam inventory not found.' });
-        }
-
-        if (!response.ok) {
-            console.error('Steam inventory failed:', response.status);
+            console.error('Steam inventory failed:', msg);
             return res.status(502).json({ error: 'Steam inventory service unavailable.' });
         }
 
-        const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            return res.status(502).json({ error: 'Invalid response from Steam.' });
-        }
-
-        const data = await response.json();
-
-        if (!data || typeof data !== 'object') {
-            return res.status(502).json({ error: 'Invalid Steam response.' });
-        }
-
-        const assets = Array.isArray(data.assets) ? data.assets : [];
-        const descriptions = Array.isArray(data.descriptions) ? data.descriptions : [];
+        const assets = Array.isArray(result.items) ? result.items : [];
+        const descriptions = Array.isArray(result.descriptions) ? result.descriptions : [];
 
         if (assets.length === 0) {
             res.setHeader(
@@ -137,10 +128,8 @@ module.exports = async (req, res) => {
         const safeResponse = {
             assets,
             descriptions,
-            total_inventory_count: Number.isInteger(data.total_inventory_count)
-                ? data.total_inventory_count
-                : assets.length,
-            more_items: Boolean(data.more_items)
+            total_inventory_count: assets.length,
+            more_items: false
         };
 
         res.setHeader(
