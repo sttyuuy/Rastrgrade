@@ -1,7 +1,7 @@
 /**
- * Steam OpenID авторизація
+ * Steam OpenID авторизація → Firebase Auth custom token (uid = steamId).
  */
-const { getFirestore } = require('../lib/firebase-admin');
+const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { isValidSteamId } = require('../lib/validation');
 const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
 
@@ -9,7 +9,6 @@ const SITE_URL = process.env.SITE_URL || 'https://rastrgrade.vercel.app';
 const STEAM_OPENID = 'https://steamcommunity.com/openid/login';
 
 function buildReturnTo() {
-    // Захардкоджений host — не беремо з req.headers.host (захист від Host header injection)
     const host = new URL(SITE_URL).host;
     return `https://${host}/api/steam-auth`;
 }
@@ -24,7 +23,7 @@ module.exports = async (req, res) => {
     const returnTo = buildReturnTo();
     const realm = SITE_URL;
 
-    // Крок 1: редірект на Steam OpenID
+    // Крок 1: редірект на Steam
     if (!req.query['openid.mode']) {
         const params = new URLSearchParams({
             'openid.ns': 'http://specs.openid.net/auth/2.0',
@@ -37,13 +36,12 @@ module.exports = async (req, res) => {
         return res.redirect(`${STEAM_OPENID}?${params.toString()}`);
     }
 
-    // Крок 2: перевірка відповіді від Steam
+    // Крок 2: перевірка підпису
     if (req.query['openid.mode'] !== 'id_res') {
         return res.status(400).json({ error: 'Invalid OpenID mode' });
     }
 
     try {
-        // Перевіряємо підпис у Steam
         const verifyParams = new URLSearchParams();
         for (const [key, value] of Object.entries(req.query)) {
             if (key.startsWith('openid.')) {
@@ -63,7 +61,6 @@ module.exports = async (req, res) => {
             return res.status(401).json({ error: 'Steam auth failed' });
         }
 
-        // Витягуємо SteamID64
         const claimedId = String(req.query['openid.claimed_id'] || '');
         const match = claimedId.match(/\/id\/(\d{17})$/);
         if (!match) {
@@ -75,7 +72,7 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Invalid SteamID' });
         }
 
-        // Створюємо/оновлюємо користувача у Firestore
+        // Створюємо/оновлюємо користувача
         const db = getFirestore();
         const userRef = db.collection('users').doc(steamId);
         const userDoc = await userRef.get();
@@ -83,16 +80,23 @@ module.exports = async (req, res) => {
         if (!userDoc.exists) {
             await userRef.set({
                 steamId,
-                createdAt: new Date(),
-                balance: 0,
+                createdAt: Date.now(),
+                balance: 5,             // START_BALANCE
                 totalWon: 0,
                 totalSold: 0,
+                totalLost: 0,
+                purchases: 0,
                 inventory: [],
             });
         }
 
-        // Редірект на фронтенд зі steamId (фронт далі використає Firebase Auth або власний токен)
-        return res.redirect(`${SITE_URL}/?steamId=${encodeURIComponent(steamId)}`);
+        // ВАРІАНТ B: створюємо Firebase custom token з uid = steamId
+        const customToken = await getAuth().createCustomToken(steamId);
+
+        // Редірект на фронт з токеном
+        return res.redirect(
+            `${SITE_URL}/?token=${encodeURIComponent(customToken)}`
+        );
     } catch (e) {
         console.error('[steam-auth] error:', e.message);
         return res.status(500).json({ error: 'Internal error' });
