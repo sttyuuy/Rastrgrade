@@ -2,7 +2,7 @@
    RASTRGRADE — Secure Client Script (FULL)
    ========================================================= */
 
-const API_BASE = 'https://rastrgrade.vercel.app/api';
+const API_BASE = '/api';
 
 // ====================== STATE ======================
 const state = {
@@ -165,7 +165,8 @@ function renderSkinIcon(skin) {
                 <img src="https://api.yrsproject.ru/public/image/Resize?shortname=${skin.shortname}&x=128&y=128"
                      alt="${skin.name || ''}"
                      loading="lazy"
-                     style="width:100%;height:100%;object-fit:contain">
+                     style="width:100%;height:100%;object-fit:contain"
+                     onerror="this.parentElement.innerHTML='◆'">
             </div>
         `;
     }
@@ -217,6 +218,7 @@ function renderShop() {
 async function handleBuy(skinId) {
     if (!state.isLoggedIn) {
         showToast('Спочатку увійди', 'lose');
+        $('#authModal')?.classList.add('show');
         return;
     }
 
@@ -516,7 +518,6 @@ function updateChance() {
         return;
     }
 
-    // Тільки для відображення. Реальний шанс рахує сервер.
     const chance = Math.min(
         95,
         Math.max(1, (state.selectedSource.price / state.selectedTarget.price) * 100)
@@ -539,6 +540,7 @@ async function handleUpgrade() {
 
     if (!state.isLoggedIn) {
         showToast('Спочатку увійди', 'lose');
+        $('#authModal')?.classList.add('show');
         return;
     }
 
