@@ -861,17 +861,26 @@ function _ah(){
 }
 
 function _checkSteamToken(){
-    var p=new URLSearchParams(window.location.search);
-    var t=p.get('steam_token');
-    if(!t)return false;
-    window.history.replaceState({},document.title,window.location.pathname);
-    if(window.fbSignInWithCustomToken&&window.fbAuth){
-        window.fbSignInWithCustomToken(window.fbAuth,t)
-            .then(function(c){console.log('Steam OK',c.user.uid);})
-            .catch(function(e){console.error('Steam err',e.message);alert('Ошибка входа: '+e.message);});
+    var p = new URLSearchParams(window.location.search);
+    var t = p.get('token');                    // ← було steam_token, стало token
+    if(!t) return false;
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if(window.fbSignInWithCustomToken && window.fbAuth){
+        window.fbSignInWithCustomToken(window.fbAuth, t)
+            .then(async function(c){
+                console.log('Steam OK', c.user.uid);
+                var idToken = await c.user.getIdToken();
+                window.apiClient.setAuthToken(idToken);   // ← ДОДАНО
+            })
+            .catch(function(e){
+                console.error('Steam err', e.message);
+                alert('Ошибка входа: ' + e.message);
+            });
         return true;
     }
     return false;
+}
 }
 function _waitForFirebase(cb,attempts){
     attempts=attempts||0;
