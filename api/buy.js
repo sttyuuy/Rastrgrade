@@ -1,11 +1,8 @@
 const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { randomUUID } = require('crypto');
+const SKINS = require('../lib/skins');
 
 const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
-
-// Каталог скінів має бути на сервері (скопіюй з skins.js)
-// Тут для прикладу — заглушка. Краще винести в lib/skins.js
-const SKINS = require('../lib/skins'); // зроби цей файл
 
 function setHeaders(res) {
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -14,6 +11,7 @@ function setHeaders(res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Vary', 'Origin');
 }
 
 async function getUidFromRequest(req) {
@@ -94,11 +92,7 @@ module.exports = async (req, res) => {
                 updatedAt: Date.now()
             });
 
-            return {
-                balance: newBalance,
-                inventory,
-                item: newItem
-            };
+            return { balance: newBalance, inventory, item: newItem };
         });
 
         return res.status(200).json(result);
