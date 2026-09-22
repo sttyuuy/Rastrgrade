@@ -1,27 +1,37 @@
 (function(){
 'use strict';
-function _a1(s){return s.price;}
-var _P=[{mult:1.5,label:'x1.5'},{mult:2,label:'x2'},{mult:3,label:'x3'},{mult:5,label:'x5'},{mult:10,label:'x10'},{mult:20,label:'x20'},{mult:50,label:'x50'},{mult:100,label:'x100'},{mult:500,label:'x500'}];
-var _L=[{lvl:1,xp:0,name:'НОВИЧОК'},{lvl:2,xp:1000,name:'ЛЮБИТЕЛЬ'},{lvl:3,xp:5000,name:'ИГРОК'},{lvl:4,xp:15000,name:'ПРОФИ'},{lvl:5,xp:40000,name:'ЭКСПЕРТ'},{lvl:6,xp:100000,name:'МАСТЕР'},{lvl:7,xp:250000,name:'ГУРУ'},{lvl:8,xp:500000,name:'ЛЕГЕНДА'},{lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}];
-var _MX=Math.max.apply(null,SKINS.map(function(s){return s.price;}));
-var _CU=null,_CT=null;
-var _UDN='';var _UPA='';
-var _steamId='';
-var _steamAppId='730';
-var _steamInv=[];
-var _steamSelected={};
-var _ndl=null;
-var _invPageSize=50;
-var _invPage=1;
-
-var _MF='https://api.yrsproject.ru/public/image/Resize?shortname=metal.fragments&x=64&y=64';
-var _MF_ICON='<img src="'+_MF+'" style="width:22px;height:22px;vertical-align:middle;display:inline-block" alt="">';
-var _MF_ICON_BIG='<img src="'+_MF+'" style="width:32px;height:32px;vertical-align:middle;display:inline-block" alt="">';
 
 /* ============================================================
-   FIRESTORE PRICES CACHE
+   FIRESTORE PRICES
    ============================================================ */
 var _firestorePrices = {};
+
+function _findSkinPrice(steamName){
+    if(!steamName) return 0;
+    var key = (steamName || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
+    if(_firestorePrices[key] !== undefined) return _firestorePrices[key];
+    for(var k in _firestorePrices){
+        if(key.indexOf(k) >= 0 || k.indexOf(key) >= 0){
+            return _firestorePrices[k];
+        }
+    }
+    var localPrice = 0;
+    if(window.SKINS){
+        window.SKINS.forEach(function(s){
+            var sName = (s.name || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
+            if(sName && key.indexOf(sName) >= 0){
+                if(s.price > localPrice) localPrice = s.price;
+            }
+        });
+    }
+    return localPrice;
+}
+
+function _a1(s){
+    var fsPrice = _findSkinPrice(s.name);
+    if(fsPrice > 0) return fsPrice;
+    return s.price;
+}
 
 async function loadPricesFromFirestore(){
     if(!window.fbDb) return;
@@ -42,42 +52,31 @@ async function loadPricesFromFirestore(){
         if(typeof _rsh === 'function') _rsh();
         if(typeof _rinv === 'function') _rinv();
         if(typeof _ri === 'function') _ri();
+        if(typeof _ui === 'function') _ui();
     }catch(e){
         console.error('Firestore prices error:', e);
     }
 }
 
-function _findSkinPrice(steamName){
-    if(!steamName) return 0;
-    var key = (steamName || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
-    
-    // 1. Firestore (найсвіжіші)
-    if(_firestorePrices[key] !== undefined) return _firestorePrices[key];
-    
-    // 2. Часткове співпадіння з Firestore
-    for(var k in _firestorePrices){
-        if(key.indexOf(k) >= 0 || k.indexOf(key) >= 0){
-            return _firestorePrices[k];
-        }
-    }
-    
-    // 3. Локальний SKINS (fallback)
-    var localPrice = 0;
-    if(window.SKINS){
-        window.SKINS.forEach(function(s){
-            var sName = (s.name || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
-            if(sName && key.indexOf(sName) >= 0){
-                if(s.price > localPrice) localPrice = s.price;
-            }
-        });
-    }
-    return localPrice;
-}
+/* ============================================================
+   ІНШІ ЗМІННІ
+   ============================================================ */
+var _P=[{mult:1.5,label:'x1.5'},{mult:2,label:'x2'},{mult:3,label:'x3'},{mult:5,label:'x5'},{mult:10,label:'x10'},{mult:20,label:'x20'},{mult:50,label:'x50'},{mult:100,label:'x100'},{mult:500,label:'x500'}];
+var _L=[{lvl:1,xp:0,name:'НОВИЧОК'},{lvl:2,xp:1000,name:'ЛЮБИТЕЛЬ'},{lvl:3,xp:5000,name:'ИГРОК'},{lvl:4,xp:15000,name:'ПРОФИ'},{lvl:5,xp:40000,name:'ЭКСПЕРТ'},{lvl:6,xp:100000,name:'МАСТЕР'},{lvl:7,xp:250000,name:'ГУРУ'},{lvl:8,xp:500000,name:'ЛЕГЕНДА'},{lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}];
+var _MX=Math.max.apply(null,SKINS.map(function(s){return s.price;}));
+var _CU=null,_CT=null;
+var _UDN='';var _UPA='';
+var _steamId='';
+var _steamAppId='730';
+var _steamInv=[];
+var _steamSelected={};
+var _ndl=null;
+var _invPageSize=50;
+var _invPage=1;
 
-function _loadPriceFor(item){
-    // не потрібно — ціни вже з Firestore
-    return;
-}
+var _MF='https://api.yrsproject.ru/public/image/Resize?shortname=metal.fragments&x=64&y=64';
+var _MF_ICON='<img src="'+_MF+'" style="width:22px;height:22px;vertical-align:middle;display:inline-block" alt="">';
+var _MF_ICON_BIG='<img src="'+_MF+'" style="width:32px;height:32px;vertical-align:middle;display:inline-block" alt="">';
 
 function _fb(){
     if(!window.fbReady){setTimeout(_fb,100);return;}
@@ -416,7 +415,7 @@ function _hu(){
 function _ipf(cid,fk,cb){var cn=$(cid);if(!cn)return;cn.innerHTML='';var a=document.createElement('button');a.className='upg-inv-filter active';a.textContent='Все';a.dataset.filter='all';cn.appendChild(a);Object.entries(RARITIES).forEach(function(kv){var b=document.createElement('button');b.className='upg-inv-filter';b.textContent=kv[1].name;b.dataset.filter=kv[0];b.style.color=kv[1].color;cn.appendChild(b);});cn.querySelectorAll('.upg-inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();cn.querySelectorAll('.upg-inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state[fk]=b.dataset.filter;cb();});});}
 var _sv=20;var _pp=null;var _pq=1;
 
-function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return a.price-b.price;});else if(state.shopSort==='price-desc')it.sort(function(a,b){return b.price-a.price;});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span class="price">'+formatRastr(p)+' '+_MF_ICON+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
+function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.shopFilter!=='all')it=it.filter(function(x){return x.rarity===state.shopFilter;});var ro={common:0,rare:1,legendary:2,mythical:3};if(state.shopSort==='price-asc')it.sort(function(a,b){return _a1(a)-_a1(b);});else if(state.shopSort==='price-desc')it.sort(function(a,b){return _a1(b)-_a1(a);});else if(state.shopSort==='rarity')it.sort(function(a,b){return ro[a.rarity]-ro[b.rarity];});else if(state.shopSort==='name')it.sort(function(a,b){return a.name.localeCompare(b.name);});if(it.length===0){g.innerHTML='<div class="empty-inv">Ничего не найдено</div>';return;}var v=it.slice(0,_sv);var fr=document.createDocumentFragment();v.forEach(function(sk){var p=_a1(sk);var ca=state.balance>=p;var e=document.createElement('div');e.className='shop-item '+sk.rarity;e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span class="price">'+formatRastr(p)+' '+_MF_ICON+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('❌ Недостаточно средств','lose');_ck();return;}_ob(sk,p);});fr.appendChild(e);});if(it.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(it.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}g.replaceChildren(fr);}
 
 function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
 
