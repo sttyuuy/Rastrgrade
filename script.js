@@ -10,17 +10,14 @@ function _findSkinPrice(steamName){
     if(!steamName) return 0;
     var key = (steamName || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
     
-    // 1. Firestore (точне співпадіння)
     if(_firestorePrices[key] !== undefined) return _firestorePrices[key];
     
-    // 2. Firestore (часткове)
     for(var k in _firestorePrices){
         if(key.indexOf(k) >= 0 || k.indexOf(key) >= 0){
             return _firestorePrices[k];
         }
     }
     
-    // 3. Локальний SKINS (fallback)
     var localPrice = 0;
     if(window.SKINS){
         window.SKINS.forEach(function(s){
@@ -496,7 +493,7 @@ function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'В�
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
-   STEAM INVENTORY — тільки трейдабельні скіни, ціни з Firestore
+   STEAM INVENTORY — тільки трейдабельні, ціни з Firestore
    ============================================================ */
 async function loadSteamInventory(appId){
     _steamAppId=appId;
@@ -598,7 +595,6 @@ function processInventory(data){
             type:desc.type||''
         };
     }).filter(function(i){
-        // ✅ Тільки трейдабельні
         if(!i.tradable) return false;
         if(!i.icon || i.icon.indexOf('undefined') >= 0) return false;
         return true;
