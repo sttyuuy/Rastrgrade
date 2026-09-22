@@ -19,8 +19,8 @@
     --r-uncommon:#4aa8ff;
     --r-rare:#a55cff;
     --r-epic:#ff3d9a;
-    --r-legendary:#ff0044;
-    --r-mythical:#f5c542;
+    --r-legendary:#f5c542;
+    --r-mythical:#ff0044;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -341,7 +341,7 @@ body::before {
 }
 
 /* ============================================================
-   КОЛЬОРИ ПО РІДКОСТІ — Legendary=червоний, Mythical=жовтий
+   КОЛЬОРИ ПО РІДКОСТІ — Legendary=жовтий, Mythical=червоний
    ============================================================ */
 
 /* COMMON — сірий */
@@ -395,40 +395,40 @@ body::before {
     filter: drop-shadow(0 0 22px rgba(255, 61, 154, 0.8));
 }
 
-/* LEGENDARY — ЧЕРВОНИЙ (передостанній, з пульсацією) */
+/* LEGENDARY — ЖОВТИЙ */
 .legendary { 
-    border-color: #ff0044;
-    background: linear-gradient(180deg, 
-        rgba(255, 0, 68, 0.4) 0%, 
-        rgba(255, 0, 68, 0.12) 50%,
-        rgba(30, 10, 15, 0.95) 100%) !important;
-    box-shadow: 0 0 40px rgba(255, 0, 68, 0.4), inset 0 0 50px rgba(255, 0, 68, 0.12);
-    animation: legendaryGlow 3s ease-in-out infinite;
-}
-.legendary .skin-icon {
-    filter: drop-shadow(0 0 30px rgba(255, 0, 68, 1));
-}
-@keyframes legendaryGlow {
-    0%, 100% { box-shadow: 0 0 40px rgba(255, 0, 68, 0.4), inset 0 0 50px rgba(255, 0, 68, 0.12); }
-    50% { box-shadow: 0 0 65px rgba(255, 0, 68, 0.65), inset 0 0 75px rgba(255, 0, 68, 0.2); }
-}
-
-/* MYTHICAL — ЖОВТИЙ (максимальний, з пульсацією) */
-.mythical { 
     border-color: #f5c542;
     background: linear-gradient(180deg, 
         rgba(245, 197, 66, 0.35) 0%, 
         rgba(245, 197, 66, 0.1) 50%,
         rgba(30, 25, 15, 0.95) 100%) !important;
     box-shadow: 0 0 35px rgba(245, 197, 66, 0.35), inset 0 0 45px rgba(245, 197, 66, 0.1);
+    animation: legendaryGlow 3s ease-in-out infinite;
+}
+.legendary .skin-icon {
+    filter: drop-shadow(0 0 28px rgba(245, 197, 66, 0.95));
+}
+@keyframes legendaryGlow {
+    0%, 100% { box-shadow: 0 0 35px rgba(245, 197, 66, 0.35), inset 0 0 45px rgba(245, 197, 66, 0.1); }
+    50% { box-shadow: 0 0 55px rgba(245, 197, 66, 0.6), inset 0 0 65px rgba(245, 197, 66, 0.18); }
+}
+
+/* MYTHICAL — ЧЕРВОНИЙ */
+.mythical { 
+    border-color: #ff0044;
+    background: linear-gradient(180deg, 
+        rgba(255, 0, 68, 0.4) 0%, 
+        rgba(255, 0, 68, 0.12) 50%,
+        rgba(30, 10, 15, 0.95) 100%) !important;
+    box-shadow: 0 0 40px rgba(255, 0, 68, 0.4), inset 0 0 50px rgba(255, 0, 68, 0.12);
     animation: mythicPulse 3s ease-in-out infinite;
 }
 .mythical .skin-icon {
-    filter: drop-shadow(0 0 28px rgba(245, 197, 66, 0.95));
+    filter: drop-shadow(0 0 30px rgba(255, 0, 68, 1));
 }
 @keyframes mythicPulse {
-    0%, 100% { box-shadow: 0 0 35px rgba(245, 197, 66, 0.35), inset 0 0 45px rgba(245, 197, 66, 0.1); }
-    50% { box-shadow: 0 0 55px rgba(245, 197, 66, 0.6), inset 0 0 65px rgba(245, 197, 66, 0.18); }
+    0%, 100% { box-shadow: 0 0 40px rgba(255, 0, 68, 0.4), inset 0 0 50px rgba(255, 0, 68, 0.12); }
+    50% { box-shadow: 0 0 65px rgba(255, 0, 68, 0.65), inset 0 0 75px rgba(255, 0, 68, 0.2); }
 }
 
 /* ============================================================
