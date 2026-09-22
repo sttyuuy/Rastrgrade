@@ -1,9 +1,11 @@
 /**
- * Апгрейд предметів (серверний RNG)
+ * Апгрейд предметів (серверний RNG).
+ * sourceUid — uid предмета в інвентарі.
+ * targetId  — id предмета з каталогу lib/skins.js.
  */
-const { getFirestore } = require('../lib/firebase-admin');
-const { isValidSteamId, isValidMarketHashName } = require('../lib/validation');
+const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
+const SKINS = require('../lib/skins');
 
 function calcChance(sourcePrice, targetPrice) {
     if (targetPrice <= 0) return 0;
@@ -21,13 +23,29 @@ module.exports = async (req, res) => {
         return res.status(429).json({ error: 'Too many requests' });
     }
 
-    const { steamId, sourceName, targetName } = req.body || {};
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-    if (!isValidSteamId(steamId)) {
-        return res.status(400).json({ error: 'Invalid SteamID' });
+    let steamId;
+    try {
+        const decoded = await getAuth().verifyIdToken(token);
+        steamId = decoded.uid;
+    } catch {
+        return res.status(401).json({ error: 'Invalid token' });
     }
-    if (!isValidMarketHashName(sourceName) || !isValidMarketHashName(targetName)) {
-        return res.status(400).json({ error: 'Invalid item names' });
+
+    const { sourceUid, targetId } = req.body || {};
+    if (!sourceUid || typeof sourceUid !== 'string') {
+        return res.status(400).json({ error: 'Missing sourceUid' });
+    }
+    if (!targetId || typeof targetId !== 'string') {
+        return res.status(400).json({ error: 'Missing targetId' });
+    }
+
+    const targetSkin = SKINS.find(s => s.id === targetId);
+    if (!targetSkin) {
+        return res.status(404).json({ error: 'Target skin not found' });
     }
 
     try {
@@ -41,39 +59,49 @@ module.exports = async (req, res) => {
             const data = doc.data();
             const inventory = Array.isArray(data.inventory) ? [...data.inventory] : [];
 
-            const srcIdx = inventory.findIndex(i => i.marketHashName === sourceName);
+            const srcIdx = inventory.findIndex(i => i.uid === sourceUid);
             if (srcIdx === -1) throw new Error('Source item not in inventory');
 
             const sourceItem = inventory[srcIdx];
             const sourcePrice = Number(sourceItem.price) || 0;
+            const targetPrice = Number(targetSkin.price) || 0;
 
-            // Цільову ціну беремо з каталогу (окрема колекція items)
-            const targetDoc = await tx.get(db.collection('items').doc(targetName));
-            if (!targetDoc.exists) throw new Error('Target item not found');
-
-            const targetPrice = Number(targetDoc.data().price) || 0;
             const chance = calcChance(sourcePrice, targetPrice);
-
             const roll = Math.random() * 100;
             const success = roll <= chance;
 
-            // Завжди видаляємо source
             inventory.splice(srcIdx, 1);
 
+            let newItem = null;
             if (success) {
-                inventory.push({
-                    marketHashName: targetName,
-                    price: targetPrice,
-                    acquiredAt: new Date().toISOString(),
-                });
+                const { randomUUID } = require('crypto');
+                newItem = {
+                    uid: randomUUID(),
+                    id: targetSkin.id,
+                    name: targetSkin.name,
+                    shortname: targetSkin.shortname || '',
+                    rarity: targetSkin.rarity,
+                    price: targetSkin.price,
+                    wonAt: Date.now(),
+                };
+                inventory.push(newItem);
             }
 
             tx.update(userRef, {
                 inventory,
-                totalWon: success ? (data.totalWon || 0) + targetPrice : (data.totalWon || 0),
+                totalWon: success
+                    ? Math.round(((data.totalWon || 0) + targetPrice) * 100) / 100
+                    : (data.totalWon || 0),
+                updatedAt: Date.now(),
             });
 
-            return { success, chance: Number(chance.toFixed(2)) };
+            return {
+                success,
+                chance: Number(chance.toFixed(2)),
+                roll: Number(roll.toFixed(2)),
+                item: newItem,
+                inventory,
+            };
         });
 
         return res.status(200).json(result);
