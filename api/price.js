@@ -1,51 +1,16 @@
-const admin = require('firebase-admin');
+const { getFirestore } = require('../lib/firebase-admin');
+const { getClientIp, checkRateLimit } = require('../lib/rate-limit');
+const {
+    isValidAppId,
+    isValidMarketHashName
+} = require('../lib/validation');
+const { fetchSteamPrice } = require('../lib/steam');
 
 const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
-const MEM_TTL = 10 * 60 * 1000;      // 10 хв
-const DB_TTL = 24 * 60 * 60 * 1000;  // 24 год
-
-const RATE_LIMIT_WINDOW = 60 * 1000;
-const RATE_LIMIT_MAX = 40;
-const requestStore = new Map();
+const MEM_TTL = 10 * 60 * 1000;       // 10 хв
+const DB_TTL = 24 * 60 * 60 * 1000;   // 24 год
 
 const _memCache = {};
-
-if (!admin.apps.length) {
-    try {
-        const privateKey = process.env.FIREBASE_PRIVATE_KEY
-            ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/@/g, '\n')
-            : '';
-
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                projectId: process.env.FIREBASE_PROJECT_ID,
-                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-                privateKey: privateKey,
-            }),
-        });
-    } catch (e) {
-        console.error('Firebase init error:', e.message);
-    }
-}
-
-function getClientIp(req) {
-    const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) return String(forwarded).split(',')[0].trim();
-    return req.headers['x-real-ip'] || req.socket?.remoteAddress || 'unknown';
-}
-
-function checkRateLimit(key) {
-    const now = Date.now();
-    const current = requestStore.get(key);
-
-    if (!current || now - current.start >= RATE_LIMIT_WINDOW) {
-        requestStore.set(key, { start: now, count: 1 });
-        return true;
-    }
-    if (current.count >= RATE_LIMIT_MAX) return false;
-    current.count++;
-    return true;
-}
 
 function setSecurityHeaders(res) {
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -65,7 +30,7 @@ module.exports = async (req, res) => {
     }
 
     const clientIp = getClientIp(req);
-    if (!checkRateLimit(`ip:${clientIp}`)) {
+    if (!checkRateLimit(`ip:${clientIp}`, 40, 60 * 1000)) {
         res.setHeader('Retry-After', '60');
         return res.status(429).json({ error: 'Too many requests', rateLimited: true });
     }
@@ -76,13 +41,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Missing appid or market_hash_name' });
     }
 
-    // Дозволяємо тільки потрібні ігри (Rust + CS2 + Dota 2)
-    const allowedApps = ['252490', '730', '570'];
-    if (!allowedApps.includes(String(appid))) {
+    if (!isValidAppId(String(appid))) {
         return res.status(400).json({ error: 'Invalid appid' });
     }
 
-    if (typeof market_hash_name !== 'string' || market_hash_name.length > 200) {
+    if (!isValidMarketHashName(market_hash_name)) {
         return res.status(400).json({ error: 'Invalid market_hash_name' });
     }
 
@@ -96,10 +59,9 @@ module.exports = async (req, res) => {
     // 2. Firestore кеш
     let db = null;
     try {
-        db = admin.firestore();
+        db = getFirestore();
         const safeKey = cacheKey.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 500);
-        const cacheRef = db.collection('prices').doc(safeKey);
-        const cacheSnap = await cacheRef.get();
+        const cacheSnap = await db.collection('prices').doc(safeKey).get();
 
         if (cacheSnap.exists) {
             const data = cacheSnap.data();
@@ -115,28 +77,7 @@ module.exports = async (req, res) => {
 
     // 3. Steam API
     try {
-        const url =
-            'https://steamcommunity.com/market/priceoverview/?appid=' +
-            encodeURIComponent(appid) +
-            '&market_hash_name=' + encodeURIComponent(market_hash_name) +
-            '&currency=1';
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-
-        let response;
-        try {
-            response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                    'Accept': 'application/json',
-                    'Accept-Language': 'en-US,en;q=0.9'
-                },
-                signal: controller.signal
-            });
-        } finally {
-            clearTimeout(timeout);
-        }
+        const response = await fetchSteamPrice(appid, market_hash_name);
 
         if (response.status === 429) {
             return res.status(429).json({ error: 'Rate limit', rateLimited: true });
@@ -148,6 +89,7 @@ module.exports = async (req, res) => {
 
         const data = await response.json();
 
+        // Зберігаємо в Firestore
         if (data && data.success && data.lowest_price && db) {
             try {
                 const safeKey = cacheKey.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 500);
