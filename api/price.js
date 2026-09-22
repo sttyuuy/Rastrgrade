@@ -10,7 +10,8 @@ const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
 const MEM_TTL = 10 * 60 * 1000;       // 10 хв
 const DB_TTL = 24 * 60 * 60 * 1000;   // 24 год
 
-const _memCache = {};
+// Map замість об'єкта — захист від prototype pollution
+const _memCache = new Map();
 
 function setSecurityHeaders(res) {
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -19,6 +20,11 @@ function setSecurityHeaders(res) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Vary', 'Origin');
+}
+
+function safeDocKey(cacheKey) {
+    return cacheKey.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 500);
 }
 
 module.exports = async (req, res) => {
@@ -52,22 +58,22 @@ module.exports = async (req, res) => {
     const cacheKey = `${appid}_${market_hash_name}`;
 
     // 1. In-memory кеш
-    if (_memCache[cacheKey] && (Date.now() - _memCache[cacheKey].time) < MEM_TTL) {
-        return res.json(_memCache[cacheKey].data);
+    const mem = _memCache.get(cacheKey);
+    if (mem && (Date.now() - mem.time) < MEM_TTL) {
+        return res.json(mem.data);
     }
 
     // 2. Firestore кеш
     let db = null;
     try {
         db = getFirestore();
-        const safeKey = cacheKey.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 500);
-        const cacheSnap = await db.collection('prices').doc(safeKey).get();
+        const cacheSnap = await db.collection('prices').doc(safeDocKey(cacheKey)).get();
 
         if (cacheSnap.exists) {
             const data = cacheSnap.data();
             if (data.time && (Date.now() - data.time) < DB_TTL) {
                 const result = { success: true, lowest_price: data.price, cached: true };
-                _memCache[cacheKey] = { time: Date.now(), data: result };
+                _memCache.set(cacheKey, { time: Date.now(), data: result });
                 return res.json(result);
             }
         }
@@ -77,24 +83,31 @@ module.exports = async (req, res) => {
 
     // 3. Steam API
     try {
-        const response = await fetchSteamPrice(appid, market_hash_name);
+        const result = await fetchSteamPrice(appid, market_hash_name);
 
-        if (response.status === 429) {
-            return res.status(429).json({ error: 'Rate limit', rateLimited: true });
-        }
+        if (!result.ok) {
+            const msg = result.error || 'Steam error';
 
-        if (!response.ok) {
+            if (msg.includes('429')) {
+                return res.status(429).json({ error: 'Rate limit', rateLimited: true });
+            }
+            if (msg.includes('timeout')) {
+                return res.status(504).json({ error: 'Steam request timed out' });
+            }
+
             return res.status(502).json({ error: 'Steam price service unavailable' });
         }
 
-        const data = await response.json();
+        const responseData = {
+            success: true,
+            lowest_price: result.price
+        };
 
         // Зберігаємо в Firestore
-        if (data && data.success && data.lowest_price && db) {
+        if (result.price && db) {
             try {
-                const safeKey = cacheKey.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 500);
-                await db.collection('prices').doc(safeKey).set({
-                    price: data.lowest_price,
+                await db.collection('prices').doc(safeDocKey(cacheKey)).set({
+                    price: result.price,
                     name: market_hash_name,
                     appid: appid,
                     time: Date.now()
@@ -104,9 +117,9 @@ module.exports = async (req, res) => {
             }
         }
 
-        _memCache[cacheKey] = { time: Date.now(), data };
+        _memCache.set(cacheKey, { time: Date.now(), data: responseData });
         res.setHeader('Cache-Control', 'public, max-age=600');
-        return res.json(data);
+        return res.json(responseData);
 
     } catch (e) {
         if (e.name === 'AbortError') {
