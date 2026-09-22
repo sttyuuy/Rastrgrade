@@ -1,4 +1,3 @@
-
 (function(){
 'use strict';
 
@@ -490,7 +489,7 @@ function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'В�
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
-   STEAM INVENTORY
+   STEAM INVENTORY — тільки трейдабельні скіни
    ============================================================ */
 async function loadSteamInventory(appId){
     _steamAppId=appId;
@@ -591,9 +590,18 @@ function processInventory(data){
             marketable:desc.marketable===1,
             type:desc.type||''
         };
-    }).filter(function(i){return i.icon && i.icon.indexOf('undefined')<0;});
+    }).filter(function(i){
+        // ✅ Показуємо ТІЛЬКИ трейдабельні предмети
+        if(!i.tradable) return false;
+        // І тільки ті, у яких є іконка
+        if(!i.icon || i.icon.indexOf('undefined') >= 0) return false;
+        return true;
+    });
     if(_steamInv.length===0){
-        if(emptyEl)emptyEl.style.display='block';
+        if(emptyEl){
+            emptyEl.style.display='block';
+            emptyEl.innerHTML='Нет предметов, доступных для трейда.<br><br>Все предметы либо не трейдабельны, либо на trade hold.';
+        }
         return;
     }
     _invPage=1;
