@@ -178,7 +178,17 @@ async function _sc(){
     try{
         var d={
             balance:state.balance,
-            inventory:state.inventory.map(function(i){return{id:i.id,rarity:i.rarity,uid:i.uid};}),
+            inventory: state.inventory.map(function(i){
+    return {
+        id: i.id,
+        name: i.name,
+        shortname: i.shortname,
+        svg: i.svg,
+        rarity: i.rarity,
+        price: i.price,
+        uid: i.uid
+    };
+}),
             profit:state.profit,
             totalWon:state.totalWon,totalLost:state.totalLost,
             upgrades:state.upgrades,purchases:state.purchases,
