@@ -36,18 +36,52 @@
     }
 
     window.apiClient = {
+        // ===== Auth =====
         setAuthToken,
         clearAuthToken,
+        getSteamAuthUrl: () => `${API_BASE}/steam-auth`,
+
+        // ===== User =====
+        getUserData: () => apiRequest('/user'),
+
+        // ===== Inventory (Steam) =====
         loadSteamInventory: (steamid, appid = '252490') =>
             apiRequest(`/inventory?steamid=${encodeURIComponent(steamid)}&appid=${encodeURIComponent(appid)}`),
+
+        // ===== Price =====
         getItemPrice: (appid, name) =>
             apiRequest(`/price?appid=${encodeURIComponent(appid)}&market_hash_name=${encodeURIComponent(name)}`),
-        getUserData: () => apiRequest('/user'),
-        buyItem: (skinId) => apiRequest('/buy', { method: 'POST', body: JSON.stringify({ skinId }) }),
-        sellItem: (itemUid) => apiRequest('/sell', { method: 'POST', body: JSON.stringify({ itemUid }) }),
-        sellAllItems: () => apiRequest('/sell-all', { method: 'POST', body: JSON.stringify({}) }),
-        doUpgrade: (sourceUid, targetId) =>
-            apiRequest('/upgrade', { method: 'POST', body: JSON.stringify({ sourceUid, targetId }) }),
-        getSteamAuthUrl: () => `${API_BASE}/steam-auth`
+
+        // ===== Buy =====
+        buyItem: (skinId) => apiRequest('/buy', {
+            method: 'POST',
+            body: JSON.stringify({ skinId })
+        }),
+
+        // ===== Sell =====
+        sellItem: (itemUid) => apiRequest('/sell', {
+            method: 'POST',
+            body: JSON.stringify({ itemUid })
+        }),
+
+        // ===== Sell All =====
+        sellAllItems: () => apiRequest('/sell-all', {
+            method: 'POST',
+            body: JSON.stringify({})
+        }),
+
+        // ===== Upgrade =====
+        doUpgrade: (sourceUid, targetId) => apiRequest('/upgrade', {
+            method: 'POST',
+            body: JSON.stringify({ sourceUid, targetId })
+        }),
+
+        // ===== Admin: Set Balance (тимчасово, для розробки) =====
+        setBalance: (amount) => apiRequest('/admin/set-balance', {
+            method: 'POST',
+            body: JSON.stringify({ amount })
+        })
     };
+
+    console.log('[api-client] loaded, apiClient ready');
 })();
