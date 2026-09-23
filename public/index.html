@@ -113,14 +113,20 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="upg-circle-wrap">
 <svg class="upg-circle-svg" viewBox="0 0 240 240">
 <defs>
-<linearGradient id="chanceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+<linearGradient id="chanceGradientLeft" x1="100%" y1="100%" x2="0%" y2="0%">
+<stop offset="0%" stop-color="#ff3b3b"/>
+<stop offset="50%" stop-color="#f5c542"/>
+<stop offset="100%" stop-color="#7ed321"/>
+</linearGradient>
+<linearGradient id="chanceGradientRight" x1="0%" y1="100%" x2="100%" y2="0%">
 <stop offset="0%" stop-color="#ff3b3b"/>
 <stop offset="50%" stop-color="#f5c542"/>
 <stop offset="100%" stop-color="#7ed321"/>
 </linearGradient>
 </defs>
 <circle class="upg-circle-bg" cx="120" cy="120" r="100"/>
-<circle class="upg-circle-sector" cx="120" cy="120" r="100" stroke-dasharray="0 628.32" id="chanceSector"/>
+<circle class="upg-circle-sector upg-circle-sector-left" cx="120" cy="120" r="100" stroke-dasharray="0 628.32" id="chanceSectorLeft"/>
+<circle class="upg-circle-sector upg-circle-sector-right" cx="120" cy="120" r="100" stroke-dasharray="0 628.32" id="chanceSectorRight"/>
 </svg>
 <div class="upg-needle" id="circleNeedle">
 <div class="upg-needle-head"></div>
