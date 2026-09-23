@@ -1,13 +1,22 @@
-/**
- * Продаж одного предмета за uid.
- */
 const { getFirestore, getAuth } = require('../lib/firebase-admin');
-const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
+const { getClientIp, checkRateLimit } = require('../lib/rate-limit');
+
+const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
+
+function setHeaders(res) {
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+}
 
 module.exports = async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    setHeaders(res);
+
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const ip = getClientIp(req);
     if (!checkRateLimit(`sell:${ip}`, 30, 60 * 1000)) {
@@ -26,7 +35,14 @@ module.exports = async (req, res) => {
         return res.status(401).json({ error: 'Invalid token' });
     }
 
-    const { itemUid } = req.body || {};
+    let body;
+    try {
+        body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    } catch {
+        return res.status(400).json({ error: 'Invalid JSON' });
+    }
+
+    const { itemUid } = body || {};
     if (!itemUid || typeof itemUid !== 'string') {
         return res.status(400).json({ error: 'Missing itemUid' });
     }
@@ -46,7 +62,9 @@ module.exports = async (req, res) => {
             if (idx === -1) throw new Error('Item not in inventory');
 
             const item = inventory[idx];
+            // ⚠️ БЕРЕМО РЕАЛЬНУ ЦІНУ З ПРЕДМЕТА (item.price), а НЕ з каталогу
             const price = Number(item.price) || 0;
+
             inventory.splice(idx, 1);
 
             const newBalance = Math.round(((data.balance || 0) + price) * 100) / 100;
@@ -55,7 +73,7 @@ module.exports = async (req, res) => {
                 inventory,
                 balance: newBalance,
                 totalSold: Math.round(((data.totalSold || 0) + price) * 100) / 100,
-                updatedAt: Date.now(),
+                updatedAt: Date.now()
             });
 
             return { balance: newBalance, sold: price, inventory };
