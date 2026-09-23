@@ -90,7 +90,6 @@ window.dispatchEvent(new Event('fb-ready'));
 <button class="nav-tab active" data-page="upgrade"><span class="nav-tab-icon">◆</span><span class="nav-tab-text">Апгрейд</span></button>
 <button class="nav-tab" data-page="shop"><span class="nav-tab-icon">▣</span><span class="nav-tab-text">Магазин</span></button>
 <button class="nav-tab" data-page="inventory"><span class="nav-tab-icon">▤</span><span class="nav-tab-text">Инвентарь</span></button>
-<button class="nav-tab" data-page="trade"><span class="nav-tab-icon">⇄</span><span class="nav-tab-text">Обмен</span></button>
 <button class="nav-tab" data-page="stats"><span class="nav-tab-icon">▦</span><span class="nav-tab-text">Стата</span></button>
 </nav>
 <main class="main">
@@ -224,57 +223,6 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="inv-grid" id="inventory"></div>
 </div>
 </section>
-<section class="page" id="page-trade">
-<div class="card">
-<div class="card-head">
-<h2 class="card-title"><span class="card-title-icon">⇄</span> Купить Metal Fragments за скины</h2>
-<div class="card-sub">Обменяй скины CS2 / Rust / Dota 2 на Metal Fragments</div>
-</div>
-<div class="shop-info-bar">
-<div class="shop-info-text"><span>Куда отправлять трейд:</span></div>
-<div class="shop-info-value" style="font-size:0.85rem">
-<a href="https://steamcommunity.com/tradeoffer/new/?partner=1073064847&token=Jjv7evlj" target="_blank" style="color:var(--gold)">Открыть Trade-ссылку</a>
-</div>
-</div>
-<div id="tradeNotLogged" style="display:none;text-align:center;padding:40px">
-<div style="font-size:3rem;margin-bottom:12px;color:var(--text-dim)">⌀</div>
-<div style="color:var(--text-dim);margin-bottom:16px">Войди через Steam, чтобы загрузить инвентарь</div>
-<button class="btn-primary" id="tradeLoginBtn">ВОЙТИ ЧЕРЕЗ STEAM</button>
-</div>
-<div id="tradeContent" style="display:none">
-<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-<button class="shop-filter active" data-game="730">CS2</button>
-<button class="shop-filter" data-game="252490">Rust</button>
-<button class="shop-filter" data-game="570">Dota 2</button>
-<button class="btn-secondary" id="reloadInvBtn" style="margin-left:auto;padding:8px 16px">Обновить</button>
-</div>
-<div id="invLoading" style="text-align:center;padding:40px;color:var(--text-dim)">Загрузка инвентаря...</div>
-<div id="invError" style="display:none;text-align:center;padding:40px"></div>
-<div id="invEmpty" style="display:none;text-align:center;padding:40px;color:var(--text-dim);font-style:italic">Инвентарь пуст</div>
-<div class="inv-grid" id="steamInvGrid" style="min-height:200px"></div>
-<div style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:20px;display:none" id="tradeSummary">
-<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-<div>
-<div style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px">Выбрано скинов</div>
-<div style="font-size:1.2rem;font-weight:700;color:#fff" id="selectedCount">0</div>
-</div>
-<div>
-<div style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px">Получишь</div>
-<div style="font-size:1.4rem;font-weight:700;color:var(--gold)" id="tradeTotal">0</div>
-</div>
-<button class="btn-primary" id="createTradeBtn" disabled style="padding:14px 32px">ОБМЕНЯТЬ</button>
-</div>
-<div style="font-size:0.75rem;color:var(--text-dim);margin-top:10px;line-height:1.6">
-После нажатия «ОБМЕНЯТЬ» отправь трейд на <a href="https://steamcommunity.com/tradeoffer/new/?partner=1073064847&token=Jjv7evlj" target="_blank" style="color:var(--gold)">эту ссылку</a>
-</div>
-</div>
-</div>
-<div style="font-size:0.85rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;margin-top:30px">Мои заявки</div>
-<div id="myTrades" style="display:flex;flex-direction:column;gap:10px">
-<div class="empty-inv" style="padding:30px">Заявок пока нет</div>
-</div>
-</div>
-</section>
 <section class="page" id="page-stats">
 <div class="card">
 <div class="card-head">
@@ -367,6 +315,6 @@ window.dispatchEvent(new Event('fb-ready'));
 <script src="skins.js"></script>
 <script src="api-client.js"></script>
 <script src="script.js"></script>
-<script src="helpers.js"></script>
+<!-- <script src="helpers.js"></script> -->
 </body>
 </html>
