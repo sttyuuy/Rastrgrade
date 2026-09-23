@@ -453,39 +453,17 @@ function _cr(){_ck();$('resultModal').classList.remove('show');}
 var _CR=100;var _CC=2*Math.PI*_CR;
 
 /* ============================================================
-   _dc — ДВОСТОРОННЯ ДУГА (ЗНИЗУ, 6-та ГОДИНА)
+   _dc — ОДНА ДУГА, РОСТЕ ВІД НИЗУ В ОБИДВА БОКИ
    ============================================================ */
 function _dc(c){
     c = Math.max(0, Math.min(100, c));
-
-    // Повна довжина кола = _CC ≈ 628.32
-    var halfCC = _CC / 2;
-    var totalFill = (c / 100) * _CC;
-    var fill = Math.min(totalFill / 2, halfCC);
-
-    // Чверть кола — зсув початку на 6-ту годину
-    var quarter = _CC / 4; // ≈ 157.08
-
-    var leftEl = $('chanceSectorLeft');
-    var rightEl = $('chanceSectorRight');
-
-    if(rightEl){
-        rightEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
-        rightEl.setAttribute('stroke-dashoffset', quarter);
-    }
-
-    if(leftEl){
-        leftEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
-        leftEl.setAttribute('stroke-dashoffset', quarter);
-    }
-
-    var co;
-    if(c>=65)co='#7ed321';
-    else if(c>=35)co='#f5c542';
-    else if(c>=15)co='#ff6b1a';
-    else co='#ff3b3b';
-    if(leftEl) leftEl.style.color = co;
-    if(rightEl) rightEl.style.color = co;
+    var el = $('chanceSector');
+    if(!el) return;
+    // pathLength=100, тому c — це прямо відсотки довжини дуги.
+    // dashoffset = c/2 центрує дугу на початку шляху (6 година).
+    el.style.strokeDasharray = c + ' ' + (100 - c);
+    el.style.strokeDashoffset = (c / 2);
+    el.style.opacity = c <= 0 ? '0' : '1';
 }
 
 function _na(d){
@@ -503,31 +481,29 @@ function _sp2(i){if(!state.upgradeSource){_lg('Сначала выбери пр�
 function _ri(){var l=$('invPanelList');if(!l)return;var f=state.invPanelFilter;var s=($('invSearch').value||'').toLowerCase();var sr=state.inventory.slice().sort(function(a,b){return _a1(b)-_a1(a);});if(f!=='all')sr=sr.filter(function(x){return x.rarity===f;});if(s)sr=sr.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('invPanelCount').textContent=state.inventory.length+' шт.';if(sr.length===0){l.innerHTML='<div class="upg-inv-empty">Инвентарь пуст</div>';return;}var fr=document.createDocumentFragment();sr.forEach(function(sk){var e=document.createElement('div');e.className='upg-inv-item '+sk.rarity;if(state.upgradeSource&&state.upgradeSource===sk)e.classList.add('used');e.innerHTML=renderSkinIcon(sk)+'<div class="upg-inv-name">'+sk.name+'</div><div class="upg-inv-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';e.addEventListener('click',function(){_un();_ck();state.upgradeSource=sk;state.upgradeTarget=null;state.selectedPreset=null;_tgCache={};_rs1();_rt1();_ri();_rp1();_uc();});fr.appendChild(e);});l.replaceChildren(fr);}
 function _rt2(){var g=$('itemsPanelGrid');if(!g)return;var f=state.itemsPanelFilter;var s=($('itemsSearch').value||'').toLowerCase();var it=SKINS.slice();if(f!=='all')it=it.filter(function(x){return x.rarity===f;});if(s)it=it.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('targetsCount').textContent=it.length;if(it.length===0){g.innerHTML='<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();it.forEach(function(sk){var e=document.createElement('div');e.className='upg-target-item '+sk.rarity;if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';e.addEventListener('click',function(){if(!state.upgradeSource){_lg('Сначала выбери свой предмет','lose');_ck();return;}if(sk.id===state.upgradeSource.id){_lg('Нельзя апгрейдить в себя','lose');_ck();return;}if(_a1(sk)<=_a1(state.upgradeSource)){_lg('Цель должна быть дороже','lose');_ck();return;}if(_a1(sk)>_MX){_lg('Нет цели','lose');_ck();return;}_un();_ck();state.upgradeTarget=sk;state.selectedPreset=null;state.upgradeTarget._realChance=_ch(_a1(state.upgradeSource),_a1(sk));_rt1();_rp1();_uc();});fr.appendChild(e);});g.replaceChildren(fr);}
 
+/* ============================================================
+   _pa — СТРІЛКА. ЗОНА ПЕРЕМОГИ — ВНИЗУ (180°)
+   ============================================================ */
 var _paRAF = null;
 function _pa(c, w){
     return new Promise(function(res){
         if(_paRAF){ cancelAnimationFrame(_paRAF); _paRAF = null; }
         var d = state.spinSpeed === 'fast' ? 2600 : 4800;
-        var sectorEnd = c * 3.6;
-        var SAFE_GAP = 5;
+
+        // Зона перемоги: центр — 180° (низ), пів-ширини = c * 1.8°
+        var half = c * 1.8;
         var fa;
         if(w){
-            var lo = SAFE_GAP;
-            var hi = Math.max(lo + 1, sectorEnd - SAFE_GAP);
-            if(hi <= lo) hi = sectorEnd / 2;
-            var mid = (lo + hi) / 2;
-            fa = mid + (Math.random() - 0.5) * (hi - lo) * 0.9;
+            var g1 = Math.min(5, half * 0.3);
+            fa = 180 + (Math.random() * 2 - 1) * (half - g1);
         } else {
-            var lo2 = sectorEnd + SAFE_GAP;
-            var hi2 = 360 - SAFE_GAP;
-            if(lo2 >= hi2){
-                fa = (sectorEnd + 180) % 360;
-            } else {
-                var mid2 = (lo2 + hi2) / 2;
-                fa = mid2 + (Math.random() - 0.5) * (hi2 - lo2) * 0.9;
-            }
+            // Зона програшу — все інше, центр 0° (верх)
+            var loseHalf = 180 - half;
+            var g2 = Math.min(5, loseHalf * 0.3);
+            fa = (Math.random() * 2 - 1) * (loseHalf - g2);
         }
         fa = ((fa % 360) + 360) % 360;
+
         var fs = state.spinSpeed === 'fast'
             ? 6 + Math.floor(Math.random() * 3)
             : 10 + Math.floor(Math.random() * 4);
