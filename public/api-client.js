@@ -68,9 +68,9 @@
         }),
 
         // ===== Admin: Set Balance (тільки для адміна) =====
-        setBalance: (amount) => apiRequest('/admin/set-balance', {
+        setBalance: (amount, targetUid, mode) => apiRequest('/admin/set-balance', {
             method: 'POST',
-            body: JSON.stringify({ amount })
+            body: JSON.stringify({ amount, targetUid, mode })
         })
     };
 
