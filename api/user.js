@@ -1,6 +1,7 @@
 /**
  * Отримання даних користувача.
  * steamId береться з Bearer-токена (Firebase Auth uid = steamId).
+ * ПОВЕРТАЄ displayName і photoURL.
  */
 const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
@@ -48,9 +49,10 @@ module.exports = async (req, res) => {
         const userDoc = await db.collection('users').doc(steamId).get();
 
         if (!userDoc.exists) {
-            // Створюємо нового користувача
             const newUser = {
                 steamId,
+                displayName: null,
+                photoURL: null,
                 balance: 5,
                 inventory: [],
                 totalWon: 0,
@@ -76,6 +78,8 @@ module.exports = async (req, res) => {
 
         return res.status(200).json({
             steamId: data.steamId || steamId,
+            displayName: data.displayName || null,
+            photoURL: data.photoURL || null,
             balance: data.balance || 0,
             inventory: data.inventory || [],
             totalWon: data.totalWon || 0,
