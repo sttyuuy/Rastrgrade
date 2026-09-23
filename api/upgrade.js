@@ -48,17 +48,20 @@ async function getFirestorePrices(db) {
  * ТОЧНО повторює логіку _a1() на клієнті.
  */
 async function getEffectivePrice(db, skin) {
+    if (!skin) return 0;
     const prices = await getFirestorePrices(db);
     const fsPrice = prices[norm(skin.name)];
-    return (fsPrice && fsPrice > 0) ? fsPrice : (skin.price || 0);
+    if (fsPrice && fsPrice > 0) return fsPrice;
+    return Number(skin.price) || 0;
 }
 
 /**
- * Формула шансу — СИНХРОНІЗОВАНА З КЛІЄНТОМ (_ch).
+ * ФОРМУЛА ШАНСУ — СИНХРОНІЗОВАНА З КЛІЄНТОМ (_ch).
  * Клієнт: (sourcePrice / targetPrice) * 100 * 0.90
  */
 function calcChance(sourcePrice, targetPrice) {
     if (!targetPrice || targetPrice <= 0) return 0;
+    if (!sourcePrice || sourcePrice <= 0) return 0.01;
     const raw = (sourcePrice / targetPrice) * 100 * 0.90;
     if (raw > 95) return 95;
     if (raw < 0.01) return 0.01;
@@ -113,13 +116,8 @@ module.exports = async (req, res) => {
     try {
         const db = getFirestore();
 
-        // Ціна цілі — та сама, що бачить гравець (Firestore -> fallback)
+        // Ціна цілі — та сама, що бачить гравець (Firestore -> fallback на SKINS)
         const targetPrice = await getEffectivePrice(db, targetSkin);
-
-        // Ціна джерела — та сама логіка (Firestore -> fallback на item.price)
-        const sourceSkinRef = SKINS.find(s => s.id === targetId);
-        // ↑ не використовується, просто для ясності
-        // (source шукаємо нижче за sourceUid в інвентарі)
 
         const userRef = db.collection('users').doc(steamId);
 
@@ -135,14 +133,35 @@ module.exports = async (req, res) => {
 
             const sourceItem = inventory[srcIdx];
 
-            // Ціна джерела — беремо з Firestore (жива), fallback на item.price
+            // ============================================================
+            // ⚠️ КЛЮЧОВИЙ ФІКС:
+            // Ціна джерела береться ТОЧНО як на клієнті (_a1):
+            //   1. Firestore за name (жива ціна)
+            //   2. fallback — РЕАЛЬНА ціна покупки (item.price), НЕ каталог
+            //
+            // Попередня версія використовувала SKINS.find(id).price як fallback —
+            // це давало розбіжність з клієнтом, бо клієнт завжди падає на item.price.
+            // ============================================================
             const sourceSkin = SKINS.find(s => s.id === sourceItem.id);
-            let sourcePrice;
+            let sourcePrice = 0;
+
             if (sourceSkin) {
-                const fsPrice = await getEffectivePrice(db, sourceSkin);
-                sourcePrice = fsPrice > 0 ? fsPrice : (Number(sourceItem.price) || 0);
+                // Firestore за name -> fallback на РЕАЛЬНУ ціну покупки
+                const prices = await getFirestorePrices(db);
+                const fsPrice = prices[norm(sourceSkin.name)];
+                sourcePrice = (fsPrice && fsPrice > 0)
+                    ? fsPrice
+                    : (Number(sourceItem.price) || 0);
             } else {
+                // Немає в каталозі — тільки реальна ціна покупки
                 sourcePrice = Number(sourceItem.price) || 0;
+            }
+
+            if (sourcePrice <= 0) {
+                throw new Error('Source item has no price — cannot upgrade');
+            }
+            if (targetPrice <= 0) {
+                throw new Error('Target item has no price');
             }
 
             const chance = calcChance(sourcePrice, targetPrice);
