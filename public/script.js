@@ -252,6 +252,8 @@ function $(i){return document.getElementById(i);}
 
 /* ============================================================
    ЗВУКИ — lazy load + точна синхронізація з анімацією
+   ФІКС: playbackRate замість loop=true, щоб уникнути різкого
+   рестарту звуку на повільній швидкості апгрейду.
    ============================================================ */
 var _SF={
     spin:'/assets/spin.mp3',
@@ -262,6 +264,7 @@ var _SF={
     levelup:'/assets/levelup.mp3'
 };
 var _SD={};var _AU=false;var _SD_LOADED=false;
+var _SD_DUR={}; // NEW: реальна тривалість кожного звуку в мс (з майстер-елемента)
 
 function _pl(){
     if(_SD_LOADED) return;
@@ -271,6 +274,9 @@ function _pl(){
         a.src=_SF[k];
         a.preload='auto'; // завантажуємо заздалегідь, щоб звук не лагав
         a.volume=0.7;
+        a.addEventListener('loadedmetadata', function(){
+            _SD_DUR[k] = a.duration * 1000; // мс
+        });
         _SD[k]=a;
     });
 }
@@ -295,14 +301,24 @@ function _by(){_sn('buy',0.8);}
 function _lu(){_sn('levelup',0.9);}
 
 var _LP={};
-function _sp(n,v){
+function _sp(n,v,targetMs){
     if(!state.soundOn)return null;
     var s=_SD[n];if(!s)return null;
     // Зупиняємо попередній звук, якщо був
     if(_LP[n]){try{_LP[n].pause();_LP[n].currentTime=0;}catch(e){}}
     var c=s.cloneNode();
     c.volume=v||0.6;
-    c.loop=true;
+
+    // ФІКС: розтягуємо/стискаємо звук під точну тривалість анімації
+    // замість loop=true, який давав різкий рестарт на повільній швидкості.
+    var natural = _SD_DUR[n]; // беремо з майстер-елемента (там точно завантажені метадані)
+    if(targetMs && natural && natural>0){
+        c.loop = false;
+        c.playbackRate = Math.max(0.4, Math.min(3, natural / targetMs));
+    } else {
+        c.loop = true; // fallback, якщо тривалість файлу ще не завантажилась
+    }
+
     c.play().catch(function(){});
     _LP[n]=c;
     // Запам'ятовуємо ІНСТАНС — щоб stop/fadeStop працювали саме з ним
@@ -495,8 +511,8 @@ function _pa(c,w){
 
         var st = performance.now();
 
-        // === ЗВУК стартує ТОЧНО з анімацією ===
-        var sd = _sp('spin', 0.55);
+        // === ЗВУК стартує ТОЧНО з анімацією, з playbackRate під тривалість ===
+        var sd = _sp('spin', 0.55, d);
 
         if(!_ndl) _ndl = $('circleNeedle');
 
