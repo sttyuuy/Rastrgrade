@@ -14,6 +14,49 @@ function setHeaders(res) {
     res.setHeader('X-Frame-Options', 'DENY');
 }
 
+/* ============================================================
+   СИНХРОНІЗАЦІЯ ЦІН З FIRESTORE (те саме джерело, що й клієнт)
+   ============================================================ */
+function norm(s) {
+    return (s || '').toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
+}
+
+let _priceCache = null;      // { normName: price }
+let _priceCacheAt = 0;
+const PRICE_CACHE_TTL = 15000; // 15 секунд
+
+async function getFirestorePrices(db) {
+    const now = Date.now();
+    if (_priceCache && (now - _priceCacheAt) < PRICE_CACHE_TTL) {
+        return _priceCache;
+    }
+    const map = {};
+    try {
+        const snap = await db.collection('skins').get();
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.name && d.price) {
+                map[norm(d.name)] = d.price;
+            }
+        });
+    } catch (e) {
+        console.error('[buy] Firestore prices error:', e.message);
+    }
+    _priceCache = map;
+    _priceCacheAt = now;
+    return map;
+}
+
+/**
+ * Реальна ціна скіна: Firestore (якщо є) -> статичний каталог (фолбек).
+ * Це ТОЧНО повторює логіку _a1() на клієнті.
+ */
+async function getEffectivePrice(db, skin) {
+    const prices = await getFirestorePrices(db);
+    const fsPrice = prices[norm(skin.name)];
+    return (fsPrice && fsPrice > 0) ? fsPrice : (skin.price || 0);
+}
+
 module.exports = async (req, res) => {
     setHeaders(res);
 
@@ -58,6 +101,10 @@ module.exports = async (req, res) => {
 
     try {
         const db = getFirestore();
+
+        // ⚠️ Ключовий фікс: беремо ту саму ціну, яку бачив гравець на фронтенді
+        const effectivePrice = await getEffectivePrice(db, skin);
+
         const userRef = db.collection('users').doc(steamId);
 
         const result = await db.runTransaction(async (tx) => {
@@ -65,10 +112,11 @@ module.exports = async (req, res) => {
             if (!snap.exists) throw new Error('User not found');
 
             const data = snap.data();
-            const balance = data.balance || 0;
+            const balance = Number(data.balance) || 0;
             const inventory = Array.isArray(data.inventory) ? [...data.inventory] : [];
 
-            if (balance < skin.price) {
+            // Порівнюємо з невеликим допуском на похибку округлення float
+            if (balance < effectivePrice - 0.001) {
                 throw new Error('Недостатньо коштів');
             }
 
@@ -79,18 +127,18 @@ module.exports = async (req, res) => {
                 shortname: skin.shortname || '',
                 svg: skin.svg || '',
                 rarity: skin.rarity,
-                price: skin.price,
+                price: effectivePrice, // зберігаємо реальну ціну купівлі, а не статичну
                 boughtAt: Date.now()
             };
 
-            const newBalance = Math.round((balance - skin.price) * 100) / 100;
+            const newBalance = Math.round((balance - effectivePrice) * 100) / 100;
             inventory.push(newItem);
 
             tx.update(userRef, {
                 balance: newBalance,
                 inventory,
                 purchases: (data.purchases || 0) + 1,
-                totalLost: Math.round(((data.totalLost || 0) + skin.price) * 100) / 100,
+                totalLost: Math.round(((data.totalLost || 0) + effectivePrice) * 100) / 100,
                 updatedAt: Date.now()
             });
 
