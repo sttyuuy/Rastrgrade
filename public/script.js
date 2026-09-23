@@ -5,30 +5,21 @@
    FIRESTORE PRICES
    ============================================================ */
 var _firestorePrices = {};
+window._skinsByName = {};
 
 function _findSkinPrice(steamName){
     if(!steamName) return 0;
     var key = (steamName || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
-    
+
+    // O(1) — Firestore
     if(_firestorePrices[key] !== undefined) return _firestorePrices[key];
-    
-    for(var k in _firestorePrices){
-        if(key.indexOf(k) >= 0 || k.indexOf(key) >= 0){
-            return _firestorePrices[k];
-        }
+
+    // O(1) — локальний індекс
+    if(window._skinsByName && window._skinsByName[key] !== undefined){
+        return window._skinsByName[key].price || 0;
     }
-    
-    var localPrice = 0;
-    if(window.SKINS){
-        window.SKINS.forEach(function(s){
-            var sName = (s.name || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
-            if(sName && key.indexOf(sName) >= 0){
-                if(s.price > localPrice) localPrice = s.price;
-            }
-        });
-    }
-    
-    return localPrice;
+
+    return 0;
 }
 
 function _a1(s){
@@ -41,8 +32,18 @@ function _a1(s){
 async function loadPricesFromFirestore(){
     if(!window.fbDb) return;
     try{
+        // Побудова локального індексу — 1 раз
+        window._skinsByName = {};
+        if(window.SKINS){
+            window.SKINS.forEach(function(s){
+                var k = (s.name || '').toLowerCase().replace(/[^a-zа-я0-9]/gi,'');
+                window._skinsByName[k] = s;
+            });
+        }
+
         var snap = await window.fbGetDocs(window.fbCollection(window.fbDb,'skins'));
         var count = 0;
+        _firestorePrices = {};
         snap.forEach(function(doc){
             var d = doc.data();
             if(d.name && d.price){
@@ -52,8 +53,6 @@ async function loadPricesFromFirestore(){
             }
         });
         console.log('✅ Загружено цен из Firestore:', count);
-        if(typeof renderSteamInv === 'function') renderSteamInv();
-        if(typeof updateTradeSummary === 'function') updateTradeSummary();
         if(typeof _rsh === 'function') _rsh();
         if(typeof _rinv === 'function') _rinv();
         if(typeof _ri === 'function') _ri();
@@ -86,36 +85,33 @@ function _fb(){
     window.fbOnAuthStateChanged(window.fbAuth,async function(u){
         if(u){
             _CU={uid:u.uid,email:u.email,displayName:u.displayName,photoURL:u.photoURL};
-            /* === ЗМІНА 4: оновлюємо токен для api-client === */
             try {
                 var idToken = await u.getIdToken();
                 if(window.apiClient) window.apiClient.setAuthToken(idToken);
             } catch(e) { console.error('token err', e); }
-            /* === кінець зміни 4 === */
 
             _ca();_rs();await _lc();_ra();_ub();
             renderMyTrades();
             checkExpiredTrades();
-            var isSteam=_CU.uid && _CU.uid.length>10 && /^[0-9]+$/.test(_CU.uid);
+
+            var isSteam = _CU.uid && _CU.uid.length > 10 && /^[0-9]+$/.test(_CU.uid);
             if(isSteam){
-                _steamId=_CU.uid;
-                var tc=document.getElementById('tradeContent');
-                var tn=document.getElementById('tradeNotLogged');
-                if(tc)tc.style.display='block';
-                if(tn)tn.style.display='none';
+                _steamId = _CU.uid;
+                var tc = document.getElementById('tradeContent');
+                var tn = document.getElementById('tradeNotLogged');
+                if(tc) tc.style.display='block';
+                if(tn) tn.style.display='none';
                 loadSteamInventory(_steamAppId);
-            }else{
-                var tc2=document.getElementById('tradeContent');
-                var tn2=document.getElementById('tradeNotLogged');
-                if(tc2)tc2.style.display='none';
-                if(tn2)tn2.style.display='block';
+            } else {
+                var tc2 = document.getElementById('tradeContent');
+                var tn2 = document.getElementById('tradeNotLogged');
+                if(tc2) tc2.style.display='none';
+                if(tn2) tn2.style.display='block';
             }
             _lg('Добро пожаловать!','win');
         }else{
             _CU=null;_UDN='';_UPA='';_steamId='';_steamInv=[];_steamSelected={};
-            /* === ЗМІНА 4b: чистимо токен при виході === */
             if(window.apiClient) window.apiClient.clearAuthToken();
-            /* === кінець зміни 4b === */
             _rs();_ra();_ub();_oa();
             var tc3=document.getElementById('tradeContent');
             var tn3=document.getElementById('tradeNotLogged');
@@ -138,78 +134,100 @@ function _fb(){
     });
 }
 
+/* ============================================================
+   ЗАВАНТАЖЕННЯ СТАНУ ЧЕРЕЗ API
+   ============================================================ */
 async function _lc(){
-    if(!_CU||!window.fbDb)return;
+    if(!_CU) return;
     try{
-        var r=window.fbDoc(window.fbDb,'users',_CU.uid);
-        var s=await window.fbGetDoc(r);
-        if(s.exists()){
-            var d=s.data();
-            Object.keys(d).forEach(function(k){state[k]=d[k];});
-            state.inventory=(state.inventory||[]).map(resolveSkin).filter(Boolean);
+        var data = await window.apiClient.getUserData();
 
-            /* === ЗМІНА 9: міграція uid для старих предметів === */
-            var _migrated = false;
-            state.inventory = state.inventory.map(function(i){
-                if(!i.uid){
-                    i.uid = (window.crypto && crypto.randomUUID) ?
-                        crypto.randomUUID() :
-                        ('u_' + Date.now() + '_' + Math.random().toString(36).slice(2));
-                    _migrated = true;
-                }
-                return i;
-            });
-            if(_migrated) save();
-            /* === кінець зміни 9 === */
+        state.balance = data.balance || 0;
+        state.inventory = (data.inventory || []).map(function(i){
+            // Додаємо svg якщо немає
+            if(!i.svg && window.SKINS){
+                var sk = window.SKINS.find(function(s){ return s.id === i.id; });
+                if(sk) i.svg = sk.svg;
+            }
+            return i;
+        });
+        state.totalWon = data.totalWon || 0;
+        state.totalLost = data.totalLost || 0;
+        state.totalSold = data.totalSold || 0;
+        state.profit = data.profit || 0;
+        state.upgrades = data.upgrades || 0;
+        state.purchases = data.purchases || 0;
+        state.housePlayerLost = data.housePlayerLost || 0;
+        state.houseCasinoWon = data.houseCasinoWon || 0;
+        state.bestDrop = data.bestDrop ? resolveSkin(data.bestDrop) : null;
+        state.bestUpgrade = data.bestUpgrade ? resolveSkin(data.bestUpgrade) : null;
+        state.xp = data.xp || 0;
+        state.level = data.level || 1;
 
-            if(state.bestDrop)state.bestDrop=resolveSkin(state.bestDrop);
-            if(state.bestUpgrade)state.bestUpgrade=resolveSkin(state.bestUpgrade);
-            if(d.displayName)_UDN=d.displayName;
-            if(d.photoURL)_UPA=d.photoURL;
-        }else{
-            state.balance=START_BALANCE;
-            await _sc();
+        // UI з localStorage
+        try {
+            var ui = JSON.parse(localStorage.getItem('rastrgrade_ui') || '{}');
+            if(ui.soundOn !== undefined) state.soundOn = ui.soundOn;
+            if(ui.shopFilter) state.shopFilter = ui.shopFilter;
+            if(ui.shopSort) state.shopSort = ui.shopSort;
+            if(ui.spinSpeed) state.spinSpeed = ui.spinSpeed;
+        } catch(e){}
+
+        if(data.displayName) _UDN = data.displayName;
+        if(data.photoURL) _UPA = data.photoURL;
+
+    } catch(e) {
+        console.error('[lc] API error:', e);
+        // Fallback — читаємо з Firestore (read дозволений)
+        try {
+            var r = window.fbDoc(window.fbDb,'users',_CU.uid);
+            var s = await window.fbGetDoc(r);
+            if(s.exists()){
+                var d = s.data();
+                state.balance = d.balance || 0;
+                state.inventory = (d.inventory || []).map(resolveSkin).filter(Boolean);
+                state.totalWon = d.totalWon || 0;
+                state.totalLost = d.totalLost || 0;
+                state.profit = d.profit || 0;
+                state.upgrades = d.upgrades || 0;
+                state.purchases = d.purchases || 0;
+                state.housePlayerLost = d.housePlayerLost || 0;
+                state.houseCasinoWon = d.houseCasinoWon || 0;
+                state.bestDrop = d.bestDrop ? resolveSkin(d.bestDrop) : null;
+                state.bestUpgrade = d.bestUpgrade ? resolveSkin(d.bestUpgrade) : null;
+                state.xp = d.xp || 0;
+                state.level = d.level || 1;
+            }
+        } catch(fallbackErr) {
+            console.error('[lc] fallback error:', fallbackErr);
+            state.balance = START_BALANCE;
         }
-    }catch(e){console.error(e);state.balance=START_BALANCE;}
+    }
+}
+
+/* ============================================================
+   SAVE — тільки localStorage (не Firestore)
+   ============================================================ */
+function save(){
+    if(!_CU) return;
+    try {
+        localStorage.setItem('rastrgrade_ui', JSON.stringify({
+            soundOn: state.soundOn,
+            shopFilter: state.shopFilter,
+            shopSort: state.shopSort,
+            spinSpeed: state.spinSpeed
+        }));
+    } catch(e){}
 }
 
 async function _sc(){
-    if(!_CU||!window.fbDb)return;
-    try{
-        var d={
-            balance:state.balance,
-            inventory: state.inventory.map(function(i){
-    return {
-        id: i.id,
-        name: i.name,
-        shortname: i.shortname,
-        svg: i.svg,
-        rarity: i.rarity,
-        price: i.price,
-        uid: i.uid
-    };
-}),
-            profit:state.profit,
-            totalWon:state.totalWon,totalLost:state.totalLost,
-            upgrades:state.upgrades,purchases:state.purchases,
-            bestDrop:state.bestDrop?{id:state.bestDrop.id,rarity:state.bestDrop.rarity}:null,
-            bestUpgrade:state.bestUpgrade?{id:state.bestUpgrade.id,rarity:state.bestUpgrade.rarity}:null,
-            housePlayerLost:state.housePlayerLost,houseCasinoWon:state.houseCasinoWon,
-            xp:state.xp,level:state.level,
-            soundOn:state.soundOn,
-            shopFilter:state.shopFilter,shopSort:state.shopSort,
-            spinSpeed:state.spinSpeed,
-            updatedAt:Date.now()
-        };
-        var r=window.fbDoc(window.fbDb,'users',_CU.uid);
-        await window.fbSetDoc(r,d);
-    }catch(e){console.error(e);}
+    // Заглушка — нічого не робить
+    return;
 }
 
-function save(){if(!_CU)return;if(_CT)clearTimeout(_CT);_CT=setTimeout(_sc,800);}
 function _ol(){var m=document.getElementById('logoutModal');if(m)m.classList.add('show');}
 function _cl(){var m=document.getElementById('logoutModal');if(m)m.classList.remove('show');}
-async function _lo(){_cl();try{await _sc();await window.fbSignOut(window.fbAuth);_lg('Вы вышли','info');}catch(e){console.error(e);}}
+async function _lo(){_cl();try{await window.fbSignOut(window.fbAuth);_lg('Вы вышли','info');}catch(e){console.error(e);}}
 
 function _ub(){
     var b=document.getElementById('userBadge');
@@ -226,7 +244,7 @@ function _ca(){var m=document.getElementById('authModal');if(m)m.classList.remov
 
 var state={
     balance:0,inventory:[],profit:0,
-    totalWon:0,totalLost:0,upgrades:0,purchases:0,
+    totalWon:0,totalLost:0,totalSold:0,upgrades:0,purchases:0,
     bestDrop:null,bestUpgrade:null,
     upgradeSource:null,upgradeTarget:null,selectedPreset:null,
     spinSpeed:'slow',
@@ -240,7 +258,7 @@ var state={
 
 function _rs(){
     state.balance=0;state.inventory=[];state.profit=0;
-    state.totalWon=0;state.totalLost=0;state.upgrades=0;state.purchases=0;
+    state.totalWon=0;state.totalLost=0;state.totalSold=0;state.upgrades=0;state.purchases=0;
     state.bestDrop=null;state.bestUpgrade=null;
     state.upgradeSource=null;state.upgradeTarget=null;state.selectedPreset=null;
     state.spinSpeed='slow';
@@ -252,7 +270,18 @@ function _rs(){
 }
 function $(i){return document.getElementById(i);}
 
-var _SF={spin:'spin.mp3',win_common:'win_common.mp3',win_legendary:'win_legendary.mp3',lose:'lose.mp3',click:'click.mp3',buy:'buy.mp3',levelup:'levelup.mp3'};
+/* ============================================================
+   ЗВУКИ — з /assets/
+   ============================================================ */
+var _SF={
+    spin:'/assets/spin.mp3',
+    win_common:'/assets/win_common.mp3',
+    win_legendary:'/assets/win_legendary.mp3',
+    lose:'/assets/lose.mp3',
+    click:'/assets/click.mp3',
+    buy:'/assets/buy.mp3',
+    levelup:'/assets/levelup.mp3'
+};
 var _SD={};var _AU=false;
 function _pl(){Object.keys(_SF).forEach(function(k){var a=new Audio();a.src=_SF[k];a.preload='auto';a.volume=0.7;a.load();_SD[k]=a;});}
 function _un(){if(_AU)return;_AU=true;Object.keys(_SD).forEach(function(k){var s=_SD[k];if(!s)return;s.volume=0;s.play().then(function(){s.pause();s.currentTime=0;s.volume=0.7;}).catch(function(){});});}
@@ -336,6 +365,7 @@ function _ui(){
     DOM.levelName.textContent=l.name;
     if(n){var pr=(state.xp-l.xp)/(n.xp-l.xp)*100;DOM.levelBarFill.style.width=Math.min(100,Math.max(0,pr))+'%';}
     else DOM.levelBarFill.style.width='100%';
+    // save() викликаємо — але він тепер пише в localStorage
     save();
 }
 
@@ -421,7 +451,7 @@ function _pa(c,w){
 }
 
 /* ============================================================
-   === ЗМІНА 5: _hu — серверний апгрейд ===
+   UPGRADE — через сервер
    ============================================================ */
 async function _hu(){
     if(!state.upgradeSource||!state.upgradeTarget)return;
@@ -443,13 +473,9 @@ async function _hu(){
     b.disabled=true;
 
     try {
-        /* 1. Запит на сервер — там RNG, там ціни, там транзакція */
         var res = await window.apiClient.doUpgrade(ss.uid, ts.id);
-
-        /* 2. Анімація з відомим результатом */
         await _pa(res.chance, res.success);
 
-        /* 3. UI за результатом */
         _xp(20);
         var sv = _a1(ss);
         var tv = _a1(ts);
@@ -474,7 +500,6 @@ async function _hu(){
             _lg(ss.name+' -> провал','lose');
         }
 
-        /* 4. Перезавантажуємо стан з Firestore (сервер туди вже записав) */
         await _lc();
         _ui(); _rinv(); _ri(); _rt2();
 
@@ -497,7 +522,6 @@ async function _hu(){
         b.disabled=false;
     }
 }
-/* === кінець зміни 5 === */
 
 function _ipf(cid,fk,cb){var cn=$(cid);if(!cn)return;cn.innerHTML='';var a=document.createElement('button');a.className='upg-inv-filter active';a.textContent='Все';a.dataset.filter='all';cn.appendChild(a);Object.entries(RARITIES).forEach(function(kv){var b=document.createElement('button');b.className='upg-inv-filter';b.textContent=kv[1].name;b.dataset.filter=kv[0];b.style.color=kv[1].color;cn.appendChild(b);});cn.querySelectorAll('.upg-inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();cn.querySelectorAll('.upg-inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state[fk]=b.dataset.filter;cb();});});}
 var _sv=20;var _pp=null;var _pq=1;
@@ -506,6 +530,9 @@ function _rsh(){var g=$('shopGrid');if(!g)return;var it=SKINS.slice();if(state.s
 
 function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
 
+/* ============================================================
+   WITHDRAW (ВИВЕСТИ)
+   ============================================================ */
 async function _withdraw(skin){
     if(!_CU){_lg('Войди в аккаунт','lose');return;}
     var steamUrl = _steamId ? 'https://steamcommunity.com/profiles/'+_steamId : '';
@@ -513,12 +540,7 @@ async function _withdraw(skin){
         var url = prompt('Вставь свою Steam Trade-ссылку:','');
         if(url === null) return;
         if(!url || url.indexOf('steamcommunity.com')<0){
-            if(_CU && _CU.uid && /^[0-9]+$/.test(_CU.uid)){
-                window.open('https://steamcommunity.com/profiles/'+_CU.uid+'/tradeoffers/privacy','_blank');
-            }else{
-                window.open('https://steamcommunity.com/my/tradeoffers/privacy','_blank');
-            }
-            _lg('Открыли Steam','info');
+            _lg('Неверная ссылка','lose');
             return;
         }
         steamUrl = url;
@@ -541,9 +563,6 @@ async function _withdraw(skin){
             }
         );
         _lg('Заявка на вывод создана','win');
-        _rinv();
-        _ri();
-        _ui();
     }catch(e){
         console.error('Withdraw error:',e);
         _lg('Ошибка: '+e.message,'lose');
@@ -571,7 +590,7 @@ function _rinv(){
 }
 
 /* ============================================================
-   === ЗМІНА 6: _ssk — серверний продаж ===
+   SELL — через сервер
    ============================================================ */
 async function _ssk(sk){
     if(!_CU){_lg('Войди в аккаунт','lose');return;}
@@ -590,7 +609,6 @@ async function _ssk(sk){
         _lg(e.message || 'Ошибка продажи','lose');
     }
 }
-/* === кінець зміни 6 === */
 
 function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
@@ -716,13 +734,13 @@ function renderSteamInv(){
     var fr=document.createDocumentFragment();
     var total=_steamInv.length;
     var shown=Math.min(_invPage*_invPageSize,total);
-    
+
     function makeItem(item){
         var e=document.createElement('div');
         e.className='inv-item';
         var selected=!!_steamSelected[item.assetid];
         var price = _findSkinPrice(item.name);
-        
+
         e.style.border='2px solid '+(selected?'#f5c542':'var(--border)');
         e.style.background=selected?'rgba(245,197,66,0.1)':'rgba(0,0,0,0.4)';
         e.style.cursor='pointer';
@@ -731,18 +749,18 @@ function renderSteamInv(){
         e.style.padding='10px 8px';
         e.style.textAlign='center';
         e.style.position='relative';
-        
+
         var priceHtml = '';
         if(price > 0){
             priceHtml = '<div style="font-size:0.75rem;color:#f5c542;font-weight:700;margin-top:4px">'+formatRastr(price)+'</div>';
         }else{
             priceHtml = '<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">—</div>';
         }
-        
+
         var badgeHtml = selected ? '<div style="position:absolute;top:6px;right:6px;background:#f5c542;color:#000;font-size:0.6rem;font-weight:900;padding:2px 6px;border-radius:4px">V</div>' : '';
-        
+
         e.innerHTML=badgeHtml+'<img src="'+item.icon+'" style="width:80px;height:80px;object-fit:contain;margin:0 auto 6px;display:block" loading="lazy"><div style="font-weight:700;font-size:0.65rem;color:#fff;line-height:1.2;text-transform:uppercase;min-height:2.4em;overflow:hidden">'+item.name+'</div>'+priceHtml+'<div style="font-size:0.6rem;color:#6a6a80;margin-top:4px">'+(selected?'ВЫБРАНО':'Нажми')+'</div>';
-        
+
         e.addEventListener('click',function(){
             if(_steamSelected[item.assetid]){
                 delete _steamSelected[item.assetid];
@@ -755,11 +773,11 @@ function renderSteamInv(){
         });
         return e;
     }
-    
+
     for(var i=0;i<shown;i++){
         fr.appendChild(makeItem(_steamInv[i]));
     }
-    
+
     if(shown<total){
         var more=document.createElement('button');
         more.className='btn-secondary';
@@ -797,12 +815,12 @@ function updateTradeSummary(){
     var btn=$('createTradeBtn');
     if(count===0){if(summary)summary.style.display='none';return;}
     if(summary)summary.style.display='block';
-    
+
     var total = 0;
     Object.values(_steamSelected).forEach(function(item){
         total += _findSkinPrice(item.name);
     });
-    
+
     if(countEl)countEl.textContent=count;
     if(totalEl){
         if(total > 0){
@@ -818,7 +836,7 @@ async function createTrade(){
     if(!_CU){_lg('Войди в аккаунт','lose');return;}
     var selected=Object.values(_steamSelected);
     if(selected.length===0){_lg('Выбери скины','lose');return;}
-    
+
     var totalPrice = 0;
     var pricedItems = 0;
     selected.forEach(function(item){
@@ -826,7 +844,7 @@ async function createTrade(){
         if(p > 0) pricedItems++;
         totalPrice += p;
     });
-    
+
     try{
         await window.fbAddDoc(
             window.fbCollection(window.fbDb,'trades'),
@@ -914,22 +932,8 @@ async function cancelTrade(tradeId){
 }
 
 async function checkExpiredTrades(){
-    if(!_CU)return;
-    try{
-        var q=window.fbQuery(window.fbCollection(window.fbDb,'trades'),window.fbWhere('uid','==',_CU.uid),window.fbWhere('status','==','pending'));
-        var snap=await window.fbGetDocs(q);
-        var now=Date.now();
-        var expired=[];
-        snap.forEach(function(docSnap){
-            var trade=docSnap.data();
-            if(trade.expiresAt&&now>trade.expiresAt){expired.push({id:docSnap.id,data:trade});}
-        });
-        for(var i=0;i<expired.length;i++){
-            await window.fbDeleteDoc(window.fbDoc(window.fbDb,'trades',expired[i].id));
-            _lg('Заявка истекла','info');
-        }
-        if(expired.length>0)renderMyTrades();
-    }catch(e){console.error('checkExpiredTrades error:',e);}
+    // Заглушка — Firestore Rules блокують, тому не робимо нічого
+    return;
 }
 
 function _ah(){
@@ -941,9 +945,7 @@ function _ah(){
     var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);
     var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'S':'M';if(state.soundOn){_un();_ck();}save();});
 
-    /* ============================================================
-       === ЗМІНА 3: buyConfirm — серверна покупка ===
-       ============================================================ */
+    /* Buy — через API */
     var bcf=$('buyConfirm');
     if(bcf)bcf.addEventListener('click',async function(){
         if(!_pp)return;
@@ -971,13 +973,10 @@ function _ah(){
             console.error('buy error', e);
         }
     });
-    /* === кінець зміни 3 === */
 
     var bc=$('buyCancel');if(bc)bc.addEventListener('click',function(){_ck();$('buyModal').classList.remove('show');_pp=null;_pq=1;});
 
-    /* ============================================================
-       === ЗМІНА 7: sellAllBtn — серверний продаж усього ===
-       ============================================================ */
+    /* Sell All — через API */
     var sa=$('sellAllBtn');
     if(sa)sa.addEventListener('click',async function(){
         if(state.inventory.length===0)return;
@@ -995,7 +994,6 @@ function _ah(){
             _lg(e.message || 'Ошибка продажи','lose');
         }
     });
-    /* === кінець зміни 7 === */
 
     var ub2=$('upgradeBtn');if(ub2)ub2.addEventListener('click',_hu);
     var ss2=$('sourceSlot');if(ss2)ss2.addEventListener('click',function(){if(state.upgradeSource)return;_un();_ck();var p=document.querySelector('.upg-inv-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
@@ -1013,26 +1011,12 @@ function _ah(){
     document.addEventListener('visibilitychange',function(){if(document.hidden)_sl();});
     document.body.addEventListener('click',function(){_un();},{once:true});
 
-    /* ============================================================
-       === ЗМІНА 10: Steam-логін через apiClient.getSteamAuthUrl() ===
-       ============================================================ */
-    var stb=$('steamLoginBtn');
-    if(stb)stb.addEventListener('click',function(){
-        window.location.href = window.apiClient.getSteamAuthUrl();
-    });
-    var tlb=$('tradeLoginBtn');
-    if(tlb)tlb.addEventListener('click',function(){
-        window.location.href = window.apiClient.getSteamAuthUrl();
-    });
-    /* === кінець зміни 10 === */
-
+    var stb=$('steamLoginBtn');if(stb)stb.addEventListener('click',function(){window.location.href=window.apiClient.getSteamAuthUrl();});
+    var tlb=$('tradeLoginBtn');if(tlb)tlb.addEventListener('click',function(){window.location.href=window.apiClient.getSteamAuthUrl();});
     var rib=$('reloadInvBtn');if(rib)rib.addEventListener('click',function(){_ck();loadSteamInventory(_steamAppId);});
     var ctb=$('createTradeBtn');if(ctb)ctb.addEventListener('click',createTrade);
 }
 
-/* ============================================================
-   === ЗМІНА 1: _checkSteamToken — тепер читає ?token= ===
-   ============================================================ */
 function _checkSteamToken(){
     var p = new URLSearchParams(window.location.search);
     var t = p.get('token');
@@ -1056,7 +1040,6 @@ function _checkSteamToken(){
     }
     return false;
 }
-/* === кінець зміни 1 === */
 
 function _waitForFirebase(cb,attempts){
     attempts=attempts||0;
@@ -1101,4 +1084,4 @@ if(document.readyState==='loading'){
     _init();
     _waitForFirebase(function(){_checkSteamToken();});
 }
-})();    
+})();   
