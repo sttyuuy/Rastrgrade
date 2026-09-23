@@ -815,7 +815,6 @@ function _pr(){
     nl.style.display = 'none';
     ct.style.display = 'block';
 
-    // Нік + ID + джерело
     var nick = _UDN || _CU.displayName || 'Игрок';
     $('profileName').textContent = nick;
     var uidShort = _CU.uid ? ('...' + _CU.uid.slice(-6)) : '—';
@@ -825,20 +824,17 @@ function _pr(){
     $('profileSource').textContent = isSteam ? '🎮 Steam' : '🔷 Google';
     $('profileSource').style.color = isSteam ? '#4aa8ff' : '#4285F4';
 
-    // Аватар
     var av = $('profileAvatar');
     if(_UPA){
-        av.innerHTML = '<img src="'+_UPA+'" alt="">';
+        av.innerHTML = '<img src="' + _UPA + '" alt="">';
         av.className = 'profile-avatar has-img';
     } else {
         av.textContent = nick.charAt(0).toUpperCase();
         av.className = 'profile-avatar';
     }
 
-    // Баланс
     $('profileBalance').innerHTML = formatRastr(state.balance) + ' ' + _MF_ICON;
 
-    // Статистика
     $('profileStatWon').innerHTML = formatRastr(state.totalWon) + ' ' + _MF_ICON;
     $('profileStatLost').innerHTML = formatRastr(state.totalLost) + ' ' + _MF_ICON;
     $('profileStatUpgrades').textContent = state.upgrades;
@@ -854,9 +850,13 @@ function _pr(){
     var bd = $('profileBestContent');
     var bdBox = $('profileBestDrop');
     if(state.bestDrop){
-        bd.innerHTML = '<div class="profile-best-skin">' + renderSkinIcon(state.bestDrop) + '</div>' +
-                       '<div class="profile-best-name">' + state.bestDrop.name + '</div>' +
-                       '<div class="profile-best-price">' + formatRastr(_a1(state.bestDrop)) + ' ' + _MF_ICON + '</div>';
+        var dropHtml = '';
+        dropHtml += '<div class="profile-best-skin">';
+        dropHtml += renderSkinIcon(state.bestDrop);
+        dropHtml += '</div>';
+        dropHtml += '<div class="profile-best-name">' + state.bestDrop.name + '</div>';
+        dropHtml += '<div class="profile-best-price">' + formatRastr(_a1(state.bestDrop)) + ' ' + _MF_ICON + '</div>';
+        bd.innerHTML = dropHtml;
         bdBox.className = 'profile-best-drop ' + state.bestDrop.rarity;
     } else {
         bd.innerHTML = '<div class="profile-best-empty">Нет дропа</div>';
@@ -867,306 +867,235 @@ function _pr(){
     var bu = $('profileBestUpgContent');
     var buBox = $('profileBestUpgrade');
     if(state.bestUpgrade){
-        bu.innerHTML = '<div class="profile-best-skin">' + renderSkinIcon(state.bestUpgrade) + '</div>' +
-                       '<div class="profile-best-name">' + state.bestUpgrade.name + '</div>' +
-                       '<div class="profile-best-price">' + formatRastr(_a1(state.bestUpgrade)) + ' ' + _MF_ICON + '</div>';
+        var upgHtml = '';
+        upgHtml += '<div class="profile-best-skin">';
+        upgHtml += renderSkinIcon(state.bestUpgrade);
+        upgHtml += '</div>';
+        upgHtml += '<div class="profile-best-name">' + state.bestUpgrade.name + '</div>';
+        upgHtml += '<div class="profile-best-price">' + formatRastr(_a1(state.bestUpgrade)) + ' ' + _MF_ICON + '</div>';
+        bu.innerHTML = upgHtml;
         buBox.className = 'profile-best-upgrade ' + state.bestUpgrade.rarity;
     } else {
         bu.innerHTML = '<div class="profile-best-empty">—</div>';
         buBox.className = 'profile-best-upgrade';
     }
 }
-   /* ============================================================
-   ПРОФІЛЬ
-   ============================================================ */
-.profile-head {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 22px;
-    background: linear-gradient(135deg, rgba(255,107,26,0.08), rgba(165,92,255,0.05));
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
+   function _ah(){
+    var lb=$('logoBtn');
+    if(lb) lb.addEventListener('click', function(e){
+        e.preventDefault();
+        _ck();
+        document.querySelectorAll('.nav-tab').forEach(function(x){ x.classList.remove('active'); });
+        document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+        var upTab = document.querySelector('.nav-tab[data-page="upgrade"]');
+        if(upTab) upTab.classList.add('active');
+        var upPage = $('page-upgrade');
+        if(upPage) upPage.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        _sl();
+    });
+
+    var ub=$('userBadge');
+    if(ub)ub.addEventListener('click',function(){
+        if(_CU){
+            document.querySelectorAll('.nav-tab').forEach(function(x){ x.classList.remove('active'); });
+            document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+            var pTab = document.querySelector('.nav-tab[data-page="profile"]');
+            if(pTab) pTab.classList.add('active');
+            var pPage = $('page-profile');
+            if(pPage) pPage.classList.add('active');
+            _pr();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            _ck();
+        } else {
+            _oa();
+        }
+    });
+
+    var lc=$('logoutConfirm');if(lc)lc.addEventListener('click',_lo);
+    var lx=$('logoutCancel');if(lx)lx.addEventListener('click',function(){_ck();_cl();});
+    var ss=$('speedSlowBtn');if(ss)ss.addEventListener('click',function(){_un();_ck();state.spinSpeed='slow';_usb();save();});
+    var sf=$('speedFastBtn');if(sf)sf.addEventListener('click',function(){_un();_ck();state.spinSpeed='fast';_usb();save();});
+    var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);
+    var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'S':'M';if(state.soundOn){_un();_ck();}save();});
+
+    var plb = $('profileLoginBtn');
+    if(plb) plb.addEventListener('click', function(){ _ck(); _oa(); });
+    var plo = $('profileLogoutBtn');
+    if(plo) plo.addEventListener('click', function(){ _ck(); _ol(); });
+    var pset = $('profileSettingsBtn');
+    if(pset) pset.addEventListener('click', function(){ _ck(); _ol(); });
+    var ptop = $('profileTopupBtn');
+    if(ptop) ptop.addEventListener('click', function(){ _ck(); _lg('Пополнение скоро','info'); });
+    var pcl = $('profileCloseBtn');
+    if(pcl) pcl.addEventListener('click', function(){ _ck(); _pr(); _lg('Обновлено','info'); });
+
+    var bcf=$('buyConfirm');
+    if(bcf)bcf.addEventListener('click',async function(){
+        if(_BUSY) return;
+        if(!_pp)return;
+        var sk=_pp.skin;
+        var q=_pq||1;
+        _ck();
+
+        if(!_CU){_lg('Войди в аккаунт','lose');return;}
+
+        _BUSY = true;
+        bcf.disabled = true;
+        bcf.textContent = '...';
+
+        try {
+            var unitPrice = _pp.price;
+            var totalSpent = 0;
+            var addedItems = [];
+
+            for(var i=0;i<q;i++){
+                var r = await window.apiClient.buyItem(sk.id);
+                if(r && r.item) addedItems.push(r.item);
+                totalSpent += unitPrice;
+            }
+
+            _by();
+            _lg('Куплено: '+sk.name+' x'+q,'win');
+
+            state.balance -= totalSpent;
+            state.totalLost += totalSpent;
+            state.purchases += q;
+            state.profit = state.totalWon - state.totalLost;
+            for(var j=0;j<addedItems.length;j++) state.inventory.push(addedItems[j]);
+
+            _sortedInvCache = { key: '', data: null };
+
+            _ui(); _rinv(); _ri(); _pr();
+
+            $('buyModal').classList.remove('show');
+            _pp=null; _pq=1;
+        } catch(e) {
+            _lg(e.message || 'Ошибка покупки','lose');
+            console.error('buy error', e);
+        } finally {
+            _BUSY = false;
+            bcf.disabled = false;
+            bcf.textContent = 'КУПИТЬ';
+        }
+    });
+
+    var bc=$('buyCancel');if(bc)bc.addEventListener('click',function(){_ck();$('buyModal').classList.remove('show');_pp=null;_pq=1;});
+
+    var sa=$('sellAllBtn');
+    if(sa)sa.addEventListener('click',async function(){
+        if(_BUSY) return;
+        if(state.inventory.length===0)return;
+        if(!_CU){_lg('Войди в аккаунт','lose');return;}
+        if(!confirm('Продать всё?'))return;
+        _ck();
+
+        _BUSY = true;
+        sa.disabled = true;
+
+        try {
+            var res = await window.apiClient.sellAllItems();
+            _by();
+            _lg('Продано всё: +'+formatRastr(res.total||0),'win');
+
+            state.balance += (res.total || 0);
+            state.totalSold += (res.total || 0);
+            state.inventory = [];
+
+            _sortedInvCache = { key: '', data: null };
+
+            _ui(); _rinv(); _ri(); _pr();
+        } catch(e) {
+            _lg(e.message || 'Ошибка продажи','lose');
+        } finally {
+            _BUSY = false;
+            sa.disabled = false;
+        }
+    });
+
+    var ub2=$('upgradeBtn');if(ub2)ub2.addEventListener('click',_hu);
+    var ss2=$('sourceSlot');if(ss2)ss2.addEventListener('click',function(){if(state.upgradeSource)return;_un();_ck();var p=document.querySelector('.upg-inv-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
+    var ts2=$('targetSlot');if(ts2)ts2.addEventListener('click',function(){if(state.upgradeTarget)return;_un();_ck();var p=document.querySelector('.upg-items-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
+    var sr=$('sourceRemoveBtn');if(sr)sr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();_rz();});
+    var tr=$('targetRemoveBtn');if(tr)tr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();state.upgradeTarget=null;state.selectedPreset=null;_tgCache={};_rt1();_rp1();_uc();});
+    var is=$('invSearch');if(is)is.addEventListener('input',_ri);
+    var its=$('itemsSearch');if(its)its.addEventListener('input',_rt2);
+    var so=$('shopSort');if(so)so.addEventListener('change',function(e){state.shopSort=e.target.value;_sv=20;_rsh();save();_ck();});
+    document.querySelectorAll('.shop-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.shop-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state.shopFilter=b.dataset.rarity;_sv=20;_rsh();save();});});
+    document.querySelectorAll('.inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();document.querySelectorAll('.inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');_ivf=b.dataset.rarity;_sortedInvCache={key:'',data:null};_rinv();});});
+    document.querySelectorAll('.nav-tab').forEach(function(t){t.addEventListener('click',function(){_un();_ck();_sl();document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});t.classList.add('active');$('page-'+t.dataset.page).classList.add('active');if(t.dataset.page==='shop'){_sv=20;_rsh();}if(t.dataset.page==='inventory')_rinv();if(t.dataset.page==='upgrade'){_ri();_rt2();}if(t.dataset.page==='profile'){_pr();}});});
+    document.addEventListener('visibilitychange',function(){if(document.hidden)_sl();});
+    document.body.addEventListener('click',function(){_un();},{once:true});
+
+    var stb=$('steamLoginBtn');if(stb)stb.addEventListener('click',function(){window.location.href=window.apiClient.getSteamAuthUrl();});
 }
 
-.profile-head::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), var(--gold), var(--accent), transparent);
-    background-size: 200% 100%;
-    animation: authLine 4s linear infinite;
+function _checkSteamToken(){
+    var p = new URLSearchParams(window.location.search);
+    var t = p.get('token');
+    if(!t) return false;
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if(window.fbSignInWithCustomToken && window.fbAuth){
+        window.fbSignInWithCustomToken(window.fbAuth, t)
+            .then(async function(c){
+                console.log('Steam OK', c.user.uid);
+                try {
+                    var idToken = await c.user.getIdToken();
+                    if(window.apiClient) window.apiClient.setAuthToken(idToken);
+                } catch(e) { console.error('setAuthToken err', e); }
+            })
+            .catch(function(e){
+                console.error('Steam err', e.message);
+                alert('Ошибка входа: ' + e.message);
+            });
+        return true;
+    }
+    return false;
 }
 
-.profile-avatar {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--gold));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: 2.2rem;
-    color: #000;
-    box-shadow:
-        0 0 30px rgba(255,107,26,0.7),
-        0 0 60px rgba(255,107,26,0.3);
-    flex-shrink: 0;
-    overflow: hidden;
-    border: 3px solid rgba(255,107,26,0.4);
-    position: relative;
+function _waitForFirebase(cb,attempts){
+    attempts=attempts||0;
+    if(window.fbReady&&window.fbSignInWithCustomToken){cb();return;}
+    if(attempts>50){console.error('Firebase timeout');return;}
+    setTimeout(function(){_waitForFirebase(cb,attempts+1);},100);
 }
 
-.profile-avatar.has-img { background: transparent; }
-
-.profile-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+function _init(){
+    _pl();
+    _ipf('invPanelFilters','invPanelFilter',_ri);
+    _ipf('itemsPanelFilters','itemsPanelFilter',_rt2);
+    var sf=document.querySelector('.shop-filter[data-rarity="'+state.shopFilter+'"]');
+    if(sf){document.querySelectorAll('.shop-filter').forEach(function(b){b.classList.remove('active');});sf.classList.add('active');}
+    if($('shopSort'))$('shopSort').value=state.shopSort;
+    if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'S':'M';
+    _ah();
+    _fb();
+    loadPricesFromFirestore();
+    _pr();
 }
 
-.profile-info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+window.state=state;
+window.save=save;
+window.log=_lg;
+window.renderAll=_ra;
+window.updateUI=_ui;
+window.renderProfile=_pr;
+window.resetStateToDefault=_rs;
+window.formatRastr=formatRastr;
+window.START_BALANCE=START_BALANCE;
+window.SKINS=SKINS;
+window.RARITIES=RARITIES;
+window.renderSkinIcon=renderSkinIcon;
+window.currentUser=function(){return _CU;};
+
+if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){
+        _init();
+        _waitForFirebase(function(){_checkSteamToken();});
+    });
+}else{
+    _init();
+    _waitForFirebase(function(){_checkSteamToken();});
 }
-
-.profile-name {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.profile-id {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--text-dim);
-    letter-spacing: 1px;
-}
-
-.profile-source {
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    margin-top: 4px;
-}
-
-.profile-logout-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: rgba(255,59,59,0.1);
-    border: 2px solid rgba(255,59,59,0.4);
-    color: var(--red);
-    font-size: 1.3rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    flex-shrink: 0;
-}
-
-.profile-logout-btn:hover {
-    background: rgba(255,59,59,0.2);
-    border-color: var(--red);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255,59,59,0.4);
-}
-
-.profile-balance {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    background: linear-gradient(135deg, rgba(245,197,66,0.08), rgba(255,107,26,0.05));
-    border: 1px solid rgba(245,197,66,0.25);
-    border-radius: 16px;
-    margin-bottom: 16px;
-    gap: 14px;
-    flex-wrap: wrap;
-}
-
-.profile-balance-label {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 4px;
-}
-
-.profile-balance-value {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #ffd966;
-    text-shadow: 0 0 20px rgba(245,197,66,0.7);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.profile-topup-btn {
-    padding: 14px 28px;
-    background: linear-gradient(135deg, #7ed321 0%, #4aa82f 100%);
-    border: none;
-    border-radius: 12px;
-    color: #000;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 800;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 6px 20px rgba(126,211,33,0.4);
-}
-
-.profile-topup-btn:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 12px 30px rgba(126,211,33,0.7);
-}
-
-.profile-best-drop,
-.profile-best-upgrade {
-    padding: 20px;
-    border-radius: 16px;
-    margin-bottom: 16px;
-    text-align: center;
-    border: 2px solid var(--border);
-    background: rgba(0,0,0,0.4);
-    transition: all 0.3s;
-}
-
-.profile-best-label {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 12px;
-}
-
-.profile-best-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.profile-best-skin .skin-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto;
-}
-
-.profile-best-name {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.profile-best-price {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.1rem;
-    color: var(--gold);
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.profile-best-empty {
-    color: var(--text-dim);
-    font-style: italic;
-    padding: 20px;
-}
-
-.profile-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.profile-stat {
-    padding: 16px 14px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    text-align: center;
-    transition: all 0.3s;
-}
-
-.profile-stat:hover {
-    border-color: var(--accent);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(255,107,26,0.2);
-}
-
-.profile-stat-label {
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 6px;
-}
-
-.profile-stat-value {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-
-.profile-stat-value.green { color: var(--green); }
-.profile-stat-value.red { color: var(--red); }
-
-.profile-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 8px;
-    flex-wrap: wrap;
-}
-
-.profile-actions button {
-    flex: 1;
-    min-width: 140px;
-}
-
-/* Rarity glow for best drop */
-.profile-best-drop.common { border-color: #7a7a8a; box-shadow: 0 0 25px rgba(122,122,138,0.3); }
-.profile-best-drop.rare { border-color: #a55cff; box-shadow: 0 0 25px rgba(165,92,255,0.4); }
-.profile-best-drop.legendary { border-color: #f5c542; box-shadow: 0 0 30px rgba(245,197,66,0.5); animation: legendaryGlow 3s ease-in-out infinite; }
-.profile-best-drop.mythical { border-color: #ff0044; box-shadow: 0 0 35px rgba(255,0,68,0.5); animation: mythicPulse 3s ease-in-out infinite; }
-
-.profile-best-upgrade.common { border-color: #7a7a8a; }
-.profile-best-upgrade.rare { border-color: #a55cff; box-shadow: 0 0 25px rgba(165,92,255,0.4); }
-.profile-best-upgrade.legendary { border-color: #f5c542; box-shadow: 0 0 30px rgba(245,197,66,0.5); }
-.profile-best-upgrade.mythical { border-color: #ff0044; box-shadow: 0 0 35px rgba(255,0,68,0.5); }
-
-@media (max-width: 768px) {
-    .profile-head { padding: 16px; gap: 12px; flex-wrap: wrap; }
-    .profile-avatar { width: 70px; height: 70px; font-size: 1.6rem; }
-    .profile-name { font-size: 1.1rem; }
-    .profile-balance-value { font-size: 1.4rem; }
-    .profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .profile-actions button { min-width: 100%; }
-}
+})();
