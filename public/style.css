@@ -1194,12 +1194,14 @@ body::before {
 .upg-circle-sector-left {
     stroke: url(#chanceGradientLeft);
     transform: rotate(90deg) scale(-1, 1);
+    transform-origin: center;
 }
 
 /* ПРАВА дуга — початок знизу, ріст ВПРАВО (по годинниковій) */
 .upg-circle-sector-right {
     stroke: url(#chanceGradientRight);
     transform: rotate(90deg);
+    transform-origin: center;
 }
 
 .upg-needle {
