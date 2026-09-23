@@ -181,8 +181,8 @@ async function _lc(){
                 state.purchases = d.purchases || 0;
                 state.housePlayerLost = d.housePlayerLost || 0;
                 state.houseCasinoWon = d.houseCasinoWon || 0;
-                state.bestDrop = d.bestDrop ? (window._skinsById[d.bestDrop.id] || resolveSkin(d.bestDrop)) : null;
-                state.bestUpgrade = d.bestUpgrade ? (window._skinsById[d.bestUpgrade.id] || resolveSkin(d.bestUpgrade)) : null;
+                state.bestDrop = d.bestDrop ? (window._skinsById[d.bestDrop.id] || d.bestDrop) : null;
+                state.bestUpgrade = d.bestUpgrade ? (window._skinsById[d.bestUpgrade.id] || d.bestUpgrade) : null;
                 state.xp = d.xp || 0;
                 state.level = d.level || 1;
                 if(d.displayName) _UDN = d.displayName;
@@ -450,7 +450,34 @@ function _ui(){
 function _cr(){_ck();$('resultModal').classList.remove('show');}
 
 var _CR=100;var _CC=2*Math.PI*_CR;
-function _dc(c){c=Math.max(0,Math.min(100,c));var l=(c/100)*_CC;$('chanceSector').setAttribute('stroke-dasharray',l+' '+_CC);var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';$('chanceSector').style.color=co;}
+
+/* ============================================================
+   _dc — ДВОСТОРОННЯ ДУГА
+   ============================================================ */
+function _dc(c){
+    c = Math.max(0, Math.min(100, c));
+    // Повна довжина кола = _CC ≈ 628.32
+    // Кожна дуга — максимум половина кола = _CC / 2 ≈ 314.16
+    var halfCC = _CC / 2;
+    // Загальна заповнена довжина = c% від кола
+    var totalFill = (c / 100) * _CC;
+    // Кожна дуга заповнюється на половину
+    var fill = Math.min(totalFill / 2, halfCC);
+
+    var leftEl = $('chanceSectorLeft');
+    var rightEl = $('chanceSectorRight');
+
+    if(leftEl) leftEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
+    if(rightEl) rightEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
+
+    var co;
+    if(c>=65)co='#7ed321';
+    else if(c>=35)co='#f5c542';
+    else if(c>=15)co='#ff6b1a';
+    else co='#ff3b3b';
+    if(leftEl) leftEl.style.color = co;
+    if(rightEl) rightEl.style.color = co;
+}
 
 function _na(d){
     if(!_ndl) _ndl = $('circleNeedle');
@@ -738,8 +765,6 @@ function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return
 
 /* ============================================================
    ПРОФІЛЬ — _pr()
-   ⚠️ bestDrop: ціна завжди береться з _findSkinPrice (Firestore),
-      fallback — bestDrop.price (збережена стара ціна)
    ============================================================ */
 function _pr(){
     var nl = $('profileNotLogged');
@@ -782,11 +807,9 @@ function _pr(){
     pe.innerHTML = (prof >= 0 ? '+' : '') + formatRastr(prof) + ' ' + _MF_ICON;
     pe.className = 'profile-stat-value ' + (prof >= 0 ? 'green' : 'red');
 
-    // === ЛУЧШИЙ ДРОП ===
     var bd = $('profileBestContent');
     var bdBox = $('profileBestDrop');
     if(state.bestDrop){
-        // ⚠️ ЦІНА: спочатку з Firestore (свіжа), потім fallback на bestDrop.price
         var freshPrice = _findSkinPrice(state.bestDrop.name);
         if(!freshPrice || freshPrice <= 0) freshPrice = Number(state.bestDrop.price) || 0;
 
