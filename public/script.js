@@ -68,6 +68,7 @@ async function loadPricesFromFirestore(){
         if(typeof _ri === 'function') _ri();
         if(typeof _rt2 === 'function') _rt2();
         if(typeof _ui === 'function') _ui();
+        if(typeof _pr === 'function') _pr();
     }catch(e){
         console.error('Firestore prices error:', e);
     }
@@ -144,8 +145,8 @@ async function _lc(){
         state.purchases = data.purchases || 0;
         state.housePlayerLost = data.housePlayerLost || 0;
         state.houseCasinoWon = data.houseCasinoWon || 0;
-        state.bestDrop = data.bestDrop ? (window._skinsById[data.bestDrop.id] || resolveSkin(data.bestDrop)) : null;
-        state.bestUpgrade = data.bestUpgrade ? (window._skinsById[data.bestUpgrade.id] || resolveSkin(data.bestUpgrade)) : null;
+        state.bestDrop = data.bestDrop ? (window._skinsById[data.bestDrop.id] || data.bestDrop) : null;
+        state.bestUpgrade = data.bestUpgrade ? (window._skinsById[data.bestUpgrade.id] || data.bestUpgrade) : null;
         state.xp = data.xp || 0;
         state.level = data.level || 1;
 
@@ -180,8 +181,8 @@ async function _lc(){
                 state.purchases = d.purchases || 0;
                 state.housePlayerLost = d.housePlayerLost || 0;
                 state.houseCasinoWon = d.houseCasinoWon || 0;
-                state.bestDrop = d.bestDrop ? resolveSkin(d.bestDrop) : null;
-                state.bestUpgrade = d.bestUpgrade ? resolveSkin(d.bestUpgrade) : null;
+                state.bestDrop = d.bestDrop ? (window._skinsById[d.bestDrop.id] || resolveSkin(d.bestDrop)) : null;
+                state.bestUpgrade = d.bestUpgrade ? (window._skinsById[d.bestUpgrade.id] || resolveSkin(d.bestUpgrade)) : null;
                 state.xp = d.xp || 0;
                 state.level = d.level || 1;
                 if(d.displayName) _UDN = d.displayName;
@@ -254,6 +255,9 @@ function _rs(){
 }
 function $(i){return document.getElementById(i);}
 
+/* ============================================================
+   ЗВУКИ
+   ============================================================ */
 var _SF={
     spin:'/assets/spin.mp3',
     win_common:'/assets/win_common.mp3',
@@ -567,6 +571,7 @@ async function _hu(){
             state.totalWon += _a1(ts);
             state.houseCasinoWon += _a1(ts);
             if(!state.bestUpgrade || _a1(ts) > _a1(state.bestUpgrade)) state.bestUpgrade = ts;
+            if(!state.bestDrop || _a1(ts) > _a1(state.bestDrop)) state.bestDrop = ts;
         } else {
             state.totalLost += _a1(ss);
             state.housePlayerLost += _a1(ss);
@@ -731,6 +736,11 @@ async function _ssk(sk){
 function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();_pr();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
+/* ============================================================
+   ПРОФІЛЬ — _pr()
+   ⚠️ bestDrop: ціна завжди береться з _findSkinPrice (Firestore),
+      fallback — bestDrop.price (збережена стара ціна)
+   ============================================================ */
 function _pr(){
     var nl = $('profileNotLogged');
     var ct = $('profileContent');
@@ -738,15 +748,19 @@ function _pr(){
     if(!_CU){ nl.style.display = 'block'; ct.style.display = 'none'; return; }
     nl.style.display = 'none';
     ct.style.display = 'block';
+
     var nick = _UDN || _CU.displayName || 'Игрок';
     $('profileName').textContent = nick;
+
     var uidShort = _CU.uid ? ('...' + _CU.uid.slice(-6)) : '—';
     $('profileId').textContent = 'ID: ' + uidShort;
+
     var isSteam = _CU.uid && _CU.uid.length > 10 && /^[0-9]+$/.test(_CU.uid);
     var steamSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" style="vertical-align:middle;margin-right:6px"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"/></svg>';
     var googleSvg = '<svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:middle;margin-right:6px"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
     $('profileSource').innerHTML = isSteam ? (steamSvg + 'Steam') : (googleSvg + 'Google');
     $('profileSource').style.color = '#fff';
+
     var av = $('profileAvatar');
     if(_UPA){
         av.innerHTML = '<img src="' + _UPA + '" alt="">';
@@ -755,25 +769,33 @@ function _pr(){
         av.textContent = nick.charAt(0).toUpperCase();
         av.className = 'profile-avatar';
     }
+
     $('profileBalance').innerHTML = formatRastr(state.balance) + ' ' + _MF_ICON;
     $('profileStatWon').innerHTML = formatRastr(state.totalWon) + ' ' + _MF_ICON;
     $('profileStatLost').innerHTML = formatRastr(state.totalLost) + ' ' + _MF_ICON;
     $('profileStatUpgrades').textContent = state.upgrades;
     $('profileStatPurchases').textContent = state.purchases;
     $('profileStatSold').innerHTML = formatRastr(state.totalSold) + ' ' + _MF_ICON;
+
     var prof = state.totalWon - state.totalLost;
     var pe = $('profileStatProfit');
     pe.innerHTML = (prof >= 0 ? '+' : '') + formatRastr(prof) + ' ' + _MF_ICON;
     pe.className = 'profile-stat-value ' + (prof >= 0 ? 'green' : 'red');
+
+    // === ЛУЧШИЙ ДРОП ===
     var bd = $('profileBestContent');
     var bdBox = $('profileBestDrop');
     if(state.bestDrop){
+        // ⚠️ ЦІНА: спочатку з Firestore (свіжа), потім fallback на bestDrop.price
+        var freshPrice = _findSkinPrice(state.bestDrop.name);
+        if(!freshPrice || freshPrice <= 0) freshPrice = Number(state.bestDrop.price) || 0;
+
         var dropHtml = '';
         dropHtml += '<div class="profile-best-skin">';
         dropHtml += renderSkinIcon(state.bestDrop);
         dropHtml += '</div>';
         dropHtml += '<div class="profile-best-name">' + state.bestDrop.name + '</div>';
-        dropHtml += '<div class="profile-best-price">' + formatRastr(_a1(state.bestDrop)) + ' ' + _MF_ICON + '</div>';
+        dropHtml += '<div class="profile-best-price">' + formatRastr(freshPrice) + ' ' + _MF_ICON + '</div>';
         bd.innerHTML = dropHtml;
         bdBox.className = 'profile-best-drop ' + state.bestDrop.rarity;
     } else {
