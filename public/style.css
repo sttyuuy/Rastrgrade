@@ -1189,21 +1189,19 @@ body::before {
     transition: stroke-dasharray 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     transform-origin: center;
 }
-
-/* ЛІВА дуга — початок знизу, ріст ВЛІВО (проти годинникової) */
+/* ЛІВА дуга — початок знизу (6-та година), ріст ВЛІВО */
 .upg-circle-sector-left {
     stroke: url(#chanceGradientLeft);
     transform: rotate(90deg) scale(-1, 1);
-    transform-origin: center;
+    transform-origin: 120px 120px;
 }
 
-/* ПРАВА дуга — початок знизу, ріст ВПРАВО (по годинниковій) */
+/* ПРАВА дуга — початок знизу (6-та година), ріст ВПРАВО */
 .upg-circle-sector-right {
     stroke: url(#chanceGradientRight);
     transform: rotate(90deg);
-    transform-origin: center;
+    transform-origin: 120px 120px;
 }
-
 .upg-needle {
     position: absolute;
     inset: 0;
