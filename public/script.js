@@ -251,7 +251,7 @@ function _rs(){
 function $(i){return document.getElementById(i);}
 
 /* ============================================================
-   ЗВУКИ — lazy load
+   ЗВУКИ — lazy load + точна синхронізація з анімацією
    ============================================================ */
 var _SF={
     spin:'/assets/spin.mp3',
@@ -298,29 +298,33 @@ var _LP={};
 function _sp(n,v){
     if(!state.soundOn)return null;
     var s=_SD[n];if(!s)return null;
-    if(_LP[n]){try{_LP[n].pause();}catch(e){}}
+    // Зупиняємо попередній звук, якщо був
+    if(_LP[n]){try{_LP[n].pause();_LP[n].currentTime=0;}catch(e){}}
     var c=s.cloneNode();
     c.volume=v||0.6;
     c.loop=true;
     c.play().catch(function(){});
     _LP[n]=c;
+    // Запам'ятовуємо ІНСТАНС — щоб stop/fadeStop працювали саме з ним
+    var thisAudio = c;
+    var thisName = n;
     return{
         stop:function(){
-            if(_LP[n]){
-                try{_LP[n].pause();_LP[n].currentTime=0;}catch(e){}
-                _LP[n]=null;
+            if(thisAudio){
+                try{thisAudio.pause();thisAudio.currentTime=0;}catch(e){}
+                if(_LP[thisName] === thisAudio) _LP[thisName] = null;
             }
         },
         fadeStop:function(d){
             d=d||250;
-            var a=_LP[n];if(!a)return;
+            var a=thisAudio;if(!a)return;
             var sv=a.volume;var st=performance.now();
             var iv=setInterval(function(){
                 var t=(performance.now()-st)/d;
                 if(t>=1){
                     clearInterval(iv);
                     try{a.pause();a.currentTime=0;}catch(e){}
-                    _LP[n]=null;
+                    if(_LP[thisName] === a) _LP[thisName] = null;
                     return;
                 }
                 a.volume=Math.max(0,sv*(1-t));
@@ -328,7 +332,14 @@ function _sp(n,v){
         }
     };
 }
-function _sl(){Object.keys(_LP).forEach(function(k){if(_LP[k]){try{_LP[k].pause();_LP[k].currentTime=0;}catch(e){}_LP[k]=null;}});}
+function _sl(){
+    Object.keys(_LP).forEach(function(k){
+        if(_LP[k]){
+            try{_LP[k].pause();_LP[k].currentTime=0;}catch(e){}
+            _LP[k]=null;
+        }
+    });
+}
 
 function _lg(m,t){
     t=t||'info';
@@ -494,9 +505,11 @@ function _pa(c,w){
         }
 
         function an(now){
-            var t = Math.min(1, (now - st) / d);
+            var t = (now - st) / d;
+            if(t > 1) t = 1;
             var ez = easeOutQuint(t);
             var angle = currentAngle + (target - currentAngle) * ez;
+            angle = Math.round(angle * 100) / 100;
             _needleAngle = angle;
 
             if(_ndl) _ndl.style.transform = 'rotate(' + angle + 'deg)';
@@ -507,8 +520,8 @@ function _pa(c,w){
                 _needleAngle = fa;
                 if(_ndl) _ndl.style.transform = 'rotate(' + fa + 'deg)';
 
-                // === ЗВУК зупиняється ТОЧНО коли стрілка зупинилась ===
-                if(sd) sd.fadeStop(250);
+                // === ЗВУК РІЗКО ЗУПИНЯЄТЬСЯ ТОЧНО КОЛИ СТРІЛКА ЗУПИНИЛАСЬ ===
+                if(sd) sd.stop();
 
                 var s = $('circleStatus');
                 if(w){ s.textContent='ПОБЕДА'; s.className='upg-status win'; }
@@ -545,6 +558,9 @@ async function _hu(){
     try {
         var res = await window.apiClient.doUpgrade(ss.uid, ts.id);
         await _pa(res.chance, res.success);
+
+        // === ПРИМУСОВА ЗУПИНКА ВСІХ ЗВУКІВ ПІСЛЯ АНІМАЦІЇ ===
+        _sl();
 
         _xp(20);
 
