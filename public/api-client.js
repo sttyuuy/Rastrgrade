@@ -1,7 +1,6 @@
 /**
  * API-клієнт для Rastgrade.
- * Працює як звичайний скрипт (без import/export),
- * щоб script.js (IIFE) міг його використовувати.
+ * Працює як звичайний скрипт (без import/export).
  */
 (function () {
     'use strict';
@@ -44,14 +43,6 @@
         // ===== User =====
         getUserData: () => apiRequest('/user'),
 
-        // ===== Inventory (Steam) =====
-        loadSteamInventory: (steamid, appid = '252490') =>
-            apiRequest(`/inventory?steamid=${encodeURIComponent(steamid)}&appid=${encodeURIComponent(appid)}`),
-
-        // ===== Price =====
-        getItemPrice: (appid, name) =>
-            apiRequest(`/price?appid=${encodeURIComponent(appid)}&market_hash_name=${encodeURIComponent(name)}`),
-
         // ===== Buy =====
         buyItem: (skinId) => apiRequest('/buy', {
             method: 'POST',
@@ -76,12 +67,12 @@
             body: JSON.stringify({ sourceUid, targetId })
         }),
 
-        // ===== Admin: Set Balance (тимчасово, для розробки) =====
+        // ===== Admin: Set Balance (тільки для адміна) =====
         setBalance: (amount) => apiRequest('/admin/set-balance', {
             method: 'POST',
             body: JSON.stringify({ amount })
         })
     };
 
-    console.log('[api-client] loaded, apiClient ready');
+    console.log('[api-client] loaded');
 })();
