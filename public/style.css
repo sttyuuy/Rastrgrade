@@ -298,64 +298,7 @@ body::before {
 }
 
 /* ============================================================
-   КНОПКА "ОБМЕНЯТЬ" (трейд)
-   ============================================================ */
-.trade-summary button,
-#createTradeBtn {
-    position: relative;
-    padding: 16px 36px;
-    background: linear-gradient(135deg, #00e676 0%, #00b85c 50%, #00a04a 100%);
-    background-size: 200% 200%;
-    border: none;
-    border-radius: 12px;
-    color: #000;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 800;
-    font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    cursor: pointer;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 8px 30px rgba(0, 230, 118, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    animation: btnGradient 3s ease infinite;
-}
-
-.trade-summary button::before,
-#createTradeBtn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.7s;
-}
-
-.trade-summary button:hover::before,
-#createTradeBtn:hover::before { left: 100%; }
-
-.trade-summary button:hover,
-#createTradeBtn:hover:not(:disabled) {
-    transform: translateY(-4px) scale(1.03);
-    box-shadow: 
-        0 15px 50px rgba(0, 230, 118, 0.7),
-        0 0 60px rgba(0, 230, 118, 0.4);
-}
-
-#createTradeBtn:disabled {
-    background: linear-gradient(135deg, #2a2a35, #3a3a45);
-    color: #555;
-    cursor: not-allowed;
-    box-shadow: none;
-    animation: none;
-}
-
-/* ============================================================
-   КНОПКИ ФІЛЬТРІВ — колір по активній рідкості, без білої рамки
+   КНОПКИ ФІЛЬТРІВ
    ============================================================ */
 .shop-filter,
 .inv-filter,
@@ -701,39 +644,6 @@ body::before {
 }
 
 /* ============================================================
-   КНОПКИ "КУПИТЬ" і "ОТМЕНА" в модалці покупки
-   ============================================================ */
-.buy-actions .btn-confirm {
-    position: relative;
-    flex: 1;
-    padding: 14px;
-    background: linear-gradient(135deg, #00e676, #00b85c);
-    background-size: 200% 200%;
-    border: none;
-    border-radius: 12px;
-    color: #000;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 800;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    cursor: pointer;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 6px 20px rgba(0, 230, 118, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    animation: btnGradient 3s ease infinite;
-}
-
-.buy-actions .btn-confirm:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 
-        0 12px 35px rgba(0, 230, 118, 0.7),
-        0 0 50px rgba(0, 230, 118, 0.4);
-}
-
-/* ============================================================
    КНОПКИ HUD
    ============================================================ */
 .hud-btn {
@@ -1058,7 +968,9 @@ body::before {
 .inv-item .price { font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: var(--gold); font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; }
 .empty-inv { text-align: center; padding: 40px; color: var(--text-dim); grid-column: 1/-1; }
 
-/* Upgrade */
+/* ============================================================
+   UPGRADE — ГОЛОВНЕ
+   ============================================================ */
 .upg-wrap { display: flex; flex-direction: column; gap: 16px; }
 .upg-top { display: grid; grid-template-columns: 1fr 380px 1fr; gap: 20px; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 18px; padding: 24px; }
 .upg-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 420px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 14px; padding: 50px 20px 20px; position: relative; }
@@ -1087,15 +999,76 @@ body::before {
 }
 .upg-btn-remove:hover { border-color: var(--red); color: var(--red); }
 .upg-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
-.upg-circle-wrap { position: relative; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; }
-.upg-circle-svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+
+/* ============================================================
+   СТРІЛКА — КРИТИЧНО ДЛЯ ПЛАВНОСТІ
+   ============================================================ */
+.upg-circle-wrap {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+.upg-circle-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    overflow: visible;
+    pointer-events: none;
+}
 .upg-circle-bg { fill: none; stroke: #1a1a26; stroke-width: 14; }
-.upg-circle-sector { fill: none; stroke: url(#chanceGradient); stroke-width: 14; }
-.upg-needle { position: absolute; inset: 0; transform-origin: center; z-index: 5; }
-.upg-needle-head { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--accent); }
-.upg-needle-body { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); width: 4px; height: 50px; background: linear-gradient(180deg, var(--accent), transparent); }
-.upg-circle-center { position: absolute; inset: 32%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 4; }
-.upg-percent { font-family: 'Share Tech Mono', monospace; font-size: 3rem; font-weight: 700; color: #fff; line-height: 1; }
+.upg-circle-sector {
+    fill: none;
+    stroke: url(#chanceGradient);
+    stroke-width: 14;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 0 8px rgba(255, 107, 26, 0.5));
+}
+
+/* ============================================================
+   СТРІЛКА — GPU-прискорення для 60 FPS
+   ============================================================ */
+.upg-needle {
+    position: absolute;
+    inset: 0;
+    transform-origin: center center;
+    z-index: 5;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0) rotate(0deg);
+    pointer-events: none;
+}
+.upg-needle-head {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 20px solid var(--accent);
+    filter: drop-shadow(0 0 10px rgba(255, 107, 26, 0.9));
+}
+.upg-needle-body {
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 50px;
+    background: linear-gradient(180deg, var(--accent) 0%, rgba(255,107,26,0.3) 60%, transparent 100%);
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(255, 107, 26, 0.6);
+}
+
+.upg-circle-center { position: absolute; inset: 32%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 4; pointer-events: none; }
+.upg-percent { font-family: 'Share Tech Mono', monospace; font-size: 3rem; font-weight: 700; color: #fff; line-height: 1; transition: color 0.3s; }
 .upg-status { font-size: 0.75rem; color: var(--text-dim); margin-top: 8px; letter-spacing: 2px; text-transform: uppercase; }
 .upg-speed-row { display: flex; gap: 8px; width: 100%; max-width: 300px; }
 .upg-presets-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
@@ -1142,19 +1115,6 @@ body::before {
 .upg-target-item .upg-target-name { font-weight: 700; text-transform: uppercase; font-size: 0.55rem; color: #fff; text-align: center; margin-top: 4px; }
 .upg-target-item .upg-target-price { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--gold); margin-top: 2px; }
 
-/* Trade */
-.steam-inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-height: 600px; overflow-y: auto; }
-.trade-item { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
-.trade-item.pending { border-color: rgba(245,197,66,0.4); }
-.trade-item.confirmed { border-color: rgba(0,230,118,0.4); }
-.trade-status { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 4px 12px; border-radius: 6px; }
-.trade-status.pending { background: rgba(245,197,66,0.15); color: var(--gold); }
-.trade-status.confirmed { background: rgba(0,230,118,0.15); color: var(--green); }
-.trade-status.declined, .trade-status.cancelled { background: rgba(255,59,59,0.15); color: var(--red); }
-.trade-actions button { background: transparent; border: 1px solid var(--red); color: var(--red); padding: 6px 14px; border-radius: 6px; font-family: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
-.trade-actions button:hover { background: var(--red); color: #fff; }
-.trade-summary { background: linear-gradient(135deg, rgba(245,197,66,0.1), rgba(255,107,26,0.05)); border: 1px solid rgba(245,197,66,0.3); border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
-
 /* Stats */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
 .stat-card { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; text-align: center; transition: all 0.3s; }
@@ -1188,9 +1148,7 @@ body::before {
 .modal-inner { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 20px; padding: 30px; max-width: 460px; width: 100%; animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1); }
 @keyframes modalIn { from { opacity: 0; transform: scale(0.85) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
-/* ============================================================
-   AUTH — форма входу
-   ============================================================ */
+/* AUTH */
 .auth-inner {
     max-width: 420px;
     text-align: center;
