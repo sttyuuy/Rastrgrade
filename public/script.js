@@ -252,8 +252,6 @@ function $(i){return document.getElementById(i);}
 
 /* ============================================================
    ЗВУКИ — lazy load + точна синхронізація з анімацією
-   ФІКС: playbackRate замість loop=true, щоб уникнути різкого
-   рестарту звуку на повільній швидкості апгрейду.
    ============================================================ */
 var _SF={
     spin:'/assets/spin.mp3',
@@ -264,7 +262,7 @@ var _SF={
     levelup:'/assets/levelup.mp3'
 };
 var _SD={};var _AU=false;var _SD_LOADED=false;
-var _SD_DUR={}; // NEW: реальна тривалість кожного звуку в мс (з майстер-елемента)
+var _SD_DUR={};
 
 function _pl(){
     if(_SD_LOADED) return;
@@ -272,10 +270,10 @@ function _pl(){
     Object.keys(_SF).forEach(function(k){
         var a=new Audio();
         a.src=_SF[k];
-        a.preload='auto'; // завантажуємо заздалегідь, щоб звук не лагав
+        a.preload='auto';
         a.volume=0.7;
         a.addEventListener('loadedmetadata', function(){
-            _SD_DUR[k] = a.duration * 1000; // мс
+            _SD_DUR[k] = a.duration * 1000;
         });
         _SD[k]=a;
     });
@@ -296,7 +294,7 @@ function _sn(n,v){
 }
 function _ck(){_sn('click',0.6);}
 function _wn(r){if(r==='legendary'||r==='mythical')_sn('win_legendary',0.9);else _sn('win_common',0.8);}
-function _ls(){} // звук програшу видалено
+function _ls(){}
 function _by(){_sn('buy',0.8);}
 function _lu(){_sn('levelup',0.9);}
 
@@ -304,24 +302,20 @@ var _LP={};
 function _sp(n,v,targetMs){
     if(!state.soundOn)return null;
     var s=_SD[n];if(!s)return null;
-    // Зупиняємо попередній звук, якщо був
     if(_LP[n]){try{_LP[n].pause();_LP[n].currentTime=0;}catch(e){}}
     var c=s.cloneNode();
     c.volume=v||0.6;
 
-    // ФІКС: розтягуємо/стискаємо звук під точну тривалість анімації
-    // замість loop=true, який давав різкий рестарт на повільній швидкості.
-    var natural = _SD_DUR[n]; // беремо з майстер-елемента (там точно завантажені метадані)
+    var natural = _SD_DUR[n];
     if(targetMs && natural && natural>0){
         c.loop = false;
         c.playbackRate = Math.max(0.4, Math.min(3, natural / targetMs));
     } else {
-        c.loop = true; // fallback, якщо тривалість файлу ще не завантажилась
+        c.loop = true;
     }
 
     c.play().catch(function(){});
     _LP[n]=c;
-    // Запам'ятовуємо ІНСТАНС — щоб stop/fadeStop працювали саме з ним
     var thisAudio = c;
     var thisName = n;
     return{
@@ -511,7 +505,6 @@ function _pa(c,w){
 
         var st = performance.now();
 
-        // === ЗВУК стартує ТОЧНО з анімацією, з playbackRate під тривалість ===
         var sd = _sp('spin', 0.55, d);
 
         if(!_ndl) _ndl = $('circleNeedle');
@@ -536,7 +529,6 @@ function _pa(c,w){
                 _needleAngle = fa;
                 if(_ndl) _ndl.style.transform = 'rotate(' + fa + 'deg)';
 
-                // === ЗВУК РІЗКО ЗУПИНЯЄТЬСЯ ТОЧНО КОЛИ СТРІЛКА ЗУПИНИЛАСЬ ===
                 if(sd) sd.stop();
 
                 var s = $('circleStatus');
@@ -575,7 +567,6 @@ async function _hu(){
         var res = await window.apiClient.doUpgrade(ss.uid, ts.id);
         await _pa(res.chance, res.success);
 
-        // === ПРИМУСОВА ЗУПИНКА ВСІХ ЗВУКІВ ПІСЛЯ АНІМАЦІЇ ===
         _sl();
 
         _xp(20);
@@ -590,7 +581,7 @@ async function _hu(){
             });
             _lg(ss.name+' -> '+ts.name,'win');
         } else {
-            _ls(); // порожня — нічого не грає
+            _ls();
             _sr({
                 type:'result-lose', icon:'X', title:'ПРОВАЛ',
                 skin:null,
@@ -654,6 +645,9 @@ async function _hu(){
 function _ipf(cid,fk,cb){var cn=$(cid);if(!cn)return;var fr=document.createDocumentFragment();var a=document.createElement('button');a.className='upg-inv-filter active';a.textContent='Все';a.dataset.filter='all';fr.appendChild(a);Object.entries(RARITIES).forEach(function(kv){var b=document.createElement('button');b.className='upg-inv-filter';b.textContent=kv[1].name;b.dataset.filter=kv[0];b.style.color=kv[1].color;fr.appendChild(b);});cn.replaceChildren(fr);cn.querySelectorAll('.upg-inv-filter').forEach(function(b){b.addEventListener('click',function(){_un();_ck();cn.querySelectorAll('.upg-inv-filter').forEach(function(x){x.classList.remove('active');});b.classList.add('active');state[fk]=b.dataset.filter;cb();});});}
 var _sv=20;var _pp=null;var _pq=1;
 
+/* ============================================================
+   _rsh — рендер магазину (ціна завжди свіжа через _a1)
+   ============================================================ */
 function _rsh(){
     var g=$('shopGrid');if(!g)return;
     var cacheKey = state.shopFilter + '|' + state.shopSort;
@@ -677,14 +671,82 @@ function _rsh(){
         var p=_a1(sk);var ca=state.balance>=p;
         var e=document.createElement('div');e.className='shop-item '+sk.rarity;
         e.innerHTML=renderSkinIcon(sk)+'<div class="name">'+sk.name+'</div><div class="rarity-label" style="color:'+RARITIES[sk.rarity].color+'">'+RARITIES[sk.rarity].name+'</div><div class="price-row"><span class="price">'+formatRastr(p)+' '+_MF_ICON+'</span></div><button class="buy-btn" '+(ca?'':'disabled')+'>'+(ca?'КУПИТЬ':'НЕ ХВАТАЕТ')+'</button>';
-        e.querySelector('.buy-btn').addEventListener('click',function(ev){ev.stopPropagation();if(!ca){_lg('Недостаточно средств','lose');_ck();return;}_ob(sk,p);});
+        e.querySelector('.buy-btn').addEventListener('click',function(ev){
+            ev.stopPropagation();
+            // ⚠️ Перевіряємо баланс У МОМЕНТ КЛІКУ (з можливістю оновлення)
+            var freshPrice = _a1(sk);
+            if(state.balance < freshPrice){
+                _lg('Недостаточно средств','lose');
+                _ck();
+                return;
+            }
+            _ob(sk);
+        });
         fr.appendChild(e);
     });
     if(sorted.length>_sv){var m=document.createElement('button');m.className='btn-secondary';m.textContent='Показать ещё ('+(sorted.length-_sv)+')';m.style.gridColumn='1/-1';m.style.marginTop='16px';m.addEventListener('click',function(){_sv+=20;_rsh();});fr.appendChild(m);}
     g.replaceChildren(fr);
 }
 
-function _ob(sk,p){_un();_ck();_pp={skin:sk,price:p};_pq=1;$('buyIcon').innerHTML=renderSkinIcon(sk);$('buyTitle').textContent=sk.name;$('buySub').textContent=RARITIES[sk.rarity].name+' · Выбери количество:';$('buyPrice').innerHTML=formatRastr(p)+' '+_MF_ICON_BIG;var inn=$('buyInner');if(!inn)return;var qr=inn.querySelector('.buy-qty-row');if(!qr){qr=document.createElement('div');qr.className='buy-qty-row';qr.style.cssText='display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';[1,5,10,50].forEach(function(q){var b=document.createElement('button');b.className='btn-secondary';b.style.padding='8px 16px';b.textContent='x'+q;b.dataset.qty=q;b.addEventListener('click',function(){_pq=q;qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});b.style.borderColor='var(--accent)';b.style.color='var(--accent)';$('buyPrice').innerHTML=formatRastr(p*q)+' '+_MF_ICON_BIG;_ck();});qr.appendChild(b);});var ac=inn.querySelector('.buy-actions');if(ac)inn.insertBefore(qr,ac);else inn.appendChild(qr);}qr.querySelectorAll('button').forEach(function(x){x.style.borderColor='';x.style.color='';});var fb=qr.querySelector('button[data-qty="1"]');if(fb){fb.style.borderColor='var(--accent)';fb.style.color='var(--accent)';}$('buyModal').classList.add('show');}
+/* ============================================================
+   _ob — ВІДКРИТИ МОДАЛКУ ПОКУПКИ
+   ⚠️ ЦІНА ЗАВЖДИ БЕРЕТЬСЯ ЧЕРЕЗ _a1(sk), А НЕ З ПЕРЕДАНОГО p
+   ============================================================ */
+function _ob(sk){
+    _un();_ck();
+
+    // ⚠️ ЗАВЖДИ беремо свіжу ціну через _a1
+    var freshPrice = _a1(sk);
+    _pp = { skin: sk, price: freshPrice };
+    _pq = 1;
+
+    $('buyIcon').innerHTML = renderSkinIcon(sk);
+    $('buyTitle').textContent = sk.name;
+    $('buySub').textContent = RARITIES[sk.rarity].name + ' · Выбери количество:';
+    $('buyPrice').innerHTML = formatRastr(freshPrice) + ' ' + _MF_ICON_BIG;
+
+    var inn = $('buyInner');
+    if(!inn) return;
+    var qr = inn.querySelector('.buy-qty-row');
+    if(!qr){
+        qr = document.createElement('div');
+        qr.className = 'buy-qty-row';
+        qr.style.cssText = 'display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap';
+        [1,5,10,50].forEach(function(q){
+            var b = document.createElement('button');
+            b.className = 'btn-secondary';
+            b.style.padding = '8px 16px';
+            b.textContent = 'x' + q;
+            b.dataset.qty = q;
+            b.addEventListener('click', function(){
+                _pq = q;
+                qr.querySelectorAll('button').forEach(function(x){
+                    x.style.borderColor = '';
+                    x.style.color = '';
+                });
+                b.style.borderColor = 'var(--accent)';
+                b.style.color = 'var(--accent)';
+                // ⚠️ Ціна = _pp.price (фіксована, свіжа) * q
+                $('buyPrice').innerHTML = formatRastr(_pp.price * q) + ' ' + _MF_ICON_BIG;
+                _ck();
+            });
+            qr.appendChild(b);
+        });
+        var ac = inn.querySelector('.buy-actions');
+        if(ac) inn.insertBefore(qr, ac);
+        else inn.appendChild(qr);
+    }
+    qr.querySelectorAll('button').forEach(function(x){
+        x.style.borderColor = '';
+        x.style.color = '';
+    });
+    var fb = qr.querySelector('button[data-qty="1"]');
+    if(fb){
+        fb.style.borderColor = 'var(--accent)';
+        fb.style.color = 'var(--accent)';
+    }
+    $('buyModal').classList.add('show');
+}
 
 var _ivf='all';
 
@@ -749,6 +811,9 @@ function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return
     var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);
     var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'S':'M';if(state.soundOn){_un();_ck();}save();});
 
+    /* ============================================================
+       buyConfirm — ціна з _pp.price (фіксована, свіжа)
+       ============================================================ */
     var bcf=$('buyConfirm');
     if(bcf)bcf.addEventListener('click',async function(){
         if(_BUSY) return;
@@ -764,13 +829,17 @@ function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return
         bcf.textContent = '...';
 
         try {
+            // ⚠️ Беремо ціну ОДИН РАЗ з _pp.price (те, що бачив гравець)
+            var unitPrice = _pp.price;
             var totalSpent = 0;
             var addedItems = [];
+
             for(var i=0;i<q;i++){
                 var r = await window.apiClient.buyItem(sk.id);
                 if(r && r.item) addedItems.push(r.item);
-                totalSpent += _a1(sk);
+                totalSpent += unitPrice;
             }
+
             _by();
             _lg('Куплено: '+sk.name+' x'+q,'win');
 
