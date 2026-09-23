@@ -417,7 +417,8 @@ function _ui(){
     if(n){var pr=(state.xp-l.xp)/(n.xp-l.xp)*100;DOM.levelBarFill.style.width=Math.min(100,Math.max(0,pr))+'%';}
     else DOM.levelBarFill.style.width='100%';
 }
-   function _sr(o){
+
+function _sr(o){
     var inn=$('resultInner');
     inn.className='modal-inner result-inner '+o.type;
     if(o.skin){
@@ -452,23 +453,31 @@ function _cr(){_ck();$('resultModal').classList.remove('show');}
 var _CR=100;var _CC=2*Math.PI*_CR;
 
 /* ============================================================
-   _dc — ДВОСТОРОННЯ ДУГА
+   _dc — ДВОСТОРОННЯ ДУГА (ЗНИЗУ, 6-та ГОДИНА)
    ============================================================ */
 function _dc(c){
     c = Math.max(0, Math.min(100, c));
+
     // Повна довжина кола = _CC ≈ 628.32
-    // Кожна дуга — максимум половина кола = _CC / 2 ≈ 314.16
     var halfCC = _CC / 2;
-    // Загальна заповнена довжина = c% від кола
     var totalFill = (c / 100) * _CC;
-    // Кожна дуга заповнюється на половину
     var fill = Math.min(totalFill / 2, halfCC);
+
+    // Чверть кола — зсув початку на 6-ту годину
+    var quarter = _CC / 4; // ≈ 157.08
 
     var leftEl = $('chanceSectorLeft');
     var rightEl = $('chanceSectorRight');
 
-    if(leftEl) leftEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
-    if(rightEl) rightEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
+    if(rightEl){
+        rightEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
+        rightEl.setAttribute('stroke-dashoffset', quarter);
+    }
+
+    if(leftEl){
+        leftEl.setAttribute('stroke-dasharray', fill + ' ' + _CC);
+        leftEl.setAttribute('stroke-dashoffset', quarter);
+    }
 
     var co;
     if(c>=65)co='#7ed321';
@@ -826,7 +835,8 @@ function _pr(){
         bdBox.className = 'profile-best-drop';
     }
 }
-   function _ah(){
+
+function _ah(){
     var lb=$('logoBtn');
     if(lb) lb.addEventListener('click', function(e){
         e.preventDefault();
