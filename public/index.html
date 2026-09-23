@@ -90,7 +90,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <button class="nav-tab active" data-page="upgrade"><span class="nav-tab-icon">◆</span><span class="nav-tab-text">Апгрейд</span></button>
 <button class="nav-tab" data-page="shop"><span class="nav-tab-icon">▣</span><span class="nav-tab-text">Магазин</span></button>
 <button class="nav-tab" data-page="inventory"><span class="nav-tab-icon">▤</span><span class="nav-tab-text">Инвентарь</span></button>
-<button class="nav-tab" data-page="stats"><span class="nav-tab-icon">▦</span><span class="nav-tab-text">Стата</span></button>
+<button class="nav-tab" data-page="profile"><span class="nav-tab-icon">◐</span><span class="nav-tab-text">Профиль</span></button>
 </nav>
 <main class="main">
 <section class="page active" id="page-upgrade">
@@ -223,27 +223,85 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="inv-grid" id="inventory"></div>
 </div>
 </section>
-<section class="page" id="page-stats">
+<section class="page" id="page-profile">
 <div class="card">
 <div class="card-head">
-<h2 class="card-title"><span class="card-title-icon">▦</span> Статистика</h2>
-<div class="card-sub">Курс: 1 USD = 0.95 Metal Fragments</div>
+<h2 class="card-title"><span class="card-title-icon">◐</span> Профиль</h2>
+<div class="card-sub">Твоя статистика и настройки</div>
 </div>
-<div class="stats-grid">
-<div class="stat-card"><div class="stat-card-icon">$</div><div class="stat-card-value" id="statTotalWon">0</div><div class="stat-card-label">Выиграно</div></div>
-<div class="stat-card"><div class="stat-card-icon">−</div><div class="stat-card-value red" id="statTotalLost">0</div><div class="stat-card-label">Потрачено</div></div>
-<div class="stat-card"><div class="stat-card-icon">↑</div><div class="stat-card-value" id="statUpgrades">0</div><div class="stat-card-label">Апгрейдов</div></div>
-<div class="stat-card"><div class="stat-card-icon">▣</div><div class="stat-card-value" id="statPurchases">0</div><div class="stat-card-label">Покупок</div></div>
-<div class="stat-card"><div class="stat-card-icon">★</div><div class="stat-card-value" id="statBestDrop">—</div><div class="stat-card-label">Лучший дроп</div></div>
-<div class="stat-card"><div class="stat-card-icon">◎</div><div class="stat-card-value" id="statBestUpgrade">—</div><div class="stat-card-label">Лучшая цель</div></div>
+
+<div id="profileNotLogged" style="display:none;text-align:center;padding:60px 20px">
+<div style="font-size:3.5rem;margin-bottom:16px;color:var(--text-dim)">◐</div>
+<div style="color:var(--text-dim);margin-bottom:20px;font-size:1.1rem">Войди, чтобы увидеть профиль</div>
+<button class="btn-primary" id="profileLoginBtn">ВОЙТИ</button>
 </div>
-<div class="house-balance">
-<div class="house-balance-title">Твой баланс</div>
-<div class="house-balance-row">
-<span>Потрачено: <span class="red" id="housePlayer">0</span></span>
-<span>Получено: <span class="green" id="houseCasino">0</span></span>
+
+<div id="profileContent" style="display:none">
+<div class="profile-head">
+<div class="profile-avatar" id="profileAvatar">◐</div>
+<div class="profile-info">
+<div class="profile-name" id="profileName">Гость</div>
+<div class="profile-id" id="profileId">ID: —</div>
+<div class="profile-source" id="profileSource">—</div>
+</div>
+<button class="profile-logout-btn" id="profileLogoutBtn" title="Выйти">⇥</button>
+</div>
+
+<div class="profile-balance">
+<div>
+<div class="profile-balance-label">Баланс</div>
+<div class="profile-balance-value" id="profileBalance">0</div>
+</div>
+<button class="profile-topup-btn" id="profileTopupBtn">ПОПОЛНИТЬ</button>
+</div>
+
+<div class="profile-best-drop" id="profileBestDrop">
+<div class="profile-best-label">ЛУЧШИЙ ДРОП</div>
+<div class="profile-best-content" id="profileBestContent">
+<div class="profile-best-empty">Нет дропа</div>
 </div>
 </div>
+
+<div class="profile-stats-grid">
+<div class="profile-stat">
+<div class="profile-stat-label">ВЫИГРАНО</div>
+<div class="profile-stat-value green" id="profileStatWon">0</div>
+</div>
+<div class="profile-stat">
+<div class="profile-stat-label">ПОТРАЧЕНО</div>
+<div class="profile-stat-value red" id="profileStatLost">0</div>
+</div>
+<div class="profile-stat">
+<div class="profile-stat-label">ПРОФИТ</div>
+<div class="profile-stat-value" id="profileStatProfit">0</div>
+</div>
+<div class="profile-stat">
+<div class="profile-stat-label">АПГРЕЙДОВ</div>
+<div class="profile-stat-value" id="profileStatUpgrades">0</div>
+</div>
+<div class="profile-stat">
+<div class="profile-stat-label">ПОКУПОК</div>
+<div class="profile-stat-value" id="profileStatPurchases">0</div>
+</div>
+<div class="profile-stat">
+<div class="profile-stat-label">ПРОДАНО</div>
+<div class="profile-stat-value" id="profileStatSold">0</div>
+</div>
+</div>
+
+<div class="profile-best-upgrade" id="profileBestUpgrade">
+<div class="profile-best-label">ЛУЧШАЯ ЦЕЛЬ</div>
+<div class="profile-best-content" id="profileBestUpgContent">
+<div class="profile-best-empty">—</div>
+</div>
+</div>
+
+<div class="profile-actions">
+<button class="btn-secondary" id="profileSettingsBtn">⚙ НАСТРОЙКИ</button>
+<button class="btn-secondary" id="profileCloseBtn">ОБНОВИТЬ</button>
+</div>
+</div>
+
 </div>
 </section>
 </main>
