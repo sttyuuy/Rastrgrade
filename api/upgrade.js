@@ -43,10 +43,6 @@ async function getFirestorePrices(db) {
     return map;
 }
 
-/**
- * Реальна ціна скіна: Firestore (якщо є) -> статичний каталог.
- * ТОЧНО повторює логіку _a1() на клієнті.
- */
 async function getEffectivePrice(db, skin) {
     if (!skin) return 0;
     const prices = await getFirestorePrices(db);
@@ -55,10 +51,6 @@ async function getEffectivePrice(db, skin) {
     return Number(skin.price) || 0;
 }
 
-/**
- * ФОРМУЛА ШАНСУ — СИНХРОНІЗОВАНА З КЛІЄНТОМ (_ch).
- * Клієнт: (sourcePrice / targetPrice) * 100 * 0.90
- */
 function calcChance(sourcePrice, targetPrice) {
     if (!targetPrice || targetPrice <= 0) return 0;
     if (!sourcePrice || sourcePrice <= 0) return 0.01;
@@ -116,7 +108,6 @@ module.exports = async (req, res) => {
     try {
         const db = getFirestore();
 
-        // Ціна цілі — та сама, що бачить гравець (Firestore -> fallback на SKINS)
         const targetPrice = await getEffectivePrice(db, targetSkin);
 
         const userRef = db.collection('users').doc(steamId);
@@ -133,27 +124,16 @@ module.exports = async (req, res) => {
 
             const sourceItem = inventory[srcIdx];
 
-            // ============================================================
-            // ⚠️ КЛЮЧОВИЙ ФІКС:
-            // Ціна джерела береться ТОЧНО як на клієнті (_a1):
-            //   1. Firestore за name (жива ціна)
-            //   2. fallback — РЕАЛЬНА ціна покупки (item.price), НЕ каталог
-            //
-            // Попередня версія використовувала SKINS.find(id).price як fallback —
-            // це давало розбіжність з клієнтом, бо клієнт завжди падає на item.price.
-            // ============================================================
             const sourceSkin = SKINS.find(s => s.id === sourceItem.id);
             let sourcePrice = 0;
 
             if (sourceSkin) {
-                // Firestore за name -> fallback на РЕАЛЬНУ ціну покупки
                 const prices = await getFirestorePrices(db);
                 const fsPrice = prices[norm(sourceSkin.name)];
                 sourcePrice = (fsPrice && fsPrice > 0)
                     ? fsPrice
                     : (Number(sourceItem.price) || 0);
             } else {
-                // Немає в каталозі — тільки реальна ціна покупки
                 sourcePrice = Number(sourceItem.price) || 0;
             }
 
@@ -185,6 +165,29 @@ module.exports = async (req, res) => {
                 inventory.push(newItem);
             }
 
+            // === BEST DROP / BEST UPGRADE ===
+            // Оновлюємо, якщо успіх і новий скін дорожчий за попередній best
+            let newBestDrop = data.bestDrop || null;
+            let newBestUpgrade = data.bestUpgrade || null;
+
+            if (success) {
+                var newBestItem = {
+                    id: targetSkin.id,
+                    name: targetSkin.name,
+                    rarity: targetSkin.rarity,
+                    price: targetPrice
+                };
+                var prevBestDropPrice = (data.bestDrop && Number(data.bestDrop.price)) || 0;
+                var prevBestUpgPrice = (data.bestUpgrade && Number(data.bestUpgrade.price)) || 0;
+
+                if (targetPrice > prevBestDropPrice) {
+                    newBestDrop = newBestItem;
+                }
+                if (targetPrice > prevBestUpgPrice) {
+                    newBestUpgrade = newBestItem;
+                }
+            }
+
             tx.update(userRef, {
                 inventory,
                 totalWon: success
@@ -200,6 +203,8 @@ module.exports = async (req, res) => {
                 houseCasinoWon: success
                     ? Math.round(((data.houseCasinoWon || 0) + targetPrice) * 100) / 100
                     : (data.houseCasinoWon || 0),
+                bestDrop: newBestDrop,
+                bestUpgrade: newBestUpgrade,
                 updatedAt: Date.now()
             });
 
@@ -210,7 +215,9 @@ module.exports = async (req, res) => {
                 item: newItem,
                 inventory,
                 sourcePrice,
-                targetPrice
+                targetPrice,
+                bestDrop: newBestDrop,
+                bestUpgrade: newBestUpgrade
             };
         });
 
