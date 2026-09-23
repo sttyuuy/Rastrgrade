@@ -1,13 +1,22 @@
-/**
- * Продаж усього інвентаря.
- */
 const { getFirestore, getAuth } = require('../lib/firebase-admin');
-const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
+const { getClientIp, checkRateLimit } = require('../lib/rate-limit');
+
+const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
+
+function setHeaders(res) {
+    res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+}
 
 module.exports = async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    setHeaders(res);
+
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const ip = getClientIp(req);
     if (!checkRateLimit(`sell-all:${ip}`, 5, 60 * 1000)) {
@@ -37,6 +46,7 @@ module.exports = async (req, res) => {
             const data = doc.data();
             const inventory = Array.isArray(data.inventory) ? data.inventory : [];
 
+            // ⚠️ Беремо РЕАЛЬНУ ціну з кожного предмета (item.price)
             const total = Math.round(
                 inventory.reduce((sum, item) => sum + (Number(item.price) || 0), 0) * 100
             ) / 100;
@@ -47,7 +57,7 @@ module.exports = async (req, res) => {
                 inventory: [],
                 balance: newBalance,
                 totalSold: Math.round(((data.totalSold || 0) + total) * 100) / 100,
-                updatedAt: Date.now(),
+                updatedAt: Date.now()
             });
 
             return { total, balance: newBalance };
