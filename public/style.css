@@ -701,7 +701,7 @@ body::before {
 }
 
 /* ============================================================
-   ЗАГАЛЬНА СТРУКТУРА + HUD-HEADER (ОНОВЛЕНО)
+   ЗАГАЛЬНА СТРУКТУРА + HUD-HEADER
    ============================================================ */
 .hud-header {
     background: linear-gradient(180deg,
@@ -839,7 +839,7 @@ body::before {
 }
 
 /* ============================================================
-   HUD-STAT — ОНОВЛЕНО
+   HUD-STAT
    ============================================================ */
 .hud-stat {
     position: relative;
@@ -1040,9 +1040,7 @@ body::before {
     cursor: pointer;
 }
 
-/* ============================================================
-   SHOP-ITEM — ПРЕМІУМ КАРТКИ
-   ============================================================ */
+/* SHOP-ITEM — ПРЕМІУМ */
 .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
 
 .shop-item {
@@ -1148,7 +1146,7 @@ body::before {
 .upg-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
 
 /* ============================================================
-   СТРІЛКА — МАКСИМУМ ПЛАВНОСТІ (GPU + contain + 60 FPS)
+   СТРІЛКА — МАКСИМУМ ПЛАВНОСТІ
    ============================================================ */
 .upg-circle-wrap {
     position: relative;
@@ -1290,7 +1288,7 @@ body::before {
 .upg-target-item .upg-target-name { font-weight: 700; text-transform: uppercase; font-size: 0.55rem; color: #fff; text-align: center; margin-top: 4px; }
 .upg-target-item .upg-target-price { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--gold); margin-top: 2px; }
 
-/* Stats */
+/* Stats (старі — не використовуються, але залишені) */
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
 .stat-card { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; text-align: center; transition: all 0.3s; }
 .stat-card:hover { border-color: var(--accent); transform: translateY(-3px); }
@@ -1497,6 +1495,291 @@ body::before {
 .buy-actions { display: flex; gap: 10px; margin-top: 10px; }
 .buy-actions button { flex: 1; }
 
+/* ============================================================
+   ПРОФІЛЬ
+   ============================================================ */
+.profile-head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px;
+    background: linear-gradient(135deg, rgba(255,107,26,0.08), rgba(165,92,255,0.05));
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-head::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--gold), var(--accent), transparent);
+    background-size: 200% 100%;
+    animation: authLine 4s linear infinite;
+}
+
+.profile-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 2.2rem;
+    color: #000;
+    box-shadow:
+        0 0 30px rgba(255,107,26,0.7),
+        0 0 60px rgba(255,107,26,0.3);
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 3px solid rgba(255,107,26,0.4);
+    position: relative;
+}
+
+.profile-avatar.has-img { background: transparent; }
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+}
+
+.profile-source {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+.profile-logout-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255,59,59,0.1);
+    border: 2px solid rgba(255,59,59,0.4);
+    color: var(--red);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.profile-logout-btn:hover {
+    background: rgba(255,59,59,0.2);
+    border-color: var(--red);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255,59,59,0.4);
+}
+
+.profile-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, rgba(245,197,66,0.08), rgba(255,107,26,0.05));
+    border: 1px solid rgba(245,197,66,0.25);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.profile-balance-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+
+.profile-balance-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffd966;
+    text-shadow: 0 0 20px rgba(245,197,66,0.7);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-topup-btn {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #7ed321 0%, #4aa82f 100%);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 6px 20px rgba(126,211,33,0.4);
+}
+
+.profile-topup-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 12px 30px rgba(126,211,33,0.7);
+}
+
+.profile-best-drop,
+.profile-best-upgrade {
+    padding: 20px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+    border: 2px solid var(--border);
+    background: rgba(0,0,0,0.4);
+    transition: all 0.3s;
+}
+
+.profile-best-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.profile-best-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-best-skin .skin-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+}
+
+.profile-best-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.profile-best-price {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--gold);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-best-empty {
+    color: var(--text-dim);
+    font-style: italic;
+    padding: 20px;
+}
+
+.profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.profile-stat {
+    padding: 16px 14px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.profile-stat:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255,107,26,0.2);
+}
+
+.profile-stat-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+}
+
+.profile-stat-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.profile-stat-value.green { color: var(--green); }
+.profile-stat-value.red { color: var(--red); }
+
+.profile-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-actions button {
+    flex: 1;
+    min-width: 140px;
+}
+
+.profile-best-drop.common { border-color: #7a7a8a; box-shadow: 0 0 25px rgba(122,122,138,0.3); }
+.profile-best-drop.rare { border-color: #a55cff; box-shadow: 0 0 25px rgba(165,92,255,0.4); }
+.profile-best-drop.legendary { border-color: #f5c542; box-shadow: 0 0 30px rgba(245,197,66,0.5); animation: legendaryGlow 3s ease-in-out infinite; }
+.profile-best-drop.mythical { border-color: #ff0044; box-shadow: 0 0 35px rgba(255,0,68,0.5); animation: mythicPulse 3s ease-in-out infinite; }
+
+.profile-best-upgrade.common { border-color: #7a7a8a; }
+.profile-best-upgrade.rare { border-color: #a55cff; box-shadow: 0 0 25px rgba(165,92,255,0.4); }
+.profile-best-upgrade.legendary { border-color: #f5c542; box-shadow: 0 0 30px rgba(245,197,66,0.5); }
+.profile-best-upgrade.mythical { border-color: #ff0044; box-shadow: 0 0 35px rgba(255,0,68,0.5); }
+
 /* Responsive */
 @media (max-width: 1200px) {
     .upg-top { grid-template-columns: 1fr; }
@@ -1519,6 +1802,13 @@ body::before {
     .toast-wrap { right: 10px; left: 10px; top: 80px; }
     .toast { min-width: auto; width: 100%; }
     .auth-inner { padding: 30px 20px 24px; }
+
+    .profile-head { padding: 16px; gap: 12px; flex-wrap: wrap; }
+    .profile-avatar { width: 70px; height: 70px; font-size: 1.6rem; }
+    .profile-name { font-size: 1.1rem; }
+    .profile-balance-value { font-size: 1.4rem; }
+    .profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .profile-actions button { min-width: 100%; }
 }
 @media (max-width: 480px) {
     .hud-stat-label { display: none; }
