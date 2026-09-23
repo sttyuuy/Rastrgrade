@@ -149,10 +149,8 @@ async function _lc(){
         state.xp = data.xp || 0;
         state.level = data.level || 1;
 
-        // === НІК І АВАТАР ===
         if(data.displayName) _UDN = data.displayName;
         if(data.photoURL) _UPA = data.photoURL;
-        // Fallback на Firebase (для Google-входу)
         if(!_UDN && _CU.displayName) _UDN = _CU.displayName;
         if(!_UPA && _CU.photoURL) _UPA = _CU.photoURL;
 
@@ -256,9 +254,6 @@ function _rs(){
 }
 function $(i){return document.getElementById(i);}
 
-/* ============================================================
-   ЗВУКИ
-   ============================================================ */
 var _SF={
     spin:'/assets/spin.mp3',
     win_common:'/assets/win_common.mp3',
@@ -831,6 +826,8 @@ function _pr(){
     if(ptop) ptop.addEventListener('click', function(){ _ck(); _lg('Пополнение скоро','info'); });
     var pcl = $('profileCloseBtn');
     if(pcl) pcl.addEventListener('click', function(){ _ck(); _pr(); _lg('Обновлено','info'); });
+    var plo = $('profileLogoutBtn');
+    if(plo) plo.addEventListener('click', function(){ _ck(); _ol(); });
 
     var bcf=$('buyConfirm');
     if(bcf)bcf.addEventListener('click',async function(){
