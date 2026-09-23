@@ -250,6 +250,9 @@ function _rs(){
 }
 function $(i){return document.getElementById(i);}
 
+/* ============================================================
+   ЗВУКИ — lazy load
+   ============================================================ */
 var _SF={
     spin:'/assets/spin.mp3',
     win_common:'/assets/win_common.mp3',
@@ -266,7 +269,7 @@ function _pl(){
     Object.keys(_SF).forEach(function(k){
         var a=new Audio();
         a.src=_SF[k];
-        a.preload='none';
+        a.preload='auto'; // завантажуємо заздалегідь, щоб звук не лагав
         a.volume=0.7;
         _SD[k]=a;
     });
@@ -287,31 +290,45 @@ function _sn(n,v){
 }
 function _ck(){_sn('click',0.6);}
 function _wn(r){if(r==='legendary'||r==='mythical')_sn('win_legendary',0.9);else _sn('win_common',0.8);}
-function _ls(){_sn('click',0.8);}
+function _ls(){} // звук програшу видалено
 function _by(){_sn('buy',0.8);}
 function _lu(){_sn('levelup',0.9);}
+
 var _LP={};
 function _sp(n,v){
     if(!state.soundOn)return null;
     var s=_SD[n];if(!s)return null;
     if(_LP[n]){try{_LP[n].pause();}catch(e){}}
-    var c=s.cloneNode();c.volume=v||0.6;c.loop=true;c.play().catch(function(){});
+    var c=s.cloneNode();
+    c.volume=v||0.6;
+    c.loop=true;
+    c.play().catch(function(){});
     _LP[n]=c;
     return{
-        stop:function(){if(_LP[n]){try{_LP[n].pause();}catch(e){}_LP[n]=null;}},
+        stop:function(){
+            if(_LP[n]){
+                try{_LP[n].pause();_LP[n].currentTime=0;}catch(e){}
+                _LP[n]=null;
+            }
+        },
         fadeStop:function(d){
-            d=d||800;var a=_LP[n];if(!a)return;
+            d=d||250;
+            var a=_LP[n];if(!a)return;
             var sv=a.volume;var st=performance.now();
             var iv=setInterval(function(){
                 var t=(performance.now()-st)/d;
-                if(t>=1){clearInterval(iv);try{a.pause();}catch(e){}_LP[n]=null;return;}
+                if(t>=1){
+                    clearInterval(iv);
+                    try{a.pause();a.currentTime=0;}catch(e){}
+                    _LP[n]=null;
+                    return;
+                }
                 a.volume=Math.max(0,sv*(1-t));
-            },80);
+            },30);
         }
     };
 }
-function _sl(){Object.keys(_LP).forEach(function(k){if(_LP[k]){try{_LP[k].pause();}catch(e){}_LP[k]=null;}});}
-function _us(d){d=d||4000;var h=_sp('spin',0.55);if(!h)return null;setTimeout(function(){h.fadeStop(800);},d-800);return h;}
+function _sl(){Object.keys(_LP).forEach(function(k){if(_LP[k]){try{_LP[k].pause();_LP[k].currentTime=0;}catch(e){}_LP[k]=null;}});}
 
 function _lg(m,t){
     t=t||'info';
@@ -431,16 +448,15 @@ function _ri(){var l=$('invPanelList');if(!l)return;var f=state.invPanelFilter;v
 function _rt2(){var g=$('itemsPanelGrid');if(!g)return;var f=state.itemsPanelFilter;var s=($('itemsSearch').value||'').toLowerCase();var it=SKINS.slice();if(f!=='all')it=it.filter(function(x){return x.rarity===f;});if(s)it=it.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('targetsCount').textContent=it.length;if(it.length===0){g.innerHTML='<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();it.forEach(function(sk){var e=document.createElement('div');e.className='upg-target-item '+sk.rarity;if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';e.addEventListener('click',function(){if(!state.upgradeSource){_lg('Сначала выбери свой предмет','lose');_ck();return;}if(sk.id===state.upgradeSource.id){_lg('Нельзя апгрейдить в себя','lose');_ck();return;}if(_a1(sk)<=_a1(state.upgradeSource)){_lg('Цель должна быть дороже','lose');_ck();return;}if(_a1(sk)>_MX){_lg('Нет цели','lose');_ck();return;}_un();_ck();state.upgradeTarget=sk;state.selectedPreset=null;state.upgradeTarget._realChance=_ch(_a1(state.upgradeSource),_a1(sk));_rt1();_rp1();_uc();});fr.appendChild(e);});g.replaceChildren(fr);}
 
 /* ============================================================
-   _pa — ПЛАВНА АНІМАЦІЯ + ГАРАНТОВАНИЙ СЕКТОР
+   _pa — ПЛАВНА АНІМАЦІЯ + СИНХРОНІЗАЦІЯ ЗВУКУ
    ============================================================ */
 function _pa(c,w){
     return new Promise(function(res){
-        var d = state.spinSpeed === 'fast' ? 2600 : 4800; // тривалість
-        var sectorEnd = c * 3.6; // градуси сектора перемоги [0, sectorEnd]
+        var d = state.spinSpeed === 'fast' ? 2600 : 4800;
+        var sectorEnd = c * 3.6;
         var SAFE_GAP = 5;
 
-        var fa; // фінальний кут (0..360)
-
+        var fa;
         if(w){
             var lo = SAFE_GAP;
             var hi = Math.max(lo + 1, sectorEnd - SAFE_GAP);
@@ -459,20 +475,20 @@ function _pa(c,w){
         }
         fa = ((fa % 360) + 360) % 360;
 
-        // Повні оберти
         var fs = state.spinSpeed === 'fast'
             ? 6 + Math.floor(Math.random() * 3)
             : 10 + Math.floor(Math.random() * 4);
 
-        // Цільовий кут — продовжує з _needleAngle
         var currentAngle = _needleAngle || 0;
         var target = currentAngle + fs * 360 + ((fa - (currentAngle % 360)) + 360) % 360;
 
         var st = performance.now();
-        var sd = _us(d);
+
+        // === ЗВУК стартує ТОЧНО з анімацією ===
+        var sd = _sp('spin', 0.55);
+
         if(!_ndl) _ndl = $('circleNeedle');
 
-        // easeOutQuint — дуже плавне гальмування
         function easeOutQuint(t){
             return 1 - Math.pow(1 - t, 5);
         }
@@ -490,7 +506,9 @@ function _pa(c,w){
             } else {
                 _needleAngle = fa;
                 if(_ndl) _ndl.style.transform = 'rotate(' + fa + 'deg)';
-                if(sd) sd.stop();
+
+                // === ЗВУК зупиняється ТОЧНО коли стрілка зупинилась ===
+                if(sd) sd.fadeStop(250);
 
                 var s = $('circleStatus');
                 if(w){ s.textContent='ПОБЕДА'; s.className='upg-status win'; }
@@ -504,7 +522,7 @@ function _pa(c,w){
 }
 
 /* ============================================================
-   _hu — апгрейд (локальне оновлення)
+   _hu — апгрейд
    ============================================================ */
 async function _hu(){
     if(_BUSY) return;
@@ -540,7 +558,7 @@ async function _hu(){
             });
             _lg(ss.name+' -> '+ts.name,'win');
         } else {
-            _ls();
+            _ls(); // порожня — нічого не грає
             _sr({
                 type:'result-lose', icon:'X', title:'ПРОВАЛ',
                 skin:null,
@@ -826,6 +844,7 @@ function _waitForFirebase(cb,attempts){
     if(attempts>50){console.error('Firebase timeout');return;}
     setTimeout(function(){_waitForFirebase(cb,attempts+1);},100);
 }
+
 function _init(){
     _pl();
     _ipf('invPanelFilters','invPanelFilter',_ri);
@@ -838,6 +857,7 @@ function _init(){
     _fb();
     loadPricesFromFirestore();
 }
+
 window.state=state;
 window.save=save;
 window.log=_lg;
@@ -850,6 +870,7 @@ window.SKINS=SKINS;
 window.RARITIES=RARITIES;
 window.renderSkinIcon=renderSkinIcon;
 window.currentUser=function(){return _CU;};
+
 if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',function(){
         _init();
