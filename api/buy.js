@@ -1,4 +1,5 @@
 const { getFirestore, getAuth } = require('../lib/firebase-admin');
+const { getClientIp, checkRateLimit } = require('../lib/rate-limit');
 const { randomUUID } = require('crypto');
 const SKINS = require('../lib/skins');
 
@@ -11,20 +12,6 @@ function setHeaders(res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Vary', 'Origin');
-}
-
-async function getUidFromRequest(req) {
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!token) return null;
-
-    try {
-        const decoded = await getAuth().verifyIdToken(token);
-        return decoded.uid;
-    } catch {
-        return null;
-    }
 }
 
 module.exports = async (req, res) => {
@@ -35,8 +22,22 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const uid = await getUidFromRequest(req);
-    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+    const ip = getClientIp(req);
+    if (!checkRateLimit(`buy:${ip}`, 30, 60 * 1000)) {
+        return res.status(429).json({ error: 'Too many requests' });
+    }
+
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+    let steamId;
+    try {
+        const decoded = await getAuth().verifyIdToken(token);
+        steamId = decoded.uid;
+    } catch {
+        return res.status(401).json({ error: 'Invalid token' });
+    }
 
     let body;
     try {
@@ -57,7 +58,7 @@ module.exports = async (req, res) => {
 
     try {
         const db = getFirestore();
-        const userRef = db.collection('users').doc(uid);
+        const userRef = db.collection('users').doc(steamId);
 
         const result = await db.runTransaction(async (tx) => {
             const snap = await tx.get(userRef);
@@ -68,7 +69,7 @@ module.exports = async (req, res) => {
             const inventory = Array.isArray(data.inventory) ? [...data.inventory] : [];
 
             if (balance < skin.price) {
-                throw new Error('Insufficient balance');
+                throw new Error('Недостатньо коштів');
             }
 
             const newItem = {
@@ -76,6 +77,7 @@ module.exports = async (req, res) => {
                 id: skin.id,
                 name: skin.name,
                 shortname: skin.shortname || '',
+                svg: skin.svg || '',
                 rarity: skin.rarity,
                 price: skin.price,
                 boughtAt: Date.now()
@@ -88,16 +90,20 @@ module.exports = async (req, res) => {
                 balance: newBalance,
                 inventory,
                 purchases: (data.purchases || 0) + 1,
-                totalLost: (data.totalLost || 0) + skin.price,
+                totalLost: Math.round(((data.totalLost || 0) + skin.price) * 100) / 100,
                 updatedAt: Date.now()
             });
 
-            return { balance: newBalance, inventory, item: newItem };
+            return {
+                balance: newBalance,
+                inventory,
+                item: newItem
+            };
         });
 
         return res.status(200).json(result);
     } catch (err) {
-        if (err.message === 'Insufficient balance') {
+        if (err.message === 'Недостатньо коштів') {
             return res.status(400).json({ error: 'Недостатньо коштів' });
         }
         if (err.message === 'User not found') {
