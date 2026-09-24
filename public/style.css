@@ -330,3 +330,430 @@ a{color:inherit}
     pointer-events: none;
     cursor: not-allowed;
 }
+/* ============================================================
+   МОБІЛЬНА ОПТИМІЗАЦІЯ — v1
+   ============================================================ */
+
+/* --- Планшети --- */
+@media (max-width: 1024px) {
+    .upg-top { grid-template-columns: 1fr 340px 1fr; }
+    .upg-bottom { grid-template-columns: 340px 1fr; }
+}
+
+/* --- Великі телефони / маленькі планшети --- */
+@media (max-width: 900px) {
+    .upg-top { grid-template-columns: 1fr; }
+    .upg-bottom { grid-template-columns: 1fr; }
+    .upg-panel { min-height: auto; padding: 40px 16px 16px; }
+    .upg-item-slot { width: 180px; height: 180px; }
+    .upg-item-slot .skin-icon { width: 90px; height: 90px; }
+    .upg-circle-wrap { width: 260px; height: 260px; }
+}
+
+/* --- Телефони --- */
+@media (max-width: 600px) {
+    /* Layout */
+    .main { padding: 10px; }
+    .hud-header { padding: 8px 10px; gap: 8px; }
+    .nav-tabs { top: auto; position: sticky; }
+    .nav-tab { padding: 10px 12px; font-size: 0.68rem; letter-spacing: 1px; }
+    .nav-tab-icon { font-size: 0.95rem; }
+    .nav-tab-text { font-size: 0.65rem; }
+
+    /* Шапка — компактна */
+    .logo { font-size: 1rem; letter-spacing: 2px; }
+    .logo-icon { font-size: 1rem; }
+    .level-box { display: none; }
+
+    .hud-stat {
+        min-width: auto;
+        padding: 5px 10px;
+        border-radius: 10px;
+    }
+    .hud-stat-label { display: none; }
+    .hud-stat-icon { display: none; }
+    .hud-stat-value { font-size: 0.82rem; }
+
+    .hud-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+        border-radius: 9px;
+    }
+
+    /* Картки */
+    .card { padding: 16px 12px; border-radius: 14px; }
+    .card-title { font-size: 1rem; letter-spacing: 2px; }
+    .card-title-icon { font-size: 1.1rem; }
+    .card-sub { font-size: 0.7rem; }
+    .card-head { margin-bottom: 14px; }
+
+    /* --- АПГРЕЙД --- */
+    .upg-wrap { gap: 10px; }
+    .upg-top {
+        padding: 10px;
+        gap: 10px;
+        border-radius: 14px;
+    }
+    .upg-panel {
+        padding: 32px 10px 10px;
+        min-height: auto;
+        gap: 8px;
+        border-radius: 12px;
+    }
+    .upg-panel-head {
+        top: 8px;
+        left: 10px;
+        right: 10px;
+        font-size: 0.65rem;
+    }
+
+    /* Слот предмета — менший */
+    .upg-item-slot {
+        width: 140px;
+        height: 140px;
+        border-radius: 14px;
+    }
+    .upg-item-slot .skin-icon {
+        width: 70px;
+        height: 70px;
+    }
+    .upg-item-slot .upg-item-name {
+        font-size: 0.58rem;
+        margin-top: 4px;
+        padding: 0 4px;
+        line-height: 1.15;
+    }
+    .upg-item-slot .upg-item-rarity {
+        font-size: 0.5rem;
+        margin-top: 2px;
+    }
+    .upg-item-empty { padding: 6px; text-align: center; }
+    .upg-item-empty-icon {
+        font-size: 2rem;
+        line-height: 1;
+    }
+    .upg-item-empty-text {
+        font-size: 0.62rem;
+        letter-spacing: 1px;
+        line-height: 1.2;
+        text-align: center;
+    }
+
+    /* Дуга */
+    .upg-circle-wrap {
+        width: 220px;
+        height: 220px;
+    }
+    .upg-percent { font-size: 2.2rem; }
+    .upg-status { font-size: 0.6rem; letter-spacing: 1px; margin-top: 4px; }
+    .upg-needle-head {
+        border-left-width: 11px;
+        border-right-width: 11px;
+        border-top-width: 18px;
+    }
+    .upg-needle-body { height: 42px; }
+
+    /* Кнопки швидкості */
+    .upg-speed-row { max-width: 100%; gap: 6px; }
+    .upg-speed-btn {
+        padding: 9px 8px;
+        font-size: 0.68rem;
+        letter-spacing: 0.5px;
+        border-radius: 10px;
+    }
+
+    /* Кнопка АПГРЕЙД */
+    .upg-action-btn {
+        padding: 14px 20px;
+        font-size: 1.05rem;
+        letter-spacing: 3px;
+        border-radius: 12px;
+        max-width: 100%;
+    }
+
+    /* Пресети */
+    .upg-presets-row {
+        grid-template-columns: repeat(5, 1fr);
+        padding: 8px;
+        gap: 4px;
+        border-radius: 12px;
+    }
+    .upg-preset-btn {
+        padding: 8px 2px;
+        border-radius: 8px;
+        border-width: 1px;
+    }
+    .upg-preset-mult { font-size: 0.78rem; }
+    .upg-preset-chance { font-size: 0.52rem; }
+
+    /* Панелі інвентарю / цілей */
+    .upg-bottom { gap: 10px; min-height: auto; }
+    .upg-inv-panel, .upg-items-panel {
+        padding: 10px;
+        border-radius: 12px;
+        gap: 8px;
+    }
+    .upg-inv-title, .upg-items-title { font-size: 0.7rem; letter-spacing: 1.5px; }
+    .upg-inv-count, .upg-items-count { font-size: 0.65rem; }
+    .upg-inv-input, .upg-items-input {
+        padding: 7px 10px;
+        font-size: 0.75rem;
+        border-radius: 8px;
+    }
+    .upg-inv-filter {
+        padding: 5px 8px;
+        font-size: 0.6rem;
+        border-radius: 7px;
+    }
+    .upg-inv-list { grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 320px; }
+    .upg-items-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 320px; }
+    .upg-inv-item, .upg-target-item {
+        min-height: 84px;
+        padding: 6px 2px;
+        border-radius: 8px;
+        border-width: 1px;
+    }
+    .upg-inv-item .skin-icon, .upg-target-item .skin-icon {
+        width: 38px;
+        height: 38px;
+    }
+    .upg-inv-item .upg-inv-name, .upg-target-item .upg-target-name {
+        font-size: 0.5rem;
+        margin-top: 2px;
+        line-height: 1.15;
+    }
+    .upg-inv-item .upg-inv-price, .upg-target-item .upg-target-price {
+        font-size: 0.55rem;
+    }
+
+    /* --- МАГАЗИН --- */
+    .shop-info-bar { padding: 10px 14px; font-size: 0.78rem; }
+    .shop-filters { gap: 6px; margin-bottom: 12px; }
+    .shop-filter {
+        padding: 7px 12px;
+        font-size: 0.7rem;
+        border-radius: 8px;
+    }
+    .shop-sort {
+        margin-left: 0;
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        border-radius: 8px;
+    }
+    .shop-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .shop-item {
+        padding: 12px 8px;
+        border-radius: 14px;
+        border-width: 1px;
+    }
+    .shop-item .skin-icon { width: 60px; height: 60px; margin-bottom: 6px; }
+    .shop-item .name { font-size: 0.62rem; margin-bottom: 6px; }
+    .shop-item .rarity-label { font-size: 0.52rem; margin-bottom: 5px; }
+    .shop-item .price { font-size: 0.82rem; }
+    .shop-item .price-row { margin-bottom: 8px; }
+    .shop-item .buy-btn {
+        padding: 8px 10px;
+        font-size: 0.68rem;
+        letter-spacing: 1px;
+        border-radius: 8px;
+    }
+
+    /* --- ІНВЕНТАР --- */
+    .inv-filters { gap: 6px; margin-bottom: 12px; }
+    .inv-filter {
+        padding: 7px 12px;
+        font-size: 0.7rem;
+        border-radius: 8px;
+    }
+    .btn-mini {
+        padding: 7px 12px;
+        font-size: 0.7rem;
+        border-radius: 8px;
+        margin-left: 0 !important;
+        width: 100%;
+    }
+    .inv-grid, .inventory-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .inv-item {
+        padding: 10px 8px;
+        border-radius: 12px;
+        border-width: 1px;
+    }
+    .inv-item .skin-icon { width: 64px; height: 64px; margin-bottom: 6px; }
+    .inv-item .name { font-size: 0.6rem; margin-bottom: 4px; }
+    .inv-item .price { font-size: 0.75rem; margin-bottom: 6px; }
+    .inv-item .sell-btn {
+        padding: 7px 10px;
+        font-size: 0.68rem;
+        border-radius: 8px;
+    }
+
+    /* --- ПРОФІЛЬ --- */
+    .profile-head {
+        padding: 14px;
+        gap: 12px;
+        border-radius: 14px;
+    }
+    .profile-avatar {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+        border-width: 2px;
+    }
+    .profile-name { font-size: 1rem; letter-spacing: 1px; }
+    .profile-id { font-size: 0.7rem; }
+    .profile-source { font-size: 0.7rem; }
+
+    .profile-balance {
+        padding: 14px 16px;
+        border-radius: 12px;
+        gap: 10px;
+    }
+    .profile-balance-label { font-size: 0.65rem; letter-spacing: 1.5px; }
+    .profile-balance-value { font-size: 1.4rem; }
+    .profile-topup-btn {
+        padding: 10px 18px;
+        font-size: 0.78rem;
+        border-radius: 10px;
+        letter-spacing: 1px;
+    }
+
+    .profile-best-drop { padding: 14px; border-radius: 12px; }
+    .profile-best-label { font-size: 0.65rem; letter-spacing: 1.5px; margin-bottom: 8px; }
+    .profile-best-skin .skin-icon { width: 60px; height: 60px; }
+    .profile-best-name { font-size: 0.85rem; }
+    .profile-best-price { font-size: 0.95rem; }
+
+    .profile-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .profile-stat { padding: 12px 10px; border-radius: 12px; }
+    .profile-stat-label { font-size: 0.58rem; letter-spacing: 1px; }
+    .profile-stat-value { font-size: 0.9rem; }
+
+    .profile-actions { gap: 8px; }
+    .profile-actions button {
+        min-width: 100%;
+        padding: 12px 16px;
+        font-size: 0.78rem;
+    }
+
+    /* --- МОДАЛКИ --- */
+    .modal { padding: 10px; }
+    .modal-inner { padding: 20px 16px; border-radius: 16px; }
+    .auth-inner { padding: 26px 18px 20px; border-radius: 18px; }
+    .auth-title { font-size: 1.2rem; letter-spacing: 4px; }
+    .auth-icon { font-size: 2rem; }
+    .auth-sub { font-size: 0.78rem; margin-bottom: 16px; }
+    .auth-hint-top {
+        padding: 12px;
+        font-size: 0.72rem;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    .auth-btn {
+        padding: 13px 18px;
+        font-size: 0.82rem;
+        letter-spacing: 1.5px;
+        border-radius: 12px;
+    }
+    .auth-google-icon { width: 18px; height: 18px; }
+    .auth-hint { font-size: 0.65rem; }
+
+    /* Результат */
+    .result-title { font-size: 1.2rem; letter-spacing: 2px; }
+    .result-icon { font-size: 2.4rem; }
+    .result-value { font-size: 1rem; }
+    .result-actions { flex-direction: column; gap: 8px; }
+    .result-actions button {
+        width: 100%;
+        min-width: auto;
+        padding: 12px 18px;
+        font-size: 0.82rem;
+    }
+
+    /* Купівля */
+    .buy-title { font-size: 1rem; }
+    .buy-icon-slot .skin-icon { width: 70px; height: 70px; }
+    .buy-price { font-size: 1.3rem; }
+    .buy-actions { flex-direction: column; gap: 8px; }
+    .buy-actions button {
+        padding: 12px 18px;
+        font-size: 0.82rem;
+        width: 100%;
+    }
+    .buy-qty-row button {
+        padding: 7px 12px !important;
+        font-size: 0.72rem;
+    }
+
+    /* Toast */
+    .toast-wrap {
+        top: 70px;
+        left: 10px;
+        right: 10px;
+        gap: 8px;
+    }
+    .toast {
+        min-width: auto;
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 0.78rem;
+        border-radius: 10px;
+    }
+
+    /* Кнопки загальні */
+    .btn-primary, .btn-secondary {
+        padding: 12px 20px;
+        font-size: 0.82rem;
+        letter-spacing: 1.5px;
+        border-radius: 10px;
+    }
+}
+
+/* --- Дуже маленькі телефони --- */
+@media (max-width: 380px) {
+    .upg-circle-wrap { width: 200px; height: 200px; }
+    .upg-percent { font-size: 1.9rem; }
+    .upg-item-slot { width: 120px; height: 120px; }
+    .upg-item-slot .skin-icon { width: 60px; height: 60px; }
+
+    .upg-inv-list { grid-template-columns: repeat(3, 1fr); }
+    .upg-items-grid { grid-template-columns: repeat(3, 1fr); }
+    .upg-inv-item .skin-icon, .upg-target-item .skin-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .shop-grid { gap: 6px; }
+    .shop-item { padding: 10px 6px; }
+    .shop-item .skin-icon { width: 52px; height: 52px; }
+
+    .inv-grid, .inventory-grid { gap: 6px; }
+    .inv-item { padding: 8px 6px; }
+    .inv-item .skin-icon { width: 56px; height: 56px; }
+
+    .profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .profile-balance-value { font-size: 1.2rem; }
+}
+
+/* --- Ландшафтна орієнтація на телефоні --- */
+@media (max-height: 500px) and (orientation: landscape) {
+    .upg-circle-wrap {
+        width: 160px;
+        height: 160px;
+    }
+    .upg-percent { font-size: 1.6rem; }
+    .upg-item-slot { width: 100px; height: 100px; }
+    .upg-item-slot .skin-icon { width: 50px; height: 50px; }
+    .upg-action-btn { padding: 10px 18px; font-size: 0.95rem; }
+    .upg-speed-btn { padding: 6px 8px; font-size: 0.62rem; }
+}
