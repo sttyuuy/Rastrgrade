@@ -54,12 +54,6 @@ function _buildIndexes(){
     }
 }
 _buildIndexes();
-
-async function loadPricesFromFirestore(){
-    if(!window.fbDb){
-        window.addEventListener('fb-ready', loadPricesFromFirestore, {once:true});
-        return;
-    }
     try{
         var snap = await window.fbGetDocs(window.fbCollection(window.fbDb,'skins'));
         var count = 0;
