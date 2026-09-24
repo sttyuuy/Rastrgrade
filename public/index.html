@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#07070c">
-<title>RASTRGRADE</title>
+<title>RustUp</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -18,7 +18,6 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyCS5TrO7fwBMVPIk9dPCaIm8D4WNVk1Mc8",
   authDomain: "rastrgrade.firebaseapp.com",
@@ -29,24 +28,12 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 window.fbAuth = auth;
-window.fbDb = db;
 window.fbGoogleProvider = new GoogleAuthProvider();
 window.fbSignInWithPopup = signInWithPopup;
 window.fbOnAuthStateChanged = onAuthStateChanged;
 window.fbSignInWithCustomToken = signInWithCustomToken;
 window.fbSignOut = signOut;
-window.fbDoc = doc;
-window.fbGetDoc = getDoc;
-window.fbSetDoc = setDoc;
-window.fbCollection = collection;
-window.fbAddDoc = addDoc;
-window.fbQuery = query;
-window.fbWhere = where;
-window.fbGetDocs = getDocs;
-window.fbUpdateDoc = updateDoc;
-window.fbDeleteDoc = deleteDoc;
 window.fbReady = true;
 window.dispatchEvent(new Event('fb-ready'));
 </script>
@@ -56,7 +43,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <header class="hud-header">
   <div class="hud-left">
     <a href="#upgrade" class="logo" id="logoBtn" title="На главную">
-      <span class="logo-icon">⚡</span><span class="logo-rust">RASTR</span><span class="logo-grade">GRADE</span>
+      <span class="logo-icon">⚡</span><span class="logo-rust">Rust</span><span class="logo-grade">Up</span>
     </a>
     <div class="level-box">
       <div class="level-badge" id="levelBadge">1</div>
