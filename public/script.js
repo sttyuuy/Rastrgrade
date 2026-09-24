@@ -41,7 +41,7 @@ function _clearCaches(){
 }
 
 /* ============================================================
-   А. ІНДЕКСИ + loadPricesFromFirestore
+   ІНДЕКСИ + ЗАВАНТАЖЕННЯ ЦІН З API
    ============================================================ */
 function _buildIndexes(){
     window._skinsByName = {};
@@ -55,9 +55,6 @@ function _buildIndexes(){
 }
 _buildIndexes();
 
-/* ============================================================
-   ЗАВАНТАЖЕННЯ ЦІН З API (1 запит замість 276 читань Firestore)
-   ============================================================ */
 async function loadPricesFromApi(){
     if(!window.apiClient || !window.apiClient.getPrices) return;
     try {
@@ -75,6 +72,7 @@ async function loadPricesFromApi(){
         console.warn('Не вдалось завантажити ціни з API:', e.message);
     }
 }
+
 var _P=[{mult:1.5,label:'x1.5'},{mult:2,label:'x2'},{mult:3,label:'x3'},{mult:5,label:'x5'},{mult:10,label:'x10'},{mult:20,label:'x20'},{mult:50,label:'x50'},{mult:100,label:'x100'},{mult:500,label:'x500'}];
 var _L=[{lvl:1,xp:0,name:'НОВИЧОК'},{lvl:2,xp:1000,name:'ЛЮБИТЕЛЬ'},{lvl:3,xp:5000,name:'ИГРОК'},{lvl:4,xp:15000,name:'ПРОФИ'},{lvl:5,xp:40000,name:'ЭКСПЕРТ'},{lvl:6,xp:100000,name:'МАСТЕР'},{lvl:7,xp:250000,name:'ГУРУ'},{lvl:8,xp:500000,name:'ЛЕГЕНДА'},{lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}];
 var _MX=999999;
@@ -127,7 +125,7 @@ function _fb(){
 }
 
 /* ============================================================
-   Б. _mapInv + _lc
+   _mapInv + _lc
    ============================================================ */
 function _mapInv(list){
     return (list || []).map(function(i){
@@ -142,11 +140,7 @@ async function _lc(){
     try{
         d = await window.apiClient.getUserData();
     }catch(e){
-        console.warn('[lc] API недоступний, беру з Firestore:', e.message, e.data || '');
-        try{
-            var s = await window.fbGetDoc(window.fbDoc(window.fbDb,'users',_CU.uid));
-            if(s.exists()) d = s.data();
-        }catch(fe){ console.error('[lc] fallback error:', fe); }
+        console.warn('[lc] API недоступний:', e.message);
     }
     if(d){
         state.balance = d.balance || 0;
@@ -199,9 +193,6 @@ function _ol(){var m=document.getElementById('logoutModal');if(m)m.classList.add
 function _cl(){var m=document.getElementById('logoutModal');if(m)m.classList.remove('show');}
 async function _lo(){_cl();try{await window.fbSignOut(window.fbAuth);_lg('Вы вышли','info');}catch(e){console.error(e);}}
 
-/* ============================================================
-   Г. _ub — аватарка з referrerpolicy
-   ============================================================ */
 function _ub(){
     var b=document.getElementById('userBadge');
     var i=document.getElementById('userBadgeIcon');
@@ -463,12 +454,87 @@ function _rs1(){var s=$('sourceSlot');if(!s)return;if(state.upgradeSource){s.cla
 function _rt1(){var s=$('targetSlot');if(!s)return;if(state.upgradeTarget){s.className='upg-item-slot filled '+state.upgradeTarget.rarity;s.innerHTML=renderSkinIcon(state.upgradeTarget)+'<div class="upg-item-name">'+state.upgradeTarget.name+'</div><div class="upg-item-rarity" style="color:'+RARITIES[state.upgradeTarget.rarity].color+'">'+RARITIES[state.upgradeTarget.rarity].name+'</div>';$('targetPriceLabel').innerHTML=formatRastr(_a1(state.upgradeTarget))+' '+_MF_ICON;$('targetRemoveBtn').style.display='block';}else{s.className='upg-item-slot';s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">?</div><div class="upg-item-empty-text">Цель</div></div>';$('targetPriceLabel').textContent='—';$('targetRemoveBtn').style.display='none';}}
 function _uc(){if(!state.upgradeSource||!state.upgradeTarget){_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);DOM.upgradeBtn.disabled=true;return;}var c=_ch(_a1(state.upgradeSource),_a1(state.upgradeTarget));state.upgradeTarget._realChance=c;var s,sc;if(c>=60){s='ВЫСОКИЙ ШАНС';sc='win';}else if(c>=30){s='СРЕДНИЙ ШАНС';sc='';}else if(c>=10){s='РИСК';sc='';}else if(c>=1){s='ХАЙ РИСК';sc='lose';}else{s='ПОЧТИ НЕВОЗМОЖНО';sc='lose';}_cc(c,s,sc);_na(0);DOM.upgradeBtn.disabled=false;}
 function _rp1(){var cn=$('presetContainer');if(!cn)return;var f=document.createDocumentFragment();var hs=!!state.upgradeSource;_P.forEach(function(p,i){var b=document.createElement('button');b.className='upg-preset-btn';b.disabled=!hs;b.dataset.idx=i;var dt='—';if(hs){var sp=_a1(state.upgradeSource);var tp=sp*p.mult;var t=_tg(tp,state.upgradeSource);if(t&&_a1(t)>sp){var rc=_ch(sp,_a1(t));if(rc>=10)dt=Math.round(rc)+'%';else dt=rc.toFixed(2)+'%';}}b.innerHTML='<span class="upg-preset-mult">'+p.label+'</span><span class="upg-preset-chance">'+dt+'</span>';if(state.selectedPreset===i)b.classList.add('active');b.addEventListener('click',function(e){e.stopPropagation();_sp2(i);});f.appendChild(b);});cn.replaceChildren(f);}
-function _sp2(i){if(!state.upgradeSource){_lg('Сначала выбери предмет','lose');_ck();return;}_un();_ck();if(_a1(state.upgradeSource)>=_MX*0.99){_lg('Это максимальный скин','lose');return;}var p=_P[i];var sp=_a1(state.upgradeSource);var tp=sp*p.mult;var t=_tg(tp,state.upgradeSource);if(!t||_a1(t)<=sp){_lg('Нет подходящей цели','lose');return;}if(_a1(t)>_MX){_lg('Нет цели','lose');return;}state.upgradeTarget=t;state.selectedPreset=i;state.upgradeTarget._realChance=_ch(sp,_a1(t));_rt1();_rp1();_uc();}
-function _ri(){var l=$('invPanelList');if(!l)return;var f=state.invPanelFilter;var s=($('invSearch').value||'').toLowerCase();var sr=state.inventory.slice().sort(function(a,b){return _a1(b)-_a1(a);});if(f!=='all')sr=sr.filter(function(x){return x.rarity===f;});if(s)sr=sr.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('invPanelCount').textContent=state.inventory.length+' шт.';if(sr.length===0){l.innerHTML='<div class="upg-inv-empty">Инвентарь пуст</div>';return;}var fr=document.createDocumentFragment();sr.forEach(function(sk){var e=document.createElement('div');e.className='upg-inv-item '+sk.rarity;if(state.upgradeSource&&state.upgradeSource===sk)e.classList.add('used');e.innerHTML=renderSkinIcon(sk)+'<div class="upg-inv-name">'+sk.name+'</div><div class="upg-inv-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';e.addEventListener('click',function(){_un();_ck();state.upgradeSource=sk;state.upgradeTarget=null;state.selectedPreset=null;_tgCache={};_rs1();_rt1();_ri();_rp1();_uc();});fr.appendChild(e);});l.replaceChildren(fr);}
-function _rt2(){var g=$('itemsPanelGrid');if(!g)return;var f=state.itemsPanelFilter;var s=($('itemsSearch').value||'').toLowerCase();var it=SKINS.slice();if(f!=='all')it=it.filter(function(x){return x.rarity===f;});if(s)it=it.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});$('targetsCount').textContent=it.length;if(it.length===0){g.innerHTML='<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';return;}var fr=document.createDocumentFragment();it.forEach(function(sk){var e=document.createElement('div');e.className='upg-target-item '+sk.rarity;if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';e.addEventListener('click',function(){if(!state.upgradeSource){_lg('Сначала выбери свой предмет','lose');_ck();return;}if(sk.id===state.upgradeSource.id){_lg('Нельзя апгрейдить в себя','lose');_ck();return;}if(_a1(sk)<=_a1(state.upgradeSource)){_lg('Цель должна быть дороже','lose');_ck();return;}if(_a1(sk)>_MX){_lg('Нет цели','lose');_ck();return;}_un();_ck();state.upgradeTarget=sk;state.selectedPreset=null;state.upgradeTarget._realChance=_ch(_a1(state.upgradeSource),_a1(sk));_rt1();_rp1();_uc();});fr.appendChild(e);});g.replaceChildren(fr);}
+
+function _sp2(i){
+    if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ ПІД ЧАС АПГРЕЙДУ
+    if(!state.upgradeSource){_lg('Сначала выбери предмет','lose');_ck();return;}
+    _un();_ck();
+    if(_a1(state.upgradeSource)>=_MX*0.99){_lg('Это максимальный скин','lose');return;}
+    var p=_P[i];var sp=_a1(state.upgradeSource);var tp=sp*p.mult;
+    var t=_tg(tp,state.upgradeSource);
+    if(!t||_a1(t)<=sp){_lg('Нет подходящей цели','lose');return;}
+    if(_a1(t)>_MX){_lg('Нет цели','lose');return;}
+    state.upgradeTarget=t;
+    state.selectedPreset=i;
+    state.upgradeTarget._realChance=_ch(sp,_a1(t));
+    _rt1();_rp1();_uc();
+}
+
+function _ri(){
+    var l=$('invPanelList');if(!l)return;
+    var f=state.invPanelFilter;
+    var s=($('invSearch').value||'').toLowerCase();
+    var sr=state.inventory.slice().sort(function(a,b){return _a1(b)-_a1(a);});
+    if(f!=='all')sr=sr.filter(function(x){return x.rarity===f;});
+    if(s)sr=sr.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});
+    $('invPanelCount').textContent=state.inventory.length+' шт.';
+    if(sr.length===0){l.innerHTML='<div class="upg-inv-empty">Инвентарь пуст</div>';return;}
+    var fr=document.createDocumentFragment();
+    sr.forEach(function(sk){
+        var e=document.createElement('div');
+        e.className='upg-inv-item '+sk.rarity;
+        if(state.upgradeSource&&state.upgradeSource===sk)e.classList.add('used');
+        if(_BUSY || state.upgrading) e.classList.add('blocked');   // ← БЛОКУВАННЯ
+        e.innerHTML=renderSkinIcon(sk)+'<div class="upg-inv-name">'+sk.name+'</div><div class="upg-inv-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';
+        e.addEventListener('click',function(){
+            if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ ПІД ЧАС АПГРЕЙДУ
+            _un();_ck();
+            state.upgradeSource=sk;
+            state.upgradeTarget=null;
+            state.selectedPreset=null;
+            _tgCache={};
+            _rs1();_rt1();_ri();_rp1();_uc();
+        });
+        fr.appendChild(e);
+    });
+    l.replaceChildren(fr);
+}
+
+function _rt2(){
+    var g=$('itemsPanelGrid');if(!g)return;
+    var f=state.itemsPanelFilter;
+    var s=($('itemsSearch').value||'').toLowerCase();
+    var it=SKINS.slice();
+    if(f!=='all')it=it.filter(function(x){return x.rarity===f;});
+    if(s)it=it.filter(function(x){return x.name.toLowerCase().indexOf(s)>=0;});
+    $('targetsCount').textContent=it.length;
+    if(it.length===0){g.innerHTML='<div class="upg-inv-empty" style="grid-column:1/-1">Ничего не найдено</div>';return;}
+    var fr=document.createDocumentFragment();
+    it.forEach(function(sk){
+        var e=document.createElement('div');
+        e.className='upg-target-item '+sk.rarity;
+        if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}
+        if(_BUSY || state.upgrading) e.classList.add('blocked');   // ← БЛОКУВАННЯ
+        e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';
+        e.addEventListener('click',function(){
+            if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ ПІД ЧАС АПГРЕЙДУ
+            if(!state.upgradeSource){_lg('Сначала выбери свой предмет','lose');_ck();return;}
+            if(sk.id===state.upgradeSource.id){_lg('Нельзя апгрейдить в себя','lose');_ck();return;}
+            if(_a1(sk)<=_a1(state.upgradeSource)){_lg('Цель должна быть дороже','lose');_ck();return;}
+            if(_a1(sk)>_MX){_lg('Нет цели','lose');_ck();return;}
+            _un();_ck();
+            state.upgradeTarget=sk;
+            state.selectedPreset=null;
+            state.upgradeTarget._realChance=_ch(_a1(state.upgradeSource),_a1(sk));
+            _rt1();_rp1();_uc();
+        });
+        fr.appendChild(e);
+    });
+    g.replaceChildren(fr);
+}
 
 /* ============================================================
-   _pa — СТРІЛКА. ЗОНА ПЕРЕМОГИ — ВНИЗУ (180°)
+   _pa — СТРІЛКА
    ============================================================ */
 var _paRAF = null;
 function _pa(c, w){
@@ -542,6 +608,12 @@ async function _hu(){
     b.style.pointerEvents='none';
     state.upgrading=true;
     b.disabled=true;
+
+    // Блокуємо всі елементи UI
+    document.querySelectorAll('.upg-inv-item, .upg-target-item, .upg-preset-btn, .upg-btn-remove').forEach(function(el){
+        el.classList.add('blocked');
+    });
+
     try {
         var res = await window.apiClient.doUpgrade(ss.uid, ts.id);
         await _pa(res.chance, res.success);
@@ -593,6 +665,10 @@ async function _hu(){
         b.disabled=false;
     } finally {
         _BUSY = false;
+        // Розблоковуємо UI
+        document.querySelectorAll('.upg-inv-item, .upg-target-item, .upg-preset-btn, .upg-btn-remove').forEach(function(el){
+            el.classList.remove('blocked');
+        });
     }
 }
 
@@ -733,7 +809,7 @@ function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'В�
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
-   ПРОФІЛЬ — _pr() — Г. аватарка з referrerpolicy
+   ПРОФІЛЬ
    ============================================================ */
 function _pr(){
     var nl = $('profileNotLogged');
@@ -844,9 +920,6 @@ function _ah(){
     var plo = $('profileLogoutBtn');
     if(plo) plo.addEventListener('click', function(){ _ck(); _ol(); });
 
-    /* ============================================================
-       В. buyConfirm — одна транзакція через apiClient.buyItem(id, qty)
-       ============================================================ */
     var bcf=$('buyConfirm');
     if(bcf)bcf.addEventListener('click',async function(){
         if(_BUSY) return;
@@ -912,8 +985,25 @@ function _ah(){
     var ub2=$('upgradeBtn');if(ub2)ub2.addEventListener('click',_hu);
     var ss2=$('sourceSlot');if(ss2)ss2.addEventListener('click',function(){if(state.upgradeSource)return;_un();_ck();var p=document.querySelector('.upg-inv-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
     var ts2=$('targetSlot');if(ts2)ts2.addEventListener('click',function(){if(state.upgradeTarget)return;_un();_ck();var p=document.querySelector('.upg-items-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});});
-    var sr=$('sourceRemoveBtn');if(sr)sr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();_rz();});
-    var tr=$('targetRemoveBtn');if(tr)tr.addEventListener('click',function(e){e.stopPropagation();_un();_ck();state.upgradeTarget=null;state.selectedPreset=null;_tgCache={};_rt1();_rp1();_uc();});
+
+    var sr=$('sourceRemoveBtn');
+    if(sr)sr.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ
+        _un();_ck();_rz();
+    });
+
+    var tr=$('targetRemoveBtn');
+    if(tr)tr.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ
+        _un();_ck();
+        state.upgradeTarget=null;
+        state.selectedPreset=null;
+        _tgCache={};
+        _rt1();_rp1();_uc();
+    });
+
     var is=$('invSearch');if(is)is.addEventListener('input',_ri);
     var its=$('itemsSearch');if(its)its.addEventListener('input',_rt2);
     var so=$('shopSort');if(so)so.addEventListener('change',function(e){state.shopSort=e.target.value;_sv=20;_rsh();save();_ck();});
@@ -966,7 +1056,7 @@ function _init(){
     if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'S':'M';
     _ah();
     _fb();
-    loadPricesFromApi();   // ← ДОДАЙ ЦЕ
+    loadPricesFromApi();
     _pr();
 }
 
