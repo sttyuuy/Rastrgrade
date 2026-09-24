@@ -14,9 +14,13 @@ function setHeaders(res) {
     res.setHeader('X-Frame-Options', 'DENY');
 }
 
-/* ============================================================
-   ЦІНИ З FIRESTORE — СИНХРОНІЗОВАНО З КЛІЄНТОМ
-   ============================================================ */
+function withTimeout(p, ms, label) {
+    return Promise.race([
+        p,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT ' + label)), ms))
+    ]);
+}
+
 function norm(s) {
     return (s || '').toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
 }
@@ -30,7 +34,7 @@ async function getFirestorePrices(db) {
     if (_priceCache && (now - _priceCacheAt) < PRICE_CACHE_TTL) return _priceCache;
     const map = {};
     try {
-        const snap = await db.collection('skins').get();
+        const snap = await withTimeout(db.collection('skins').get(), 8000, 'skins.get');
         snap.forEach(doc => {
             const d = doc.data();
             if (d.name && d.price) map[norm(d.name)] = d.price;
@@ -60,13 +64,18 @@ function calcChance(sourcePrice, targetPrice) {
     return raw;
 }
 
+function invalidateUserCache(uid) {
+    try {
+        const userMod = require('./user');
+        if (userMod.invalidateUserCache) userMod.invalidateUserCache(uid);
+    } catch (e) { /* ignore */ }
+}
+
 module.exports = async (req, res) => {
     setHeaders(res);
 
     if (req.method === 'OPTIONS') return res.status(204).end();
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const ip = getClientIp(req);
     if (!checkRateLimit(`upgrade:${ip}`, 30, 60 * 1000)) {
@@ -79,7 +88,7 @@ module.exports = async (req, res) => {
 
     let steamId;
     try {
-        const decoded = await getAuth().verifyIdToken(token);
+        const decoded = await withTimeout(getAuth().verifyIdToken(token), 5000, 'verifyIdToken');
         steamId = decoded.uid;
     } catch {
         return res.status(401).json({ error: 'Invalid token' });
@@ -93,26 +102,21 @@ module.exports = async (req, res) => {
     }
 
     const { sourceUid, targetId } = body || {};
-    if (!sourceUid || typeof sourceUid !== 'string') {
-        return res.status(400).json({ error: 'Missing sourceUid' });
-    }
-    if (!targetId || typeof targetId !== 'string') {
-        return res.status(400).json({ error: 'Missing targetId' });
-    }
+    if (!sourceUid || typeof sourceUid !== 'string') return res.status(400).json({ error: 'Missing sourceUid' });
+    if (!targetId || typeof targetId !== 'string') return res.status(400).json({ error: 'Missing targetId' });
 
     const targetSkin = SKINS.find(s => s.id === targetId);
-    if (!targetSkin) {
-        return res.status(404).json({ error: 'Target skin not found' });
-    }
+    if (!targetSkin) return res.status(404).json({ error: 'Target skin not found' });
 
     try {
         const db = getFirestore();
-
         const targetPrice = await getEffectivePrice(db, targetSkin);
-
         const userRef = db.collection('users').doc(steamId);
 
-        const result = await db.runTransaction(async (tx) => {
+        // Завантажуємо ціни ЗАЗДАЛЕГІДЬ, щоб не робити це всередині транзакції
+        const prices = await getFirestorePrices(db);
+
+        const result = await withTimeout(db.runTransaction(async (tx) => {
             const doc = await tx.get(userRef);
             if (!doc.exists) throw new Error('User not found');
 
@@ -123,26 +127,18 @@ module.exports = async (req, res) => {
             if (srcIdx === -1) throw new Error('Source item not in inventory');
 
             const sourceItem = inventory[srcIdx];
-
             const sourceSkin = SKINS.find(s => s.id === sourceItem.id);
             let sourcePrice = 0;
 
             if (sourceSkin) {
-                const prices = await getFirestorePrices(db);
                 const fsPrice = prices[norm(sourceSkin.name)];
-                sourcePrice = (fsPrice && fsPrice > 0)
-                    ? fsPrice
-                    : (Number(sourceItem.price) || 0);
+                sourcePrice = (fsPrice && fsPrice > 0) ? fsPrice : (Number(sourceItem.price) || 0);
             } else {
                 sourcePrice = Number(sourceItem.price) || 0;
             }
 
-            if (sourcePrice <= 0) {
-                throw new Error('Source item has no price — cannot upgrade');
-            }
-            if (targetPrice <= 0) {
-                throw new Error('Target item has no price');
-            }
+            if (sourcePrice <= 0) throw new Error('Source item has no price — cannot upgrade');
+            if (targetPrice <= 0) throw new Error('Target item has no price');
 
             const chance = calcChance(sourcePrice, targetPrice);
             const roll = Math.random() * 100;
@@ -165,8 +161,6 @@ module.exports = async (req, res) => {
                 inventory.push(newItem);
             }
 
-            // === BEST DROP / BEST UPGRADE ===
-            // Оновлюємо, якщо успіх і новий скін дорожчий за попередній best
             let newBestDrop = data.bestDrop || null;
             let newBestUpgrade = data.bestUpgrade || null;
 
@@ -180,12 +174,8 @@ module.exports = async (req, res) => {
                 var prevBestDropPrice = (data.bestDrop && Number(data.bestDrop.price)) || 0;
                 var prevBestUpgPrice = (data.bestUpgrade && Number(data.bestUpgrade.price)) || 0;
 
-                if (targetPrice > prevBestDropPrice) {
-                    newBestDrop = newBestItem;
-                }
-                if (targetPrice > prevBestUpgPrice) {
-                    newBestUpgrade = newBestItem;
-                }
+                if (targetPrice > prevBestDropPrice) newBestDrop = newBestItem;
+                if (targetPrice > prevBestUpgPrice) newBestUpgrade = newBestItem;
             }
 
             tx.update(userRef, {
@@ -219,8 +209,9 @@ module.exports = async (req, res) => {
                 bestDrop: newBestDrop,
                 bestUpgrade: newBestUpgrade
             };
-        });
+        }), 12000, 'transaction');
 
+        invalidateUserCache(steamId);
         return res.status(200).json(result);
     } catch (e) {
         console.error('[upgrade] error:', e.message);
