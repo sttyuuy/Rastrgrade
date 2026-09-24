@@ -1,6 +1,3 @@
-/**
- * Дані користувача. steamId береться з Bearer-токена (Firebase Auth uid).
- */
 const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { checkRateLimit, getClientIp } = require('../lib/rate-limit');
 
@@ -25,6 +22,10 @@ function withTimeout(p, ms, label) {
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
+/* ── Кеш користувача на 5 секунд (зменшує читання при частих запитах) ── */
+const _userCache = new Map();
+const USER_CACHE_TTL = 5000;
+
 module.exports = async (req, res) => {
     setHeaders(res);
 
@@ -42,18 +43,25 @@ module.exports = async (req, res) => {
 
     let steamId;
     try {
-        const decoded = await withTimeout(getAuth().verifyIdToken(token), 6000, 'verifyIdToken');
+        const decoded = await withTimeout(getAuth().verifyIdToken(token), 5000, 'verifyIdToken');
         steamId = decoded.uid;
     } catch (e) {
         console.error('[user] token error:', e.code || e.message);
         return res.status(401).json({ error: 'Invalid token' });
     }
 
+    // Кеш
+    const cached = _userCache.get(steamId);
+    if (cached && Date.now() - cached.ts < USER_CACHE_TTL) {
+        return res.status(200).json(cached.data);
+    }
+
     try {
         const db = getFirestore();
         const ref = db.collection('users').doc(steamId);
-        const userDoc = await withTimeout(ref.get(), 7000, 'users.get');
+        const userDoc = await withTimeout(ref.get(), 6000, 'users.get');
 
+        let response;
         if (!userDoc.exists) {
             const newUser = {
                 steamId, displayName: null, photoURL: null, balance: 5, inventory: [],
@@ -61,33 +69,40 @@ module.exports = async (req, res) => {
                 housePlayerLost: 0, houseCasinoWon: 0, bestDrop: null, bestUpgrade: null,
                 xp: 0, level: 1, createdAt: Date.now(), updatedAt: Date.now()
             };
-            await withTimeout(ref.set(newUser), 7000, 'users.set');
-            return res.status(200).json(newUser);
+            await withTimeout(ref.set(newUser), 6000, 'users.set');
+            response = newUser;
+        } else {
+            const d = userDoc.data();
+            response = {
+                steamId: d.steamId || steamId,
+                displayName: d.displayName || null,
+                photoURL: d.photoURL || null,
+                balance: d.balance || 0,
+                inventory: d.inventory || [],
+                totalWon: d.totalWon || 0,
+                totalLost: d.totalLost || 0,
+                totalSold: d.totalSold || 0,
+                profit: round2((d.totalWon || 0) - (d.totalLost || 0)),
+                upgrades: d.upgrades || 0,
+                purchases: d.purchases || 0,
+                housePlayerLost: d.housePlayerLost || 0,
+                houseCasinoWon: d.houseCasinoWon || 0,
+                bestDrop: d.bestDrop || null,
+                bestUpgrade: d.bestUpgrade || null,
+                xp: d.xp || 0,
+                level: d.level || 1
+            };
         }
 
-        const d = userDoc.data();
-        return res.status(200).json({
-            steamId: d.steamId || steamId,
-            displayName: d.displayName || null,
-            photoURL: d.photoURL || null,
-            balance: d.balance || 0,
-            inventory: d.inventory || [],
-            totalWon: d.totalWon || 0,
-            totalLost: d.totalLost || 0,
-            totalSold: d.totalSold || 0,
-            // сервер не оновлює поле profit, тому рахуємо тут
-            profit: round2((d.totalWon || 0) - (d.totalLost || 0)),
-            upgrades: d.upgrades || 0,
-            purchases: d.purchases || 0,
-            housePlayerLost: d.housePlayerLost || 0,
-            houseCasinoWon: d.houseCasinoWon || 0,
-            bestDrop: d.bestDrop || null,
-            bestUpgrade: d.bestUpgrade || null,
-            xp: d.xp || 0,
-            level: d.level || 1
-        });
+        _userCache.set(steamId, { ts: Date.now(), data: response });
+        return res.status(200).json(response);
     } catch (e) {
         console.error('[user] error:', e.code, e.message);
         return res.status(500).json({ error: 'Internal error', code: String(e.code || 'UNKNOWN') });
     }
+};
+
+/* Експорт, щоб інші функції могли очистити кеш після зміни балансу */
+module.exports.invalidateUserCache = (uid) => {
+    _userCache.delete(uid);
 };
