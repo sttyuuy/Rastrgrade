@@ -89,6 +89,8 @@
 
         getUserData: getUserDataCached,
 
+            getPrices: () => apiRequest('/prices', {}, 15000),
+
         buyItem: (skinId, qty) => apiRequest('/buy', {
             method: 'POST',
             body: JSON.stringify({ skinId, qty: qty || 1 })
