@@ -166,7 +166,7 @@ async function _lc(){
     if(!_UPA && _CU.photoURL) _UPA = _CU.photoURL;
     _sortedInvCache = { key: '', data: null };
     try {
-        var ui = JSON.parse(localStorage.getItem('rastrgrade_ui') || '{}');
+        var ui = JSON.parse(localStorage.getItem('rustup_ui') || '{}');
         if(ui.soundOn !== undefined) state.soundOn = ui.soundOn;
         if(ui.shopFilter) state.shopFilter = ui.shopFilter;
         if(ui.shopSort) state.shopSort = ui.shopSort;
@@ -179,7 +179,7 @@ function save(){
     if(_SAVE_TIMER) clearTimeout(_SAVE_TIMER);
     _SAVE_TIMER = setTimeout(function(){
         try {
-            localStorage.setItem('rastrgrade_ui', JSON.stringify({
+            localStorage.setItem('rustup_ui', JSON.stringify({
                 soundOn: state.soundOn,
                 shopFilter: state.shopFilter,
                 shopSort: state.shopSort,
@@ -432,7 +432,7 @@ function _cr(){_ck();$('resultModal').classList.remove('show');}
 var _CR=100;var _CC=2*Math.PI*_CR;
 
 /* ============================================================
-   _dc — ОДНА ДУГА, РОСТЕ ВІД НИЗУ В ОБИДВА БОКИ
+   _dc — ОДНА ДУГА
    ============================================================ */
 function _dc(c){
     c = Math.max(0, Math.min(100, c));
@@ -456,7 +456,7 @@ function _uc(){if(!state.upgradeSource||!state.upgradeTarget){_cc(0,'ВЫБЕР�
 function _rp1(){var cn=$('presetContainer');if(!cn)return;var f=document.createDocumentFragment();var hs=!!state.upgradeSource;_P.forEach(function(p,i){var b=document.createElement('button');b.className='upg-preset-btn';b.disabled=!hs;b.dataset.idx=i;var dt='—';if(hs){var sp=_a1(state.upgradeSource);var tp=sp*p.mult;var t=_tg(tp,state.upgradeSource);if(t&&_a1(t)>sp){var rc=_ch(sp,_a1(t));if(rc>=10)dt=Math.round(rc)+'%';else dt=rc.toFixed(2)+'%';}}b.innerHTML='<span class="upg-preset-mult">'+p.label+'</span><span class="upg-preset-chance">'+dt+'</span>';if(state.selectedPreset===i)b.classList.add('active');b.addEventListener('click',function(e){e.stopPropagation();_sp2(i);});f.appendChild(b);});cn.replaceChildren(f);}
 
 function _sp2(i){
-    if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ ПІД ЧАС АПГРЕЙДУ
+    if(_BUSY || state.upgrading) return;
     if(!state.upgradeSource){_lg('Сначала выбери предмет','lose');_ck();return;}
     _un();_ck();
     if(_a1(state.upgradeSource)>=_MX*0.99){_lg('Это максимальный скин','lose');return;}
@@ -484,10 +484,10 @@ function _ri(){
         var e=document.createElement('div');
         e.className='upg-inv-item '+sk.rarity;
         if(state.upgradeSource&&state.upgradeSource===sk)e.classList.add('used');
-        if(_BUSY || state.upgrading) e.classList.add('blocked');   // ← БЛОКУВАННЯ
+        if(_BUSY || state.upgrading) e.classList.add('blocked');
         e.innerHTML=renderSkinIcon(sk)+'<div class="upg-inv-name">'+sk.name+'</div><div class="upg-inv-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';
         e.addEventListener('click',function(){
-            if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ ПІД ЧАС АПГРЕЙДУ
+            if(_BUSY || state.upgrading) return;
             _un();_ck();
             state.upgradeSource=sk;
             state.upgradeTarget=null;
@@ -514,10 +514,10 @@ function _rt2(){
         var e=document.createElement('div');
         e.className='upg-target-item '+sk.rarity;
         if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){e.style.borderColor='#f5c542';e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';}
-        if(_BUSY || state.upgrading) e.classList.add('blocked');   // ← БЛОКУВАННЯ
+        if(_BUSY || state.upgrading) e.classList.add('blocked');
         e.innerHTML=renderSkinIcon(sk)+'<div class="upg-target-name">'+sk.name+'</div><div class="upg-target-price">'+formatRastr(_a1(sk))+' '+_MF_ICON+'</div>';
         e.addEventListener('click',function(){
-            if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ ПІД ЧАС АПГРЕЙДУ
+            if(_BUSY || state.upgrading) return;
             if(!state.upgradeSource){_lg('Сначала выбери свой предмет','lose');_ck();return;}
             if(sk.id===state.upgradeSource.id){_lg('Нельзя апгрейдить в себя','lose');_ck();return;}
             if(_a1(sk)<=_a1(state.upgradeSource)){_lg('Цель должна быть дороже','lose');_ck();return;}
@@ -609,7 +609,6 @@ async function _hu(){
     state.upgrading=true;
     b.disabled=true;
 
-    // Блокуємо всі елементи UI
     document.querySelectorAll('.upg-inv-item, .upg-target-item, .upg-preset-btn, .upg-btn-remove').forEach(function(el){
         el.classList.add('blocked');
     });
@@ -665,7 +664,6 @@ async function _hu(){
         b.disabled=false;
     } finally {
         _BUSY = false;
-        // Розблоковуємо UI
         document.querySelectorAll('.upg-inv-item, .upg-target-item, .upg-preset-btn, .upg-btn-remove').forEach(function(el){
             el.classList.remove('blocked');
         });
@@ -989,14 +987,14 @@ function _ah(){
     var sr=$('sourceRemoveBtn');
     if(sr)sr.addEventListener('click',function(e){
         e.stopPropagation();
-        if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ
+        if(_BUSY || state.upgrading) return;
         _un();_ck();_rz();
     });
 
     var tr=$('targetRemoveBtn');
     if(tr)tr.addEventListener('click',function(e){
         e.stopPropagation();
-        if(_BUSY || state.upgrading) return;   // ← БЛОКУВАННЯ
+        if(_BUSY || state.upgrading) return;
         _un();_ck();
         state.upgradeTarget=null;
         state.selectedPreset=null;
