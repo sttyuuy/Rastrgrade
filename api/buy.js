@@ -27,7 +27,7 @@ function withTimeout(p, ms, label) {
     ]);
 }
 
-/* Ціни з Firestore — те саме джерело, що й на клієнті */
+/* ── Кеш цін скінів ── */
 let _priceCache = null;
 let _priceCacheAt = 0;
 const PRICE_CACHE_TTL = 5 * 60 * 1000;
@@ -47,7 +47,7 @@ async function getFirestorePrices(db) {
         return map;
     } catch (e) {
         console.error('[buy] prices error:', e.message);
-        return _priceCache || {}; // не кешуємо помилку
+        return _priceCache || {};
     }
 }
 
@@ -55,6 +55,14 @@ async function getEffectivePrice(db, skin) {
     const prices = await getFirestorePrices(db);
     const fsPrice = prices[norm(skin.name)];
     return (fsPrice && fsPrice > 0) ? fsPrice : (skin.price || 0);
+}
+
+/* Очищення кешу користувача після зміни */
+function invalidateUserCache(uid) {
+    try {
+        const userMod = require('./user');
+        if (userMod.invalidateUserCache) userMod.invalidateUserCache(uid);
+    } catch (e) { /* ignore */ }
 }
 
 module.exports = async (req, res) => {
@@ -74,7 +82,7 @@ module.exports = async (req, res) => {
 
     let steamId;
     try {
-        const decoded = await withTimeout(getAuth().verifyIdToken(token), 6000, 'verifyIdToken');
+        const decoded = await withTimeout(getAuth().verifyIdToken(token), 5000, 'verifyIdToken');
         steamId = decoded.uid;
     } catch {
         return res.status(401).json({ error: 'Invalid token' });
@@ -138,6 +146,7 @@ module.exports = async (req, res) => {
             return { balance: newBalance, inventory, item: items[items.length - 1], items, spent: total, qty };
         }), 12000, 'transaction');
 
+        invalidateUserCache(steamId);
         return res.status(200).json(result);
     } catch (err) {
         if (err.message === 'Недостатньо коштів') return res.status(400).json({ error: 'Недостатньо коштів' });
