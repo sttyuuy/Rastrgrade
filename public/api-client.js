@@ -1,6 +1,6 @@
 /**
- * API-клієнт для Rastgrade.
- * Працює як звичайний скрипт (без import/export).
+ * API-клієнт для Rastgrade. Звичайний скрипт (без import/export).
+ * Кожен запит має тайм-аут, щоб сайт не «висів» при повільному сервері.
  */
 (function () {
     'use strict';
@@ -11,18 +11,30 @@
     function setAuthToken(token) { _authToken = token; }
     function clearAuthToken() { _authToken = null; }
 
-    async function apiRequest(path, options = {}) {
-        const headers = {
-            'Content-Type': 'application/json',
-            ...(options.headers || {})
-        };
+    async function apiRequest(path, options = {}, timeoutMs = 15000) {
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
         if (_authToken) headers['Authorization'] = `Bearer ${_authToken}`;
 
-        const res = await fetch(`${API_BASE}${path}`, {
-            ...options,
-            headers,
-            credentials: 'include'
-        });
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+
+        let res;
+        try {
+            res = await fetch(`${API_BASE}${path}`, {
+                ...options,
+                headers,
+                credentials: 'include',
+                signal: ctrl.signal
+            });
+        } catch (e) {
+            const err = new Error(e.name === 'AbortError'
+                ? 'Сервер не отвечает, попробуй ещё раз'
+                : 'Нет соединения с сервером');
+            err.status = 0;
+            throw err;
+        } finally {
+            clearTimeout(timer);
+        }
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -35,39 +47,32 @@
     }
 
     window.apiClient = {
-        // ===== Auth =====
         setAuthToken,
         clearAuthToken,
         getSteamAuthUrl: () => `${API_BASE}/steam-auth`,
 
-        // ===== User =====
-        getUserData: () => apiRequest('/user'),
+        getUserData: () => apiRequest('/user', {}, 6000),
 
-        // ===== Buy =====
-        buyItem: (skinId) => apiRequest('/buy', {
+        buyItem: (skinId, qty) => apiRequest('/buy', {
             method: 'POST',
-            body: JSON.stringify({ skinId })
-        }),
+            body: JSON.stringify({ skinId, qty: qty || 1 })
+        }, 20000),
 
-        // ===== Sell =====
         sellItem: (itemUid) => apiRequest('/sell', {
             method: 'POST',
             body: JSON.stringify({ itemUid })
         }),
 
-        // ===== Sell All =====
         sellAllItems: () => apiRequest('/sell-all', {
             method: 'POST',
             body: JSON.stringify({})
         }),
 
-        // ===== Upgrade =====
         doUpgrade: (sourceUid, targetId) => apiRequest('/upgrade', {
             method: 'POST',
             body: JSON.stringify({ sourceUid, targetId })
         }),
 
-        // ===== Admin: Set Balance (тільки для адміна) =====
         setBalance: (amount, targetUid, mode) => apiRequest('/admin/set-balance', {
             method: 'POST',
             body: JSON.stringify({ amount, targetUid, mode })
