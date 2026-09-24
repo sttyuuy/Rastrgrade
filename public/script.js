@@ -966,6 +966,7 @@ function _init(){
     if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'S':'M';
     _ah();
     _fb();
+    loadPricesFromApi();   // ← ДОДАЙ ЦЕ
     _pr();
 }
 
