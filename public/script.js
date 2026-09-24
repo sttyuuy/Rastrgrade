@@ -40,26 +40,33 @@ function _clearCaches(){
     _sortedInvCache = { key: '', data: null };
 }
 
+/* ============================================================
+   А. ІНДЕКСИ + loadPricesFromFirestore
+   ============================================================ */
+function _buildIndexes(){
+    window._skinsByName = {};
+    window._skinsById = {};
+    if(window.SKINS){
+        window.SKINS.forEach(function(s){
+            window._skinsByName[_norm(s.name)] = s;
+            window._skinsById[s.id] = s;
+        });
+    }
+}
+_buildIndexes();
+
 async function loadPricesFromFirestore(){
-    if(!window.fbDb) return;
+    if(!window.fbDb){
+        window.addEventListener('fb-ready', loadPricesFromFirestore, {once:true});
+        return;
+    }
     try{
-        window._skinsByName = {};
-        window._skinsById = {};
-        if(window.SKINS){
-            window.SKINS.forEach(function(s){
-                window._skinsByName[_norm(s.name)] = s;
-                window._skinsById[s.id] = s;
-            });
-        }
         var snap = await window.fbGetDocs(window.fbCollection(window.fbDb,'skins'));
         var count = 0;
         _firestorePrices = {};
         snap.forEach(function(doc){
             var d = doc.data();
-            if(d.name && d.price){
-                _firestorePrices[_norm(d.name)] = d.price;
-                count++;
-            }
+            if(d.name && d.price){ _firestorePrices[_norm(d.name)] = d.price; count++; }
         });
         _clearCaches();
         console.log('✅ Загружено цен из Firestore:', count);
@@ -125,74 +132,58 @@ function _fb(){
     });
 }
 
+/* ============================================================
+   Б. _mapInv + _lc
+   ============================================================ */
+function _mapInv(list){
+    return (list || []).map(function(i){
+        if(!i.svg && window._skinsById[i.id]) i.svg = window._skinsById[i.id].svg;
+        return i;
+    });
+}
+
 async function _lc(){
     if(!_CU) return;
+    var d = null;
     try{
-        var data = await window.apiClient.getUserData();
-
-        state.balance = data.balance || 0;
-        state.inventory = (data.inventory || []).map(function(i){
-            if(!i.svg && window._skinsById[i.id]){
-                i.svg = window._skinsById[i.id].svg;
-            }
-            return i;
-        });
-        state.totalWon = data.totalWon || 0;
-        state.totalLost = data.totalLost || 0;
-        state.totalSold = data.totalSold || 0;
-        state.profit = data.profit || 0;
-        state.upgrades = data.upgrades || 0;
-        state.purchases = data.purchases || 0;
-        state.housePlayerLost = data.housePlayerLost || 0;
-        state.houseCasinoWon = data.houseCasinoWon || 0;
-        state.bestDrop = data.bestDrop ? (window._skinsById[data.bestDrop.id] || data.bestDrop) : null;
-        state.bestUpgrade = data.bestUpgrade ? (window._skinsById[data.bestUpgrade.id] || data.bestUpgrade) : null;
-        state.xp = data.xp || 0;
-        state.level = data.level || 1;
-
-        if(data.displayName) _UDN = data.displayName;
-        if(data.photoURL) _UPA = data.photoURL;
-        if(!_UDN && _CU.displayName) _UDN = _CU.displayName;
-        if(!_UPA && _CU.photoURL) _UPA = _CU.photoURL;
-
-        _sortedInvCache = { key: '', data: null };
-
-        try {
-            var ui = JSON.parse(localStorage.getItem('rastrgrade_ui') || '{}');
-            if(ui.soundOn !== undefined) state.soundOn = ui.soundOn;
-            if(ui.shopFilter) state.shopFilter = ui.shopFilter;
-            if(ui.shopSort) state.shopSort = ui.shopSort;
-            if(ui.spinSpeed) state.spinSpeed = ui.spinSpeed;
-        } catch(e){}
-
-    } catch(e) {
-        console.error('[lc] API error:', e);
-        try {
-            var r = window.fbDoc(window.fbDb,'users',_CU.uid);
-            var s = await window.fbGetDoc(r);
-            if(s.exists()){
-                var d = s.data();
-                state.balance = d.balance || 0;
-                state.inventory = (d.inventory || []).map(resolveSkin).filter(Boolean);
-                state.totalWon = d.totalWon || 0;
-                state.totalLost = d.totalLost || 0;
-                state.profit = d.profit || 0;
-                state.upgrades = d.upgrades || 0;
-                state.purchases = d.purchases || 0;
-                state.housePlayerLost = d.housePlayerLost || 0;
-                state.houseCasinoWon = d.houseCasinoWon || 0;
-                state.bestDrop = d.bestDrop ? (window._skinsById[d.bestDrop.id] || d.bestDrop) : null;
-                state.bestUpgrade = d.bestUpgrade ? (window._skinsById[d.bestUpgrade.id] || d.bestUpgrade) : null;
-                state.xp = d.xp || 0;
-                state.level = d.level || 1;
-                if(d.displayName) _UDN = d.displayName;
-                if(d.photoURL) _UPA = d.photoURL;
-            }
-        } catch(fallbackErr) {
-            console.error('[lc] fallback error:', fallbackErr);
-            state.balance = START_BALANCE;
-        }
+        d = await window.apiClient.getUserData();
+    }catch(e){
+        console.warn('[lc] API недоступний, беру з Firestore:', e.message, e.data || '');
+        try{
+            var s = await window.fbGetDoc(window.fbDoc(window.fbDb,'users',_CU.uid));
+            if(s.exists()) d = s.data();
+        }catch(fe){ console.error('[lc] fallback error:', fe); }
     }
+    if(d){
+        state.balance = d.balance || 0;
+        state.inventory = _mapInv(d.inventory);
+        state.totalWon = d.totalWon || 0;
+        state.totalLost = d.totalLost || 0;
+        state.totalSold = d.totalSold || 0;
+        state.profit = Math.round((state.totalWon - state.totalLost) * 100) / 100;
+        state.upgrades = d.upgrades || 0;
+        state.purchases = d.purchases || 0;
+        state.housePlayerLost = d.housePlayerLost || 0;
+        state.houseCasinoWon = d.houseCasinoWon || 0;
+        state.bestDrop = d.bestDrop ? (window._skinsById[d.bestDrop.id] || d.bestDrop) : null;
+        state.bestUpgrade = d.bestUpgrade ? (window._skinsById[d.bestUpgrade.id] || d.bestUpgrade) : null;
+        state.xp = d.xp || 0;
+        state.level = d.level || 1;
+        if(d.displayName) _UDN = d.displayName;
+        if(d.photoURL) _UPA = d.photoURL;
+    } else {
+        state.balance = START_BALANCE;
+    }
+    if(!_UDN && _CU.displayName) _UDN = _CU.displayName;
+    if(!_UPA && _CU.photoURL) _UPA = _CU.photoURL;
+    _sortedInvCache = { key: '', data: null };
+    try {
+        var ui = JSON.parse(localStorage.getItem('rastrgrade_ui') || '{}');
+        if(ui.soundOn !== undefined) state.soundOn = ui.soundOn;
+        if(ui.shopFilter) state.shopFilter = ui.shopFilter;
+        if(ui.shopSort) state.shopSort = ui.shopSort;
+        if(ui.spinSpeed) state.spinSpeed = ui.spinSpeed;
+    } catch(e){}
 }
 
 function save(){
@@ -214,13 +205,16 @@ function _ol(){var m=document.getElementById('logoutModal');if(m)m.classList.add
 function _cl(){var m=document.getElementById('logoutModal');if(m)m.classList.remove('show');}
 async function _lo(){_cl();try{await window.fbSignOut(window.fbAuth);_lg('Вы вышли','info');}catch(e){console.error(e);}}
 
+/* ============================================================
+   Г. _ub — аватарка з referrerpolicy
+   ============================================================ */
 function _ub(){
     var b=document.getElementById('userBadge');
     var i=document.getElementById('userBadgeIcon');
     if(!b||!i)return;
     if(_CU){
         b.title='Профиль';
-        if(_UPA){i.innerHTML='<img src="'+_UPA+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
+        if(_UPA){i.innerHTML='<img src="'+_UPA+'" referrerpolicy="no-referrer" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
         else{i.textContent='X';}
     }else{b.title='Войти';i.textContent='?';}
 }
@@ -459,8 +453,6 @@ function _dc(c){
     c = Math.max(0, Math.min(100, c));
     var el = $('chanceSector');
     if(!el) return;
-    // pathLength=100, тому c — це прямо відсотки довжини дуги.
-    // dashoffset = c/2 центрує дугу на початку шляху (6 година).
     el.style.strokeDasharray = c + ' ' + (100 - c);
     el.style.strokeDashoffset = (c / 2);
     el.style.opacity = c <= 0 ? '0' : '1';
@@ -490,14 +482,12 @@ function _pa(c, w){
         if(_paRAF){ cancelAnimationFrame(_paRAF); _paRAF = null; }
         var d = state.spinSpeed === 'fast' ? 2600 : 4800;
 
-        // Зона перемоги: центр — 180° (низ), пів-ширини = c * 1.8°
         var half = c * 1.8;
         var fa;
         if(w){
             var g1 = Math.min(5, half * 0.3);
             fa = 180 + (Math.random() * 2 - 1) * (half - g1);
         } else {
-            // Зона програшу — все інше, центр 0° (верх)
             var loseHalf = 180 - half;
             var g2 = Math.min(5, loseHalf * 0.3);
             fa = (Math.random() * 2 - 1) * (loseHalf - g2);
@@ -589,7 +579,7 @@ async function _hu(){
             state.housePlayerLost += _a1(ss);
         }
         state.upgrades++;
-        state.profit = state.totalWon - state.totalLost;
+        state.profit = Math.round((state.totalWon - state.totalLost) * 100) / 100;
         _sortedInvCache = { key: '', data: null };
         _ui(); _rinv(); _ri(); _pr();
         state.upgradeSource=null;
@@ -749,7 +739,7 @@ function _ra(){_rs1();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'В�
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
-   ПРОФІЛЬ — _pr()
+   ПРОФІЛЬ — _pr() — Г. аватарка з referrerpolicy
    ============================================================ */
 function _pr(){
     var nl = $('profileNotLogged');
@@ -773,7 +763,7 @@ function _pr(){
 
     var av = $('profileAvatar');
     if(_UPA){
-        av.innerHTML = '<img src="' + _UPA + '" alt="">';
+        av.innerHTML = '<img src="' + _UPA + '" referrerpolicy="no-referrer" alt="">';
         av.className = 'profile-avatar has-img';
     } else {
         av.textContent = nick.charAt(0).toUpperCase();
@@ -860,10 +850,13 @@ function _ah(){
     var plo = $('profileLogoutBtn');
     if(plo) plo.addEventListener('click', function(){ _ck(); _ol(); });
 
+    /* ============================================================
+       В. buyConfirm — одна транзакція через apiClient.buyItem(id, qty)
+       ============================================================ */
     var bcf=$('buyConfirm');
     if(bcf)bcf.addEventListener('click',async function(){
         if(_BUSY) return;
-        if(!_pp)return;
+        if(!_pp) return;
         var sk=_pp.skin;
         var q=_pq||1;
         _ck();
@@ -872,23 +865,16 @@ function _ah(){
         bcf.disabled = true;
         bcf.textContent = '...';
         try {
-            var unitPrice = _pp.price;
-            var totalSpent = 0;
-            var addedItems = [];
-            for(var i=0;i<q;i++){
-                var r = await window.apiClient.buyItem(sk.id);
-                if(r && r.item) addedItems.push(r.item);
-                totalSpent += unitPrice;
-            }
+            var r = await window.apiClient.buyItem(sk.id, q);
             _by();
             _lg('Куплено: '+sk.name+' x'+q,'win');
-            state.balance -= totalSpent;
-            state.totalLost += totalSpent;
+            state.balance = r.balance;
+            state.inventory = _mapInv(r.inventory);
+            state.totalLost += (r.spent || 0);
             state.purchases += q;
-            state.profit = state.totalWon - state.totalLost;
-            for(var j=0;j<addedItems.length;j++) state.inventory.push(addedItems[j]);
+            state.profit = Math.round((state.totalWon - state.totalLost) * 100) / 100;
             _sortedInvCache = { key: '', data: null };
-            _ui(); _rinv(); _ri(); _pr();
+            _ui(); _rinv(); _ri(); _pr(); _rsh();
             $('buyModal').classList.remove('show');
             _pp=null; _pq=1;
         } catch(e) {
