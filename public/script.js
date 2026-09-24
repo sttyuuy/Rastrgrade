@@ -54,6 +54,27 @@ function _buildIndexes(){
     }
 }
 _buildIndexes();
+
+/* ============================================================
+   ЗАВАНТАЖЕННЯ ЦІН З API (1 запит замість 276 читань Firestore)
+   ============================================================ */
+async function loadPricesFromApi(){
+    if(!window.apiClient || !window.apiClient.getPrices) return;
+    try {
+        var map = await window.apiClient.getPrices();
+        _firestorePrices = map || {};
+        _clearCaches();
+        console.log('✅ Загружено цен з API:', Object.keys(_firestorePrices).length);
+        if(typeof _rsh === 'function') _rsh();
+        if(typeof _rinv === 'function') _rinv();
+        if(typeof _ri === 'function') _ri();
+        if(typeof _rt2 === 'function') _rt2();
+        if(typeof _ui === 'function') _ui();
+        if(typeof _pr === 'function') _pr();
+    } catch(e) {
+        console.warn('Не вдалось завантажити ціни з API:', e.message);
+    }
+}
 var _P=[{mult:1.5,label:'x1.5'},{mult:2,label:'x2'},{mult:3,label:'x3'},{mult:5,label:'x5'},{mult:10,label:'x10'},{mult:20,label:'x20'},{mult:50,label:'x50'},{mult:100,label:'x100'},{mult:500,label:'x500'}];
 var _L=[{lvl:1,xp:0,name:'НОВИЧОК'},{lvl:2,xp:1000,name:'ЛЮБИТЕЛЬ'},{lvl:3,xp:5000,name:'ИГРОК'},{lvl:4,xp:15000,name:'ПРОФИ'},{lvl:5,xp:40000,name:'ЭКСПЕРТ'},{lvl:6,xp:100000,name:'МАСТЕР'},{lvl:7,xp:250000,name:'ГУРУ'},{lvl:8,xp:500000,name:'ЛЕГЕНДА'},{lvl:9,xp:1000000,name:'ТИТАН'},{lvl:10,xp:2500000,name:'БОГ КАЗИНО'}];
 var _MX=999999;
