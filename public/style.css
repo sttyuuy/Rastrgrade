@@ -537,74 +537,73 @@ a{color:inherit}
         font-size: 0.55rem;
     }
 
-    /* --- МАГАЗИН --- */
-    .shop-info-bar { padding: 10px 14px; font-size: 0.78rem; }
-    .shop-filters { gap: 6px; margin-bottom: 12px; }
+        /* --- МАГАЗИН --- */
+    .shop-info-bar {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        margin-bottom: 10px;
+    }
+    .shop-info-value { font-size: 0.9rem; }
+    .shop-filters {
+        gap: 5px;
+        margin-bottom: 10px;
+    }
     .shop-filter {
-        padding: 7px 12px;
-        font-size: 0.7rem;
-        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 0.65rem;
+        border-radius: 7px;
+        letter-spacing: 0.5px;
     }
     .shop-sort {
         margin-left: 0;
         width: 100%;
-        padding: 8px 12px;
-        font-size: 0.75rem;
-        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 0.7rem;
+        border-radius: 7px;
+        margin-top: 4px;
     }
     .shop-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
     }
     .shop-item {
-        padding: 12px 8px;
-        border-radius: 14px;
+        padding: 8px 4px;
+        border-radius: 10px;
         border-width: 1px;
     }
-    .shop-item .skin-icon { width: 60px; height: 60px; margin-bottom: 6px; }
-    .shop-item .name { font-size: 0.62rem; margin-bottom: 6px; }
-    .shop-item .rarity-label { font-size: 0.52rem; margin-bottom: 5px; }
-    .shop-item .price { font-size: 0.82rem; }
-    .shop-item .price-row { margin-bottom: 8px; }
+    .shop-item .skin-icon {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 4px;
+    }
+    .shop-item .name {
+        font-size: 0.55rem;
+        margin-bottom: 4px;
+        min-height: auto;
+        line-height: 1.15;
+    }
+    .shop-item .rarity-label {
+        font-size: 0.45rem;
+        margin-bottom: 3px;
+        letter-spacing: 0.5px;
+    }
+    .shop-item .price {
+        font-size: 0.7rem;
+        gap: 2px;
+    }
+    .shop-item .price-row {
+        margin-bottom: 5px;
+    }
+    .shop-item .price img {
+        width: 12px !important;
+        height: 12px !important;
+    }
     .shop-item .buy-btn {
-        padding: 8px 10px;
-        font-size: 0.68rem;
-        letter-spacing: 1px;
-        border-radius: 8px;
+        padding: 6px 6px;
+        font-size: 0.58rem;
+        letter-spacing: 0.5px;
+        border-radius: 7px;
     }
-
-    /* --- ІНВЕНТАР --- */
-    .inv-filters { gap: 6px; margin-bottom: 12px; }
-    .inv-filter {
-        padding: 7px 12px;
-        font-size: 0.7rem;
-        border-radius: 8px;
-    }
-    .btn-mini {
-        padding: 7px 12px;
-        font-size: 0.7rem;
-        border-radius: 8px;
-        margin-left: 0 !important;
-        width: 100%;
-    }
-    .inv-grid, .inventory-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-    .inv-item {
-        padding: 10px 8px;
-        border-radius: 12px;
-        border-width: 1px;
-    }
-    .inv-item .skin-icon { width: 64px; height: 64px; margin-bottom: 6px; }
-    .inv-item .name { font-size: 0.6rem; margin-bottom: 4px; }
-    .inv-item .price { font-size: 0.75rem; margin-bottom: 6px; }
-    .inv-item .sell-btn {
-        padding: 7px 10px;
-        font-size: 0.68rem;
-        border-radius: 8px;
-    }
-
     /* --- ПРОФІЛЬ --- */
     .profile-head {
         padding: 14px;
