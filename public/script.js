@@ -972,7 +972,6 @@ function _init(){
     if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'S':'M';
     _ah();
     _fb();
-    loadPricesFromFirestore();
     _pr();
 }
 
