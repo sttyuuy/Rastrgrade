@@ -46,12 +46,48 @@
         return data;
     }
 
+    /* ============================================================
+       КЕШ getUserData — щоб не спамити Firestore
+       ============================================================ */
+    let _lastUserFetch = 0;
+    let _lastUserData = null;
+    let _lastUserPromise = null;
+    const USER_CACHE_MS = 3000;
+
+    async function getUserDataCached() {
+        const now = Date.now();
+        if (_lastUserData && now - _lastUserFetch < USER_CACHE_MS) {
+            return _lastUserData;
+        }
+        if (_lastUserPromise) return _lastUserPromise;
+
+        _lastUserPromise = apiRequest('/user', {}, 12000)
+            .then(data => {
+                _lastUserData = data;
+                _lastUserFetch = Date.now();
+                _lastUserPromise = null;
+                return data;
+            })
+            .catch(err => {
+                _lastUserPromise = null;
+                throw err;
+            });
+
+        return _lastUserPromise;
+    }
+
+    function invalidateUserData() {
+        _lastUserData = null;
+        _lastUserFetch = 0;
+    }
+
     window.apiClient = {
         setAuthToken,
         clearAuthToken,
+        invalidateUserData,
         getSteamAuthUrl: () => `${API_BASE}/steam-auth`,
 
-        getUserData: () => apiRequest('/user', {}, 12000),
+        getUserData: getUserDataCached,
 
         buyItem: (skinId, qty) => apiRequest('/buy', {
             method: 'POST',
