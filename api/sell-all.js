@@ -12,6 +12,20 @@ function setHeaders(res) {
     res.setHeader('X-Frame-Options', 'DENY');
 }
 
+function withTimeout(p, ms, label) {
+    return Promise.race([
+        p,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT ' + label)), ms))
+    ]);
+}
+
+function invalidateUserCache(uid) {
+    try {
+        const userMod = require('./user');
+        if (userMod.invalidateUserCache) userMod.invalidateUserCache(uid);
+    } catch (e) { /* ignore */ }
+}
+
 module.exports = async (req, res) => {
     setHeaders(res);
 
@@ -29,7 +43,7 @@ module.exports = async (req, res) => {
 
     let steamId;
     try {
-        const decoded = await getAuth().verifyIdToken(token);
+        const decoded = await withTimeout(getAuth().verifyIdToken(token), 5000, 'verifyIdToken');
         steamId = decoded.uid;
     } catch {
         return res.status(401).json({ error: 'Invalid token' });
@@ -39,14 +53,13 @@ module.exports = async (req, res) => {
         const db = getFirestore();
         const userRef = db.collection('users').doc(steamId);
 
-        const result = await db.runTransaction(async (tx) => {
+        const result = await withTimeout(db.runTransaction(async (tx) => {
             const doc = await tx.get(userRef);
             if (!doc.exists) throw new Error('User not found');
 
             const data = doc.data();
             const inventory = Array.isArray(data.inventory) ? data.inventory : [];
 
-            // ⚠️ Беремо РЕАЛЬНУ ціну з кожного предмета (item.price)
             const total = Math.round(
                 inventory.reduce((sum, item) => sum + (Number(item.price) || 0), 0) * 100
             ) / 100;
@@ -61,8 +74,9 @@ module.exports = async (req, res) => {
             });
 
             return { total, balance: newBalance };
-        });
+        }), 12000, 'transaction');
 
+        invalidateUserCache(steamId);
         return res.status(200).json(result);
     } catch (e) {
         console.error('[sell-all] error:', e.message);
