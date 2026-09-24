@@ -12,6 +12,20 @@ function setHeaders(res) {
     res.setHeader('X-Frame-Options', 'DENY');
 }
 
+function withTimeout(p, ms, label) {
+    return Promise.race([
+        p,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT ' + label)), ms))
+    ]);
+}
+
+function invalidateUserCache(uid) {
+    try {
+        const userMod = require('./user');
+        if (userMod.invalidateUserCache) userMod.invalidateUserCache(uid);
+    } catch (e) { /* ignore */ }
+}
+
 module.exports = async (req, res) => {
     setHeaders(res);
 
@@ -29,7 +43,7 @@ module.exports = async (req, res) => {
 
     let steamId;
     try {
-        const decoded = await getAuth().verifyIdToken(token);
+        const decoded = await withTimeout(getAuth().verifyIdToken(token), 5000, 'verifyIdToken');
         steamId = decoded.uid;
     } catch {
         return res.status(401).json({ error: 'Invalid token' });
@@ -43,15 +57,13 @@ module.exports = async (req, res) => {
     }
 
     const { itemUid } = body || {};
-    if (!itemUid || typeof itemUid !== 'string') {
-        return res.status(400).json({ error: 'Missing itemUid' });
-    }
+    if (!itemUid || typeof itemUid !== 'string') return res.status(400).json({ error: 'Missing itemUid' });
 
     try {
         const db = getFirestore();
         const userRef = db.collection('users').doc(steamId);
 
-        const result = await db.runTransaction(async (tx) => {
+        const result = await withTimeout(db.runTransaction(async (tx) => {
             const doc = await tx.get(userRef);
             if (!doc.exists) throw new Error('User not found');
 
@@ -62,7 +74,6 @@ module.exports = async (req, res) => {
             if (idx === -1) throw new Error('Item not in inventory');
 
             const item = inventory[idx];
-            // ⚠️ БЕРЕМО РЕАЛЬНУ ЦІНУ З ПРЕДМЕТА (item.price), а НЕ з каталогу
             const price = Number(item.price) || 0;
 
             inventory.splice(idx, 1);
@@ -77,8 +88,9 @@ module.exports = async (req, res) => {
             });
 
             return { balance: newBalance, sold: price, inventory };
-        });
+        }), 12000, 'transaction');
 
+        invalidateUserCache(steamId);
         return res.status(200).json(result);
     } catch (e) {
         console.error('[sell] error:', e.message);
