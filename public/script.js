@@ -1057,7 +1057,6 @@ function _init(){
     loadPricesFromApi();
     _pr();
 }
-
 window.state=state;
 window.save=save;
 window.log=_lg;
