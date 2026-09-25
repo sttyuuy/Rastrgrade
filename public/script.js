@@ -477,9 +477,9 @@ function _buildWinZone(chancePct){
     // Зона виграшу залежить від шансу — чим менше шанс, тим вужча зона
     // Але мінімум 5° для видимості
     var halfWidth = Math.max(5, Math.min(90, chancePct * 1.8));
-    // Знизу = 180°. Малюємо сектор від (180 - halfWidth) до (180 + halfWidth)
-    var startAngle = 180 - halfWidth;
-    var endAngle = 180 + halfWidth;
+    // Знизу відповідає куту 90° у системі координат SVG (0°=право, 90°=низ, 180°=ліво, 270°=верх)
+    var startAngle = 90 - halfWidth;
+    var endAngle = 90 + halfWidth;
 
     var startRad = startAngle * Math.PI / 180;
     var endRad = endAngle * Math.PI / 180;
