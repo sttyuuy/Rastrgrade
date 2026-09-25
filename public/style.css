@@ -1,686 +1,160 @@
 /* ============================================================
-   RASTRGRADE — стиль
-   Швидкість: без backdrop-filter, без нескінченних анімацій на картках,
-   content-visibility для довгих списків, шрифти з display=swap (у index.html)
+   КОЛЕСО АПГРЕЙДУ — новий стиль (як на референсі)
    ============================================================ */
-:root{
-  --bg:#07070c;--bg2:#0b0b12;--panel:#10101a;--panel2:#161622;--line:#25253a;
-  --text:#cfd0dc;--dim:#767690;
-  --accent:#ff6b1a;--accent2:#ffb347;--gold:#f5c542;--green:#00e676;--red:#ff3b3b;--blue:#4aa8ff;
-  --ease:cubic-bezier(.22,1,.36,1);
+
+/* Обгортка колеса */
+.upg-circle-wrap {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: grid;
+    place-items: center;
 }
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{background:var(--bg);color:var(--text);font:500 16px/1.3 'Rajdhani','Segoe UI',sans-serif;letter-spacing:.4px;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(60% 45% at 8% 0,rgba(255,107,26,.16),transparent),radial-gradient(50% 40% at 100% 100%,rgba(165,92,255,.13),transparent)}
-button{font:inherit;color:inherit;cursor:pointer}
-input,select{font:inherit}
-a{color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}
 
-/* Рідкість: задає лише змінну --rc, її використовують усі картки */
-.common{--rc:#8a8aa0}.uncommon{--rc:#4aa8ff}.rare{--rc:#a55cff}
-.epic{--rc:#ff3d9a}.legendary{--rc:#f5c542}.mythical{--rc:#ff0044}
+/* SVG з поділками і зоною виграшу */
+.upg-ring-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
 
-/* ---------- Шапка ---------- */
-.hud-header{position:relative;z-index:5;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:12px 22px;background:var(--bg2);border-bottom:1px solid var(--line)}
-.hud-header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.55}
-.hud-left,.hud-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:10px;font:900 1.35rem 'Orbitron',sans-serif;letter-spacing:3px;text-decoration:none;user-select:none;transition:transform .25s var(--ease)}
-.logo:hover{transform:scale(1.04)}
-.logo-icon{filter:drop-shadow(0 0 10px var(--accent))}
-.logo-rust{color:var(--accent);text-shadow:0 0 22px rgba(255,107,26,.8)}
-.logo-grade{color:#fff}
-.level-box{display:flex;align-items:center;gap:10px}
-.level-badge{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font:900 1rem 'Orbitron',sans-serif;color:#000;background:linear-gradient(135deg,var(--accent),var(--gold));box-shadow:0 0 20px rgba(255,107,26,.55)}
-.level-info{display:flex;flex-direction:column;gap:4px}
-.level-name{font-size:.7rem;font-weight:700;letter-spacing:1.5px;color:var(--accent)}
-.level-bar{width:110px;height:6px;border-radius:3px;background:#0a0a12;border:1px solid var(--line);overflow:hidden}
-.level-bar-fill{height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .5s}
-.hud-stat{display:flex;align-items:center;gap:10px;min-width:140px;padding:8px 16px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
-.hud-stat-icon:empty{display:none}
-.hud-stat-label{font-size:.62rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
-.hud-stat-value{display:flex;align-items:center;gap:6px;font:700 1rem 'Share Tech Mono',monospace;color:#fff}
-.hud-stat-value.gold{color:#ffd966;text-shadow:0 0 14px rgba(245,197,66,.55)}
-.hud-stat-value.green{color:var(--green)}.hud-stat-value.red{color:var(--red)}
-.hud-btn{width:44px;height:44px;display:grid;place-items:center;overflow:hidden;border-radius:12px;font-size:1.1rem;background:var(--panel);border:1px solid var(--line);transition:transform .25s var(--ease),border-color .2s,box-shadow .2s}
-.hud-btn:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,107,26,.3)}
-.hud-btn img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+/* Дуга шансу (росте знизу в обидва боки) */
+.upg-circle-sector {
+    fill: none;
+    stroke-width: 14;
+    stroke-linecap: round;
+    stroke-dasharray: 0 100;
+    stroke-dashoffset: 0;
+    opacity: 0;
+    filter: drop-shadow(0 0 8px rgba(255,150,40,0.5));
+    transition: stroke-dasharray 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                stroke-dashoffset 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.2s;
+}
 
-/* ---------- Навігація ---------- */
-.nav-tabs{position:sticky;top:0;z-index:20;display:flex;overflow-x:auto;scrollbar-width:none;background:rgba(11,11,18,.97);border-bottom:1px solid var(--line)}
-.nav-tabs::-webkit-scrollbar{display:none}
-.nav-tab{display:flex;align-items:center;gap:8px;padding:15px 24px;background:none;border:0;border-bottom:3px solid transparent;color:var(--dim);font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:2px;white-space:nowrap;transition:color .2s,background .2s}
-.nav-tab:hover{color:var(--text)}
-.nav-tab.active{color:#fff;border-bottom-color:var(--accent);background:linear-gradient(180deg,transparent,rgba(255,107,26,.16))}
-.nav-tab.active .nav-tab-icon{color:var(--accent);filter:drop-shadow(0 0 8px var(--accent))}
+/* Стрілка — біла, тонка, зверху */
+.upg-needle {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    transform-origin: 50% 50%;
+    transform: translateZ(0) rotate(0deg);
+    will-change: transform;
+}
 
-.main{position:relative;z-index:1;max-width:1600px;margin:0 auto;padding:20px}
-.page{display:none}
-.page.active{display:block;animation:fade .3s ease}
-@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.upg-needle-head {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 18px solid #ffffff;
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.9));
+}
 
-/* ---------- Картки та кнопки ---------- */
-.card{padding:26px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2))}
-.card-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:22px}
-.card-title{display:flex;align-items:center;gap:10px;margin-bottom:4px;font:900 1.3rem 'Orbitron',sans-serif;letter-spacing:3px;text-transform:uppercase;color:#fff}
-.card-title-icon{color:var(--accent)}
-.card-sub{font-size:.8rem;color:var(--dim);letter-spacing:1px}
+.upg-needle-body {
+    position: absolute;
+    top: 36px;
+    left: 50%;
+    width: 3px;
+    height: 40px;
+    transform: translateX(-50%);
+    border-radius: 2px;
+    background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.3) 70%, transparent 100%);
+    box-shadow: 0 0 6px rgba(255,255,255,0.6);
+}
 
-.btn-primary,.buy-btn,.sell-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 26px;border:0;border-radius:12px;color:#160800;font-weight:800;font-size:.9rem;text-transform:uppercase;letter-spacing:2px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 18px rgba(255,107,26,.35);transition:transform .25s var(--ease),box-shadow .25s,filter .25s}
-.btn-primary:hover,.buy-btn:hover:not(:disabled),.sell-btn:hover{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 10px 26px rgba(255,107,26,.55)}
-.btn-primary:active,.buy-btn:active,.sell-btn:active{transform:none}
-.btn-primary:disabled,.buy-btn:disabled,.upg-action-btn:disabled{background:#23232f;color:#5c5c70;box-shadow:none;cursor:not-allowed;transform:none;filter:none;letter-spacing:2px}
-.buy-btn,.sell-btn{width:100%;padding:10px 12px;font-size:.8rem;letter-spacing:1.5px}
-
-.btn-secondary,.btn-mini,.upg-btn-remove{padding:11px 20px;border-radius:10px;background:rgba(0,0,0,.4);border:1px solid var(--line);color:var(--text);font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;transition:transform .2s var(--ease),border-color .2s,color .2s}
-.btn-secondary:hover,.btn-mini:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
-.btn-mini{padding:9px 14px}
-.upg-btn-remove{padding:6px 14px;font-size:.72rem;text-transform:none;color:var(--dim)}
-.upg-btn-remove:hover{border-color:var(--red);color:var(--red)}
-
-.shop-filter,.inv-filter,.upg-inv-filter{padding:9px 18px;border-radius:10px;background:rgba(0,0,0,.4);border:1px solid var(--line);color:var(--dim);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:1.5px;transition:border-color .2s,color .2s,box-shadow .2s}
-.upg-inv-filter{padding:6px 11px;font-size:.68rem;letter-spacing:.5px;border-radius:8px}
-.shop-filter:hover,.inv-filter:hover,.upg-inv-filter:hover{border-color:var(--accent);color:var(--text)}
-.shop-filter.active,.inv-filter.active,.upg-inv-filter.active{color:#fff;border-color:currentColor;background:rgba(255,255,255,.06);box-shadow:0 0 16px -3px currentColor}
-
-/* ---------- Іконка скіна ---------- */
-.skin-icon{width:70px;height:70px;flex-shrink:0;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--rc,transparent) 55%,transparent))}
-.skin-icon img{width:100%;height:100%;object-fit:contain}
-
-/* ---------- Картки предметів (магазин, інвентар, апгрейд) ---------- */
-.shop-item,.inv-item,.upg-inv-item,.upg-target-item{position:relative;text-align:center;border-radius:14px;border:2px solid var(--rc,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--rc,#2a2a3c) 22%,transparent),transparent 68%),var(--panel);transition:transform .25s var(--ease),box-shadow .25s}
-.shop-item:hover,.inv-item:hover,.upg-inv-item:hover,.upg-target-item:hover{transform:translateY(-4px);box-shadow:0 12px 28px -6px color-mix(in srgb,var(--rc,#ff6b1a) 55%,transparent)}
-.shop-item,.inv-item{content-visibility:auto;contain-intrinsic-size:auto 280px}
-.upg-inv-item,.upg-target-item{content-visibility:auto;contain-intrinsic-size:auto 112px}
-.legendary.shop-item,.legendary.inv-item,.mythical.shop-item,.mythical.inv-item{box-shadow:0 0 22px -8px var(--rc)}
-
-/* Магазин */
-.shop-info-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px 18px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.35)}
-.shop-info-value{display:flex;align-items:center;gap:6px;font:700 1rem 'Share Tech Mono',monospace;color:var(--gold)}
-.shop-filters,.inv-filters{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-.shop-sort{margin-left:auto;padding:10px 14px;border-radius:10px;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--text);font-size:.8rem;cursor:pointer}
-.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
-.shop-item{padding:20px 14px}
-.shop-item .skin-icon{width:90px;height:90px;margin:0 auto 10px}
-.shop-item .name{min-height:2.4em;margin-bottom:8px;font-weight:700;font-size:.74rem;line-height:1.2;text-transform:uppercase;color:#fff}
-.shop-item .rarity-label{margin-bottom:8px;font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase}
-.shop-item .price-row{display:flex;justify-content:center;margin-bottom:10px}
-.shop-item .price{display:flex;align-items:center;gap:4px;font:700 1.05rem 'Share Tech Mono',monospace;color:var(--gold)}
-
-/* Інвентар */
-.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.inv-item{padding:14px 10px}
-.inv-item .skin-icon{width:80px;height:80px;margin:0 auto 8px}
-.inv-item .name{min-height:2.4em;margin-bottom:6px;font-weight:700;font-size:.7rem;line-height:1.2;text-transform:uppercase;color:#fff}
-.inv-item .price{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:8px;font:700 .85rem 'Share Tech Mono',monospace;color:var(--gold)}
-.empty-inv{grid-column:1/-1;padding:40px;text-align:center;color:var(--dim)}
-
-/* ---------- Апгрейд ---------- */
-.upg-wrap{display:flex;flex-direction:column;gap:16px}
-.upg-top{display:grid;grid-template-columns:1fr 380px 1fr;gap:20px;padding:24px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2))}
-.upg-panel{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:420px;padding:50px 20px 20px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.25)}
-.upg-panel-head{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;font:.75rem 'Share Tech Mono',monospace}
-.upg-panel-label{color:var(--dim)}
-.upg-panel-price{display:flex;align-items:center;gap:4px;color:var(--gold);font-weight:700}
-.upg-item-slot{width:220px;height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:16px;border:2px dashed var(--line);background:rgba(0,0,0,.3);cursor:pointer;transition:border-color .25s,background .25s,box-shadow .25s}
-.upg-item-slot:hover{border-color:var(--accent);background:rgba(255,107,26,.05)}
-.upg-item-slot.filled{border-style:solid;border-color:var(--rc,var(--line));box-shadow:0 0 34px -8px var(--rc,transparent)}
-.upg-item-slot .skin-icon{width:120px;height:120px}
-.upg-item-name{margin-top:8px;font-weight:700;font-size:.72rem;text-align:center;text-transform:uppercase;color:#fff}
-.upg-item-rarity{margin-top:4px;font-size:.62rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
-.upg-item-empty {
+/* Центр */
+.upg-circle-center {
+    position: absolute;
+    inset: 30%;
+    z-index: 4;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    color: var(--text-dim);
-    width: 100%;
-    height: 100%;
+    pointer-events: none;
+}
+
+.upg-percent {
+    font: 700 2.8rem/1 'Share Tech Mono', monospace;
+    color: #fff;
+    transition: color 0.3s;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+}
+
+.upg-status {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     text-align: center;
-}
-.upg-item-empty-icon{font-size:3rem;opacity:.4}
-.upg-item-empty-text{font-size:.8rem;letter-spacing:2px;text-transform:uppercase}
-.upg-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
-
-/* Колесо шансу: дуга починається знизу і росте в обидва боки */
-.upg-circle-wrap{position:relative;width:300px;height:300px;display:grid;place-items:center}
-.upg-circle-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.upg-circle-bg{fill:none;stroke:#1a1a28;stroke-width:14}
-.upg-circle-sector{fill:none;stroke-width:14;stroke-linecap:round;stroke-dasharray:0 100;stroke-dashoffset:0;opacity:0;filter:drop-shadow(0 0 6px rgba(255,150,40,.45));transition:stroke-dasharray .5s var(--ease),stroke-dashoffset .5s var(--ease),opacity .2s}
-.upg-needle{position:absolute;inset:0;z-index:5;pointer-events:none;transform-origin:50% 50%;transform:translateZ(0) rotate(0deg);will-change:transform}
-.upg-needle-head{position:absolute;top:6px;left:50%;width:0;height:0;transform:translateX(-50%);border-left:14px solid transparent;border-right:14px solid transparent;border-top:22px solid var(--accent);filter:drop-shadow(0 0 8px rgba(255,107,26,.8))}
-.upg-needle-body{position:absolute;top:28px;left:50%;width:4px;height:55px;transform:translateX(-50%);border-radius:2px;background:linear-gradient(180deg,var(--accent),rgba(255,107,26,.4) 60%,transparent)}
-.upg-circle-center{position:absolute;inset:32%;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.upg-percent{font:700 3rem/1 'Share Tech Mono',monospace;color:#fff;transition:color .3s;text-shadow:0 0 20px rgba(255,255,255,.25)}
-.upg-status{margin-top:8px;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;text-align:center;color:var(--dim);transition:color .3s}
-.upg-status.win{color:var(--green)}.upg-status.lose{color:var(--red)}
-
-.upg-speed-row{display:flex;gap:8px;width:100%;max-width:300px}
-.upg-speed-btn{flex:1;padding:11px;border-radius:12px;background:rgba(0,0,0,.4);border:2px solid var(--line);color:var(--dim);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;transition:border-color .2s,color .2s,background .2s,box-shadow .2s}
-.upg-speed-btn:hover{border-color:var(--accent);color:var(--text)}
-.upg-speed-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(255,107,26,.14);box-shadow:0 0 20px rgba(255,107,26,.28)}
-.upg-action-btn{width:100%;max-width:340px;padding:18px 30px;border:0;border-radius:16px;color:#fff;font-weight:900;font-size:1.25rem;text-transform:uppercase;letter-spacing:6px;background:linear-gradient(135deg,#ff3b3b,var(--accent) 55%,var(--accent2));box-shadow:0 10px 34px rgba(255,59,59,.5);transition:transform .3s var(--ease),box-shadow .3s,letter-spacing .3s}
-.upg-action-btn:hover:not(:disabled){transform:translateY(-3px);letter-spacing:8px;box-shadow:0 16px 46px rgba(255,59,59,.75)}
-
-.upg-presets-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;padding:14px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2))}
-.upg-preset-btn{padding:12px 8px;border-radius:12px;background:rgba(0,0,0,.4);border:2px solid var(--line);color:var(--text);text-align:center;transition:transform .25s var(--ease),border-color .2s,box-shadow .2s}
-.upg-preset-btn:hover:not(:disabled){transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 22px rgba(255,107,26,.35)}
-.upg-preset-btn:disabled{opacity:.3;cursor:not-allowed}
-.upg-preset-btn.active{border-color:var(--accent);background:rgba(255,107,26,.16);box-shadow:0 0 26px rgba(255,107,26,.5)}
-.upg-preset-mult{display:block;font:700 1rem 'Share Tech Mono',monospace;color:#fff}
-.upg-preset-chance{display:block;font-size:.66rem;color:var(--dim)}
-.upg-preset-btn.active .upg-preset-mult{color:var(--accent)}
-.upg-preset-btn.active .upg-preset-chance{color:var(--gold)}
-
-.upg-bottom{display:grid;grid-template-columns:380px 1fr;gap:16px;min-height:500px}
-.upg-inv-panel,.upg-items-panel{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2))}
-.upg-inv-head{display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--line)}
-.upg-inv-title{font-weight:700;font-size:.85rem;letter-spacing:2px;text-transform:uppercase;color:#fff}
-.upg-inv-count{font:700 .75rem 'Share Tech Mono',monospace;color:var(--accent)}
-.upg-items-count{font:700 .75rem 'Share Tech Mono',monospace;color:var(--green)}
-.upg-inv-input{width:100%;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--text);font-size:.85rem;outline:none;transition:border-color .2s,box-shadow .2s}
-.upg-inv-input:focus{border-color:var(--accent);box-shadow:0 0 14px rgba(255,107,26,.25)}
-.upg-inv-filters{display:flex;flex-wrap:wrap;gap:4px}
-.upg-inv-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:1;max-height:480px;padding-right:4px;overflow-y:auto}
-.upg-inv-empty{grid-column:1/-1;padding:40px;text-align:center;font-style:italic;color:var(--dim)}
-.upg-inv-item,.upg-target-item{display:flex;flex-direction:column;align-items:center;min-height:110px;padding:8px 4px;cursor:pointer}
-.upg-inv-item.used{opacity:.3;pointer-events:none}
-.upg-inv-item .skin-icon,.upg-target-item .skin-icon{width:48px;height:48px}
-.upg-inv-name,.upg-target-name{margin-top:4px;font-weight:700;font-size:.56rem;text-align:center;text-transform:uppercase;color:#fff}
-.upg-inv-price,.upg-target-price{display:flex;align-items:center;gap:3px;margin-top:2px;font:.6rem 'Share Tech Mono',monospace;color:var(--gold)}
-.upg-items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;flex:1;max-height:480px;overflow-y:auto}
-
-/* ---------- Сповіщення ---------- */
-.toast-wrap{position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;pointer-events:none}
-.toast{display:flex;align-items:center;gap:12px;min-width:260px;padding:14px 20px;border-radius:12px;border:1px solid var(--line);border-left:4px solid var(--blue);background:rgba(12,12,20,.98);font-size:.88rem;box-shadow:0 10px 34px rgba(0,0,0,.6);animation:toastIn .35s var(--ease);pointer-events:auto}
-@keyframes toastIn{from{opacity:0;transform:translateX(120%)}to{opacity:1;transform:none}}
-.toast.win{border-left-color:var(--green)}.toast.lose{border-left-color:var(--red)}.toast.jackpot{border-left-color:var(--gold)}
-.toast-icon{width:22px;text-align:center;font-weight:900;color:var(--text)}
-.toast.win .toast-icon{color:var(--green)}.toast.lose .toast-icon{color:var(--red)}.toast.jackpot .toast-icon{color:var(--gold)}
-
-/* ---------- Модальні вікна ---------- */
-.modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.82)}
-.modal.show{display:flex;animation:fade .2s ease}
-.modal-inner{width:100%;max-width:460px;padding:30px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--panel2));animation:modalIn .3s var(--ease)}
-@keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(24px)}to{opacity:1;transform:none}}
-
-.auth-inner{position:relative;overflow:hidden;max-width:420px;padding:44px 40px 36px;text-align:center;border-color:rgba(255,107,26,.3);box-shadow:0 30px 80px rgba(0,0,0,.85),0 0 90px rgba(255,107,26,.1)}
-.auth-inner::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--gold),var(--accent),transparent)}
-.auth-icon{margin-bottom:12px;font-size:2.6rem;color:var(--accent);filter:drop-shadow(0 0 18px rgba(255,107,26,.5))}
-.auth-title{margin-bottom:8px;font:900 1.6rem 'Orbitron',sans-serif;letter-spacing:6px;color:#fff}
-.auth-sub{margin-bottom:22px;font-size:.88rem;letter-spacing:1px;color:var(--dim)}
-.auth-hint-top{margin-bottom:26px;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,107,26,.18);background:rgba(255,107,26,.05);text-align:left;font-size:.85rem;line-height:1.7;color:var(--dim)}
-.auth-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;padding:15px 24px;border:0;border-radius:14px;color:#fff;font-weight:800;font-size:.95rem;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#4285f4,#2a6ad0);box-shadow:0 8px 24px rgba(66,133,244,.4);transition:transform .25s var(--ease),box-shadow .25s}
-.auth-btn:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(66,133,244,.6)}
-.auth-btn.steam{background:linear-gradient(135deg,#1b2838,#2a475e);box-shadow:0 8px 24px rgba(27,40,56,.6)}
-.auth-btn.steam:hover{box-shadow:0 14px 36px rgba(42,71,94,.8)}
-.auth-google-icon{width:22px;height:22px;flex-shrink:0}
-.auth-error{min-height:1.2em;margin-top:14px;font-size:.82rem;font-weight:600;color:var(--red)}
-.auth-hint{margin-top:16px;font-size:.74rem;font-style:italic;color:var(--dim)}
-
-.result-inner{position:relative;overflow:hidden;max-width:420px;text-align:center}
-.result-icon{margin-bottom:10px;font-size:3.4rem;color:var(--accent)}
-.result-title{margin-bottom:14px;font:900 1.5rem 'Orbitron',sans-serif;letter-spacing:3px;text-transform:uppercase}
-.result-win .result-title,.result-jackpot .result-title{color:var(--green);text-shadow:0 0 24px rgba(0,230,118,.6)}
-.result-lose .result-title{color:var(--red);text-shadow:0 0 24px rgba(255,59,59,.6)}
-.result-skin .skin-icon{width:110px;height:110px;margin:0 auto}
-.result-skin .name{font-weight:700;text-transform:uppercase;color:#fff}
-.result-skin .price{display:flex;align-items:center;justify-content:center;gap:4px;font-family:'Share Tech Mono',monospace;color:var(--gold)}
-.result-value{display:flex;align-items:center;justify-content:center;gap:6px;margin:14px 0;font:1.2rem 'Share Tech Mono',monospace;color:var(--gold)}
-.result-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:20px}
-.result-actions button{flex:1;min-width:140px}
-.result-particles{position:absolute;inset:0;pointer-events:none}
-.particle{position:absolute;width:6px;height:6px;border-radius:50%;animation:fly 1s ease-out forwards}
-@keyframes fly{to{transform:translate(var(--dx),var(--dy));opacity:0}}
-
-.buy-inner{max-width:440px;text-align:center}
-.buy-icon-slot{display:flex;justify-content:center;margin-bottom:12px}
-.buy-icon-slot .skin-icon{width:96px;height:96px}
-.buy-title{margin-bottom:6px;font:700 1.2rem 'Orbitron',sans-serif;letter-spacing:2px;text-transform:uppercase;color:#fff}
-.buy-sub{margin-bottom:14px;font-size:.85rem;color:var(--dim)}
-.buy-price{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:6px;font:700 1.6rem 'Share Tech Mono',monospace;color:var(--gold)}
-.buy-actions{display:flex;gap:10px;margin-top:10px}
-.buy-actions button{flex:1}
-
-/* ---------- Профіль ---------- */
-.profile-guest{padding:60px 20px;text-align:center}
-.profile-guest-icon{margin-bottom:16px;font-size:3.5rem;color:var(--dim)}
-.profile-guest-text{margin-bottom:20px;font-size:1.1rem;color:var(--dim)}
-.profile-head{position:relative;overflow:hidden;display:flex;align-items:center;gap:18px;margin-bottom:16px;padding:22px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(255,107,26,.09),rgba(165,92,255,.05))}
-.profile-head::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--gold),var(--accent),transparent)}
-.profile-avatar{position:relative;flex-shrink:0;width:90px;height:90px;display:grid;place-items:center;overflow:hidden;border-radius:50%;border:3px solid rgba(255,107,26,.45);background:linear-gradient(135deg,var(--accent),var(--gold));font:900 2.2rem 'Orbitron',sans-serif;color:#000;box-shadow:0 0 30px rgba(255,107,26,.55)}
-.profile-avatar.has-img{background:none}
-.profile-avatar img{width:100%;height:100%;object-fit:cover}
-.profile-info{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
-.profile-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:900 1.4rem 'Orbitron',sans-serif;letter-spacing:2px;text-transform:uppercase;color:#fff}
-.profile-id{font:.85rem 'Share Tech Mono',monospace;letter-spacing:1px;color:var(--dim)}
-.profile-source{margin-top:4px;font-size:.82rem;font-weight:700;letter-spacing:1px}
-.profile-balance{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px;padding:20px 24px;border-radius:16px;border:1px solid rgba(245,197,66,.28);background:linear-gradient(135deg,rgba(245,197,66,.08),rgba(255,107,26,.05))}
-.profile-balance-label{margin-bottom:4px;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
-.profile-balance-value{display:flex;align-items:center;gap:8px;font:700 1.8rem 'Share Tech Mono',monospace;color:#ffd966;text-shadow:0 0 18px rgba(245,197,66,.6)}
-.profile-topup-btn{padding:13px 26px;border:0;border-radius:12px;color:#06140a;font-weight:800;font-size:.9rem;letter-spacing:2px;background:linear-gradient(135deg,#7ed321,#4aa82f);box-shadow:0 6px 18px rgba(126,211,33,.35);transition:transform .25s var(--ease),box-shadow .25s}
-.profile-topup-btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(126,211,33,.6)}
-.profile-best-drop{margin-bottom:16px;padding:20px;text-align:center;border-radius:16px;border:2px solid var(--rc,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--rc,#2a2a3c) 16%,transparent),transparent),rgba(0,0,0,.35);box-shadow:0 0 30px -10px var(--rc,transparent)}
-.profile-best-label{margin-bottom:12px;font-size:.75rem;letter-spacing:2px;color:var(--dim)}
-.profile-best-content{display:flex;flex-direction:column;align-items:center;gap:8px}
-.profile-best-skin .skin-icon{width:84px;height:84px;margin:0 auto}
-.profile-best-name{font:700 1rem 'Orbitron',sans-serif;letter-spacing:1px;text-transform:uppercase;color:#fff}
-.profile-best-price{display:flex;align-items:center;gap:6px;font:700 1.1rem 'Share Tech Mono',monospace;color:var(--gold)}
-.profile-best-empty{padding:20px;font-style:italic;color:var(--dim)}
-.profile-stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
-.profile-stat{padding:16px 14px;text-align:center;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.35);transition:border-color .2s,transform .25s var(--ease)}
-.profile-stat:hover{border-color:var(--accent);transform:translateY(-3px)}
-.profile-stat-label{margin-bottom:6px;font-size:.66rem;letter-spacing:1.5px;color:var(--dim)}
-.profile-stat-value{display:flex;align-items:center;justify-content:center;gap:4px;font:700 1.1rem 'Share Tech Mono',monospace;color:#fff}
-.profile-stat-value.green{color:var(--green)}.profile-stat-value.red{color:var(--red)}
-.profile-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
-.profile-actions button{flex:1;min-width:140px}
-
-/* ---------- Адаптив ---------- */
-@media (max-width:1200px){.upg-top,.upg-bottom{grid-template-columns:1fr}}
-@media (max-width:768px){
-  .hud-header{padding:10px 12px}
-  .hud-stat{min-width:100px;padding:6px 10px}
-  .logo{font-size:1.1rem}
-  .level-box{display:none}
-  .nav-tab{padding:12px 14px;font-size:.72rem}
-  .main{padding:12px}
-  .card{padding:18px 14px}
-  .upg-item-slot{width:160px;height:160px}
-  .upg-item-slot .skin-icon{width:90px;height:90px}
-  .upg-circle-wrap{width:240px;height:240px}
-  .upg-percent{font-size:2.2rem}
-  .upg-inv-list{grid-template-columns:repeat(2,1fr)}
-  .shop-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
-  .inv-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
-  .toast-wrap{left:10px;right:10px}
-  .toast{min-width:0;width:100%}
-  .auth-inner{padding:30px 20px 24px}
-  .profile-head{padding:16px;gap:12px;flex-wrap:wrap}
-  .profile-avatar{width:70px;height:70px;font-size:1.6rem}
-  .profile-name{font-size:1.1rem}
-  .profile-balance-value{font-size:1.4rem}
-  .profile-stats-grid{grid-template-columns:repeat(2,1fr)}
-  .profile-actions button{min-width:100%}
-}
-@media (max-width:480px){
-  .hud-stat-label{display:none}
-  .hud-stat{min-width:0}
-  .upg-presets-row{grid-template-columns:repeat(3,1fr)}
-  .result-actions{flex-direction:column}
-}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--accent),#a55cff);border-radius:4px}
-#userBadgeIcon{width:100%;height:100%;display:grid;place-items:center}
-/* ============================================================
-   БЛОКУВАННЯ UI ПІД ЧАС АПГРЕЙДУ
-   ============================================================ */
-.upg-inv-item.blocked,
-.upg-target-item.blocked {
-    opacity: 0.4;
-    pointer-events: none;
-    cursor: not-allowed;
-    filter: grayscale(0.7);
+    color: var(--dim);
+    transition: color 0.3s;
 }
 
-.upg-preset-btn.blocked {
-    opacity: 0.4;
-    pointer-events: none;
-    cursor: not-allowed;
+.upg-status.win { color: var(--green); }
+.upg-status.lose { color: var(--red); }
+
+/* Пресети — знизу (як на референсі) */
+.upg-presets-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 6px;
+    margin-top: 16px;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--line);
 }
 
-.upg-btn-remove.blocked {
-    opacity: 0.4;
-    pointer-events: none;
-    cursor: not-allowed;
-}
-/* ============================================================
-   МОБІЛЬНА ОПТИМІЗАЦІЯ — v1
-   ============================================================ */
-
-/* --- Планшети --- */
-@media (max-width: 1024px) {
-    .upg-top { grid-template-columns: 1fr 340px 1fr; }
-    .upg-bottom { grid-template-columns: 340px 1fr; }
+.upg-preset-btn {
+    padding: 8px 6px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--line);
+    color: var(--text);
+    text-align: center;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
-/* --- Великі телефони / маленькі планшети --- */
-@media (max-width: 900px) {
-    .upg-top { grid-template-columns: 1fr; }
-    .upg-bottom { grid-template-columns: 1fr; }
-    .upg-panel { min-height: auto; padding: 40px 16px 16px; }
-    .upg-item-slot { width: 180px; height: 180px; }
-    .upg-item-slot .skin-icon { width: 90px; height: 90px; }
-    .upg-circle-wrap { width: 260px; height: 260px; }
+.upg-preset-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    transform: translateY(-2px);
 }
 
-/* --- Телефони --- */
-@media (max-width: 600px) {
-    /* Layout */
-    .main { padding: 10px; }
-    .hud-header { padding: 8px 10px; gap: 8px; }
-    .nav-tabs { top: auto; position: sticky; }
-    .nav-tab { padding: 10px 12px; font-size: 0.68rem; letter-spacing: 1px; }
-    .nav-tab-icon { font-size: 0.95rem; }
-    .nav-tab-text { font-size: 0.65rem; }
+.upg-preset-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    /* Шапка — компактна */
-    .logo { font-size: 1rem; letter-spacing: 2px; }
-    .logo-icon { font-size: 1rem; }
-    .level-box { display: none; }
-
-    .hud-stat {
-        min-width: auto;
-        padding: 5px 10px;
-        border-radius: 10px;
-    }
-    .hud-stat-label { display: none; }
-    .hud-stat-icon { display: none; }
-    .hud-stat-value { font-size: 0.82rem; }
-
-    .hud-btn {
-        width: 36px;
-        height: 36px;
-        font-size: 0.95rem;
-        border-radius: 9px;
-    }
-
-    /* Картки */
-    .card { padding: 16px 12px; border-radius: 14px; }
-    .card-title { font-size: 1rem; letter-spacing: 2px; }
-    .card-title-icon { font-size: 1.1rem; }
-    .card-sub { font-size: 0.7rem; }
-    .card-head { margin-bottom: 14px; }
-
-    /* --- АПГРЕЙД --- */
-    .upg-wrap { gap: 10px; }
-    .upg-top {
-        padding: 10px;
-        gap: 10px;
-        border-radius: 14px;
-    }
-    .upg-panel {
-        padding: 32px 10px 10px;
-        min-height: auto;
-        gap: 8px;
-        border-radius: 12px;
-    }
-    .upg-panel-head {
-        top: 8px;
-        left: 10px;
-        right: 10px;
-        font-size: 0.65rem;
-    }
-
-    /* Слот предмета — менший */
-    .upg-item-slot {
-        width: 140px;
-        height: 140px;
-        border-radius: 14px;
-    }
-    .upg-item-slot .skin-icon {
-        width: 70px;
-        height: 70px;
-    }
-    .upg-item-slot .upg-item-name {
-        font-size: 0.58rem;
-        margin-top: 4px;
-        padding: 0 4px;
-        line-height: 1.15;
-    }
-    .upg-item-slot .upg-item-rarity {
-        font-size: 0.5rem;
-        margin-top: 2px;
-    }
-    .upg-item-empty { padding: 6px; text-align: center; }
-    .upg-item-empty-icon {
-        font-size: 2rem;
-        line-height: 1;
-    }
-    .upg-item-empty-text {
-        font-size: 0.62rem;
-        letter-spacing: 1px;
-        line-height: 1.2;
-        text-align: center;
-    }
-
-    /* Дуга */
-    .upg-circle-wrap {
-        width: 220px;
-        height: 220px;
-    }
-    .upg-percent { font-size: 2.2rem; }
-    .upg-status { font-size: 0.6rem; letter-spacing: 1px; margin-top: 4px; }
-    .upg-needle-head {
-        border-left-width: 11px;
-        border-right-width: 11px;
-        border-top-width: 18px;
-    }
-    .upg-needle-body { height: 42px; }
-
-    /* Кнопки швидкості */
-    .upg-speed-row { max-width: 100%; gap: 6px; }
-    .upg-speed-btn {
-        padding: 9px 8px;
-        font-size: 0.68rem;
-        letter-spacing: 0.5px;
-        border-radius: 10px;
-    }
-
-    /* Кнопка АПГРЕЙД */
-    .upg-action-btn {
-        padding: 14px 20px;
-        font-size: 1.05rem;
-        letter-spacing: 3px;
-        border-radius: 12px;
-        max-width: 100%;
-    }
-
-    /* Пресети */
-    .upg-presets-row {
-        grid-template-columns: repeat(5, 1fr);
-        padding: 8px;
-        gap: 4px;
-        border-radius: 12px;
-    }
-    .upg-preset-btn {
-        padding: 8px 2px;
-        border-radius: 8px;
-        border-width: 1px;
-    }
-    .upg-preset-mult { font-size: 0.78rem; }
-    .upg-preset-chance { font-size: 0.52rem; }
-
-    /* Панелі інвентарю / цілей */
-    .upg-bottom { gap: 10px; min-height: auto; }
-    .upg-inv-panel, .upg-items-panel {
-        padding: 10px;
-        border-radius: 12px;
-        gap: 8px;
-    }
-    .upg-inv-title, .upg-items-title { font-size: 0.7rem; letter-spacing: 1.5px; }
-    .upg-inv-count, .upg-items-count { font-size: 0.65rem; }
-    .upg-inv-input, .upg-items-input {
-        padding: 7px 10px;
-        font-size: 0.75rem;
-        border-radius: 8px;
-    }
-    .upg-inv-filter {
-        padding: 5px 8px;
-        font-size: 0.6rem;
-        border-radius: 7px;
-    }
-    .upg-inv-list { grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 320px; }
-    .upg-items-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 320px; }
-    .upg-inv-item, .upg-target-item {
-        min-height: 84px;
-        padding: 6px 2px;
-        border-radius: 8px;
-        border-width: 1px;
-    }
-    .upg-inv-item .skin-icon, .upg-target-item .skin-icon {
-        width: 38px;
-        height: 38px;
-    }
-    .upg-inv-item .upg-inv-name, .upg-target-item .upg-target-name {
-        font-size: 0.5rem;
-        margin-top: 2px;
-        line-height: 1.15;
-    }
-    .upg-inv-item .upg-inv-price, .upg-target-item .upg-target-price {
-        font-size: 0.55rem;
-    }
-
-        
-
-    /* --- МОДАЛКИ --- */
-    .modal { padding: 10px; }
-    .modal-inner { padding: 20px 16px; border-radius: 16px; }
-    .auth-inner { padding: 26px 18px 20px; border-radius: 18px; }
-    .auth-title { font-size: 1.2rem; letter-spacing: 4px; }
-    .auth-icon { font-size: 2rem; }
-    .auth-sub { font-size: 0.78rem; margin-bottom: 16px; }
-    .auth-hint-top {
-        padding: 12px;
-        font-size: 0.72rem;
-        margin-bottom: 20px;
-        line-height: 1.6;
-    }
-    .auth-btn {
-        padding: 13px 18px;
-        font-size: 0.82rem;
-        letter-spacing: 1.5px;
-        border-radius: 12px;
-    }
-    .auth-google-icon { width: 18px; height: 18px; }
-    .auth-hint { font-size: 0.65rem; }
-
-    /* Результат */
-    .result-title { font-size: 1.2rem; letter-spacing: 2px; }
-    .result-icon { font-size: 2.4rem; }
-    .result-value { font-size: 1rem; }
-    .result-actions { flex-direction: column; gap: 8px; }
-    .result-actions button {
-        width: 100%;
-        min-width: auto;
-        padding: 12px 18px;
-        font-size: 0.82rem;
-    }
-
-    /* Купівля */
-    .buy-title { font-size: 1rem; }
-    .buy-icon-slot .skin-icon { width: 70px; height: 70px; }
-    .buy-price { font-size: 1.3rem; }
-    .buy-actions { flex-direction: column; gap: 8px; }
-    .buy-actions button {
-        padding: 12px 18px;
-        font-size: 0.82rem;
-        width: 100%;
-    }
-    .buy-qty-row button {
-        padding: 7px 12px !important;
-        font-size: 0.72rem;
-    }
-
-    /* Toast */
-    .toast-wrap {
-        top: 70px;
-        left: 10px;
-        right: 10px;
-        gap: 8px;
-    }
-    .toast {
-        min-width: auto;
-        width: 100%;
-        padding: 10px 14px;
-        font-size: 0.78rem;
-        border-radius: 10px;
-    }
-
-    /* Кнопки загальні */
-    .btn-primary, .btn-secondary {
-        padding: 12px 20px;
-        font-size: 0.82rem;
-        letter-spacing: 1.5px;
-        border-radius: 10px;
-    }
+.upg-preset-btn.active {
+    border-color: var(--accent);
+    background: rgba(255,107,26,0.15);
+    box-shadow: 0 0 20px rgba(255,107,26,0.4);
 }
 
-/* --- Дуже маленькі телефони --- */
-@media (max-width: 380px) {
-    .upg-circle-wrap { width: 200px; height: 200px; }
-    .upg-percent { font-size: 1.9rem; }
-    .upg-item-slot { width: 120px; height: 120px; }
-    .upg-item-slot .skin-icon { width: 60px; height: 60px; }
-
-    .upg-inv-list { grid-template-columns: repeat(3, 1fr); }
-    .upg-items-grid { grid-template-columns: repeat(3, 1fr); }
-    .upg-inv-item .skin-icon, .upg-target-item .skin-icon {
-        width: 34px;
-        height: 34px;
-    }
-
-    .shop-grid { gap: 6px; }
-    .shop-item { padding: 10px 6px; }
-    .shop-item .skin-icon { width: 52px; height: 52px; }
-
-    .inv-grid, .inventory-grid { gap: 6px; }
-    .inv-item { padding: 8px 6px; }
-    .inv-item .skin-icon { width: 56px; height: 56px; }
-
-    .profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .profile-balance-value { font-size: 1.2rem; }
+.upg-preset-mult {
+    display: block;
+    font: 700 0.9rem 'Share Tech Mono', monospace;
+    color: #fff;
 }
 
-/* --- Ландшафтна орієнтація на телефоні --- */
-@media (max-height: 500px) and (orientation: landscape) {
-    .upg-circle-wrap {
-        width: 160px;
-        height: 160px;
-    }
-    .upg-percent { font-size: 1.6rem; }
-    .upg-item-slot { width: 100px; height: 100px; }
-    .upg-item-slot .skin-icon { width: 50px; height: 50px; }
-    .upg-action-btn { padding: 10px 18px; font-size: 0.95rem; }
-    .upg-speed-btn { padding: 6px 8px; font-size: 0.62rem; }
-}
-/* ============================================================
-   ПОЗНАЧКИ % НА ЦИФЕРБЛАТІ
-   ============================================================ */
-.upg-marks line {
-    stroke: #4a4a5e;
-    stroke-width: 1.5;
-    stroke-linecap: round;
+.upg-preset-chance {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--dim);
+    margin-top: 2px;
 }
 
-.upg-marks text {
-    fill: #6a6a80;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    text-anchor: middle;
-    dominant-baseline: middle;
-    letter-spacing: 0.3px;
-}
+.upg-preset-btn.active .upg-preset-mult { color: var(--accent); }
+.upg-preset-btn.active .upg-preset-chance { color: var(--gold); }
 
-/* 100% — зелений (вгорі) */
-.upg-marks text:nth-of-type(1) { fill: #7ed321; }
-/* 50% — жовтий (справа) */
-.upg-marks text:nth-of-type(2) { fill: #f5c542; }
-/* 0% — червоний (внизу) */
-.upg-marks text:nth-of-type(3) { fill: #ff3b3b; }
-/* 50% — жовтий (зліва) */
-.upg-marks text:nth-of-type(4) { fill: #f5c542; }
-
-/* ============================================================
-   ДРУГИЙ СЛОТ ПРЕДМЕТА
-   ============================================================ */
+/* Другий слот предмета */
 .upg-item-slot-second {
     width: 160px;
     height: 160px;
@@ -688,25 +162,11 @@ a{color:inherit}
     border-style: dashed;
 }
 
-.upg-item-slot-second .skin-icon {
-    width: 80px;
-    height: 80px;
-}
+.upg-item-slot-second .skin-icon { width: 80px; height: 80px; }
+.upg-item-slot-second .upg-item-name { font-size: 0.62rem; }
+.upg-item-slot-second .upg-item-empty-icon { font-size: 2rem; }
+.upg-item-slot-second .upg-item-empty-text { font-size: 0.65rem; letter-spacing: 1px; }
 
-.upg-item-slot-second .upg-item-name {
-    font-size: 0.62rem;
-}
-
-.upg-item-slot-second .upg-item-empty-icon {
-    font-size: 2rem;
-}
-
-.upg-item-slot-second .upg-item-empty-text {
-    font-size: 0.65rem;
-    letter-spacing: 1px;
-}
-
-/* Кнопка "Додати другий" */
 .upg-btn-add-second {
     margin-top: 10px;
     padding: 8px 16px;
@@ -729,11 +189,6 @@ a{color:inherit}
     box-shadow: 0 0 20px rgba(255,107,26,0.3);
 }
 
-/* Бейдж 1 / 2 на предметі в інвентарі */
-.upg-inv-item {
-    position: relative;
-}
-
 .upg-inv-badge {
     position: absolute;
     top: 4px;
@@ -752,36 +207,21 @@ a{color:inherit}
     z-index: 5;
 }
 
-/* Мобільна версія — другий слот менший */
+/* Мобільна версія */
 @media (max-width: 600px) {
     .upg-item-slot-second {
         width: 120px;
         height: 120px;
         margin-top: 6px;
     }
-    .upg-item-slot-second .skin-icon {
-        width: 60px;
-        height: 60px;
-    }
-    .upg-btn-add-second {
-        padding: 6px 12px;
-        font-size: 0.65rem;
-    }
-    .upg-marks text {
-        font-size: 8px;
-    }
-    .upg-marks line {
-        stroke-width: 1;
-    }
+    .upg-item-slot-second .skin-icon { width: 60px; height: 60px; }
+    .upg-btn-add-second { padding: 6px 12px; font-size: 0.65rem; }
+    .upg-percent { font-size: 2.2rem; }
+    .upg-needle-head { border-left-width: 8px; border-right-width: 8px; border-top-width: 14px; top: 14px; }
+    .upg-needle-body { height: 32px; top: 28px; }
 }
 
 @media (max-width: 380px) {
-    .upg-item-slot-second {
-        width: 100px;
-        height: 100px;
-    }
-    .upg-item-slot-second .skin-icon {
-        width: 50px;
-        height: 50px;
-    }
+    .upg-item-slot-second { width: 100px; height: 100px; }
+    .upg-item-slot-second .skin-icon { width: 50px; height: 50px; }
 }
