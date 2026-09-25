@@ -650,3 +650,138 @@ a{color:inherit}
     .upg-action-btn { padding: 10px 18px; font-size: 0.95rem; }
     .upg-speed-btn { padding: 6px 8px; font-size: 0.62rem; }
 }
+/* ============================================================
+   ПОЗНАЧКИ % НА ЦИФЕРБЛАТІ
+   ============================================================ */
+.upg-marks line {
+    stroke: #4a4a5e;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+}
+
+.upg-marks text {
+    fill: #6a6a80;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    letter-spacing: 0.3px;
+}
+
+/* 100% — зелений (вгорі) */
+.upg-marks text:nth-of-type(1) { fill: #7ed321; }
+/* 50% — жовтий (справа) */
+.upg-marks text:nth-of-type(2) { fill: #f5c542; }
+/* 0% — червоний (внизу) */
+.upg-marks text:nth-of-type(3) { fill: #ff3b3b; }
+/* 50% — жовтий (зліва) */
+.upg-marks text:nth-of-type(4) { fill: #f5c542; }
+
+/* ============================================================
+   ДРУГИЙ СЛОТ ПРЕДМЕТА
+   ============================================================ */
+.upg-item-slot-second {
+    width: 160px;
+    height: 160px;
+    margin-top: 10px;
+    border-style: dashed;
+}
+
+.upg-item-slot-second .skin-icon {
+    width: 80px;
+    height: 80px;
+}
+
+.upg-item-slot-second .upg-item-name {
+    font-size: 0.62rem;
+}
+
+.upg-item-slot-second .upg-item-empty-icon {
+    font-size: 2rem;
+}
+
+.upg-item-slot-second .upg-item-empty-text {
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+}
+
+/* Кнопка "Додати другий" */
+.upg-btn-add-second {
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: rgba(255,107,26,0.1);
+    border: 1px dashed var(--accent);
+    border-radius: 10px;
+    color: var(--accent);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.upg-btn-add-second:hover {
+    background: rgba(255,107,26,0.2);
+    border-style: solid;
+    box-shadow: 0 0 20px rgba(255,107,26,0.3);
+}
+
+/* Бейдж 1 / 2 на предметі в інвентарі */
+.upg-inv-item {
+    position: relative;
+}
+
+.upg-inv-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 700;
+    font-size: 0.7rem;
+    box-shadow: 0 0 10px rgba(255,107,26,0.8);
+    z-index: 5;
+}
+
+/* Мобільна версія — другий слот менший */
+@media (max-width: 600px) {
+    .upg-item-slot-second {
+        width: 120px;
+        height: 120px;
+        margin-top: 6px;
+    }
+    .upg-item-slot-second .skin-icon {
+        width: 60px;
+        height: 60px;
+    }
+    .upg-btn-add-second {
+        padding: 6px 12px;
+        font-size: 0.65rem;
+    }
+    .upg-marks text {
+        font-size: 8px;
+    }
+    .upg-marks line {
+        stroke-width: 1;
+    }
+}
+
+@media (max-width: 380px) {
+    .upg-item-slot-second {
+        width: 100px;
+        height: 100px;
+    }
+    .upg-item-slot-second .skin-icon {
+        width: 50px;
+        height: 50px;
+    }
+}
