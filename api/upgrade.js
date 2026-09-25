@@ -2,8 +2,10 @@ const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { getClientIp, checkRateLimit } = require('../lib/rate-limit');
 const { randomUUID } = require('crypto');
 const SKINS = require('../lib/skins');
+const { getCatalogPrice, withTimeout } = require('../lib/prices');
 
 const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
+const MAX_SOURCES = 2;
 
 function setHeaders(res) {
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -12,47 +14,6 @@ function setHeaders(res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-}
-
-function withTimeout(p, ms, label) {
-    return Promise.race([
-        p,
-        new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT ' + label)), ms))
-    ]);
-}
-
-function norm(s) {
-    return (s || '').toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
-}
-
-let _priceCache = null;
-let _priceCacheAt = 0;
-const PRICE_CACHE_TTL = 15000;
-
-async function getFirestorePrices(db) {
-    const now = Date.now();
-    if (_priceCache && (now - _priceCacheAt) < PRICE_CACHE_TTL) return _priceCache;
-    const map = {};
-    try {
-        const snap = await withTimeout(db.collection('skins').get(), 8000, 'skins.get');
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (d.name && d.price) map[norm(d.name)] = d.price;
-        });
-    } catch (e) {
-        console.error('[upgrade] Firestore prices error:', e.message);
-    }
-    _priceCache = map;
-    _priceCacheAt = now;
-    return map;
-}
-
-async function getEffectivePrice(db, skin) {
-    if (!skin) return 0;
-    const prices = await getFirestorePrices(db);
-    const fsPrice = prices[norm(skin.name)];
-    if (fsPrice && fsPrice > 0) return fsPrice;
-    return Number(skin.price) || 0;
 }
 
 function calcChance(sourcePrice, targetPrice) {
@@ -101,8 +62,20 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Invalid JSON' });
     }
 
-    const { sourceUid, targetId } = body || {};
-    if (!sourceUid || typeof sourceUid !== 'string') return res.status(400).json({ error: 'Missing sourceUid' });
+    // Підтримка обох форматів: sourceUid (старий) і sourceUids (новий)
+    let sourceUids = body.sourceUids;
+    if (!Array.isArray(sourceUids)) {
+        if (body.sourceUid && typeof body.sourceUid === 'string') {
+            sourceUids = [body.sourceUid];
+        } else {
+            return res.status(400).json({ error: 'Missing sourceUids' });
+        }
+    }
+    sourceUids = sourceUids.filter(u => typeof u === 'string' && u.length > 0);
+    if (sourceUids.length === 0) return res.status(400).json({ error: 'No valid sourceUids' });
+    if (sourceUids.length > MAX_SOURCES) return res.status(400).json({ error: 'Too many source items (max 2)' });
+
+    const { targetId } = body || {};
     if (!targetId || typeof targetId !== 'string') return res.status(400).json({ error: 'Missing targetId' });
 
     const targetSkin = SKINS.find(s => s.id === targetId);
@@ -110,11 +83,8 @@ module.exports = async (req, res) => {
 
     try {
         const db = getFirestore();
-        const targetPrice = await getEffectivePrice(db, targetSkin);
+        const targetPrice = getCatalogPrice(targetSkin);
         const userRef = db.collection('users').doc(steamId);
-
-        // Завантажуємо ціни ЗАЗДАЛЕГІДЬ, щоб не робити це всередині транзакції
-        const prices = await getFirestorePrices(db);
 
         const result = await withTimeout(db.runTransaction(async (tx) => {
             const doc = await tx.get(userRef);
@@ -123,28 +93,37 @@ module.exports = async (req, res) => {
             const data = doc.data();
             const inventory = Array.isArray(data.inventory) ? [...data.inventory] : [];
 
-            const srcIdx = inventory.findIndex(i => i.uid === sourceUid);
-            if (srcIdx === -1) throw new Error('Source item not in inventory');
+            // Знаходимо і перевіряємо всі source предмети
+            const sourceItems = [];
+            const sourceIndices = [];
+            let totalSourcePrice = 0;
 
-            const sourceItem = inventory[srcIdx];
-            const sourceSkin = SKINS.find(s => s.id === sourceItem.id);
-            let sourcePrice = 0;
+            for (const uid of sourceUids) {
+                const idx = inventory.findIndex(i => i.uid === uid);
+                if (idx === -1) throw new Error('Source item not in inventory: ' + uid);
+                if (sourceIndices.includes(idx)) throw new Error('Duplicate source item');
 
-            if (sourceSkin) {
-                const fsPrice = prices[norm(sourceSkin.name)];
-                sourcePrice = (fsPrice && fsPrice > 0) ? fsPrice : (Number(sourceItem.price) || 0);
-            } else {
-                sourcePrice = Number(sourceItem.price) || 0;
+                const item = inventory[idx];
+                const skinDef = SKINS.find(s => s.id === item.id);
+                const price = skinDef ? getCatalogPrice(skinDef) : (Number(item.price) || 0);
+                if (price <= 0) throw new Error('Source item has no price: ' + item.name);
+
+                sourceItems.push(item);
+                sourceIndices.push(idx);
+                totalSourcePrice += price;
             }
 
-            if (sourcePrice <= 0) throw new Error('Source item has no price — cannot upgrade');
             if (targetPrice <= 0) throw new Error('Target item has no price');
 
-            const chance = calcChance(sourcePrice, targetPrice);
+            const chance = calcChance(totalSourcePrice, targetPrice);
             const roll = Math.random() * 100;
             const success = roll <= chance;
 
-            inventory.splice(srcIdx, 1);
+            // Видаляємо source предмети (з кінця, щоб індекси не зсувались)
+            const sortedIndices = [...sourceIndices].sort((a, b) => b - a);
+            for (const idx of sortedIndices) {
+                inventory.splice(idx, 1);
+            }
 
             let newItem = null;
             if (success) {
@@ -165,14 +144,14 @@ module.exports = async (req, res) => {
             let newBestUpgrade = data.bestUpgrade || null;
 
             if (success) {
-                var newBestItem = {
+                const newBestItem = {
                     id: targetSkin.id,
                     name: targetSkin.name,
                     rarity: targetSkin.rarity,
                     price: targetPrice
                 };
-                var prevBestDropPrice = (data.bestDrop && Number(data.bestDrop.price)) || 0;
-                var prevBestUpgPrice = (data.bestUpgrade && Number(data.bestUpgrade.price)) || 0;
+                const prevBestDropPrice = (data.bestDrop && Number(data.bestDrop.price)) || 0;
+                const prevBestUpgPrice = (data.bestUpgrade && Number(data.bestUpgrade.price)) || 0;
 
                 if (targetPrice > prevBestDropPrice) newBestDrop = newBestItem;
                 if (targetPrice > prevBestUpgPrice) newBestUpgrade = newBestItem;
@@ -184,11 +163,11 @@ module.exports = async (req, res) => {
                     ? Math.round(((data.totalWon || 0) + targetPrice) * 100) / 100
                     : (data.totalWon || 0),
                 totalLost: !success
-                    ? Math.round(((data.totalLost || 0) + sourcePrice) * 100) / 100
+                    ? Math.round(((data.totalLost || 0) + totalSourcePrice) * 100) / 100
                     : (data.totalLost || 0),
                 upgrades: (data.upgrades || 0) + 1,
                 housePlayerLost: !success
-                    ? Math.round(((data.housePlayerLost || 0) + sourcePrice) * 100) / 100
+                    ? Math.round(((data.housePlayerLost || 0) + totalSourcePrice) * 100) / 100
                     : (data.housePlayerLost || 0),
                 houseCasinoWon: success
                     ? Math.round(((data.houseCasinoWon || 0) + targetPrice) * 100) / 100
@@ -204,7 +183,7 @@ module.exports = async (req, res) => {
                 roll: Number(roll.toFixed(2)),
                 item: newItem,
                 inventory,
-                sourcePrice,
+                sourcePrice: totalSourcePrice,
                 targetPrice,
                 bestDrop: newBestDrop,
                 bestUpgrade: newBestUpgrade
