@@ -79,14 +79,38 @@ window.dispatchEvent(new Event('fb-ready'));
 <section class="page active" id="page-upgrade">
   <div class="upg-wrap">
     <div class="upg-top">
+
+      <!-- ЛІВА ПАНЕЛЬ — ПРЕДМЕТ -->
       <div class="upg-panel">
-        <div class="upg-panel-head"><span class="upg-panel-label">ПРЕДМЕТ</span><span class="upg-panel-price" id="sourcePriceLabel">—</span></div>
-        <div class="upg-item-slot" id="sourceSlot">
-          <div class="upg-item-empty"><div class="upg-item-empty-icon">+</div><div class="upg-item-empty-text">Выбрать предмет</div></div>
+        <div class="upg-panel-head">
+          <span class="upg-panel-label">ПРЕДМЕТ</span>
+          <span class="upg-panel-price" id="sourcePriceLabel">—</span>
         </div>
+
+        <!-- Слот 1 -->
+        <div class="upg-item-slot" id="sourceSlot1">
+          <div class="upg-item-empty">
+            <div class="upg-item-empty-icon">+</div>
+            <div class="upg-item-empty-text">Выбрать предмет</div>
+          </div>
+        </div>
+
+        <!-- Слот 2 (порожній за замовчуванням) -->
+        <div class="upg-item-slot upg-item-slot-second" id="sourceSlot2" style="display:none">
+          <div class="upg-item-empty">
+            <div class="upg-item-empty-icon">+</div>
+            <div class="upg-item-empty-text">Второй предмет</div>
+          </div>
+        </div>
+
+        <!-- Кнопка "Додати другий" -->
+        <button class="upg-btn-add-second" id="addSecondBtn" style="display:none">+ Добавить второй предмет</button>
+
+        <!-- Кнопка "Убрать" -->
         <button class="upg-btn-remove" id="sourceRemoveBtn" style="display:none">✕ Убрать</button>
       </div>
 
+      <!-- ЦЕНТР — КОЛЕСО -->
       <div class="upg-center">
         <div class="upg-circle-wrap">
           <svg class="upg-circle-svg" viewBox="0 0 240 240">
@@ -97,26 +121,61 @@ window.dispatchEvent(new Event('fb-ready'));
                 <stop offset="100%" stop-color="#7ed321"/>
               </linearGradient>
             </defs>
+
             <circle class="upg-circle-bg" cx="120" cy="120" r="100"/>
-            <path class="upg-circle-sector" id="chanceSector" d="M120 220 A100 100 0 1 1 120 20 A100 100 0 1 1 120 220" pathLength="100" stroke="url(#chanceGradient)"/>
+
+            <!-- ПОЗНАЧКИ % НА ЦИФЕРБЛАТІ -->
+            <g class="upg-marks">
+              <!-- 12:00 — 100% -->
+              <line x1="120" y1="20" x2="120" y2="34"/>
+              <text x="120" y="12">100%</text>
+              <!-- 3:00 — 50% -->
+              <line x1="220" y1="120" x2="206" y2="120"/>
+              <text x="232" y="120">50%</text>
+              <!-- 6:00 — 0% -->
+              <line x1="120" y1="220" x2="120" y2="206"/>
+              <text x="120" y="232">0%</text>
+              <!-- 9:00 — 50% -->
+              <line x1="20" y1="120" x2="34" y2="120"/>
+              <text x="8" y="120">50%</text>
+            </g>
+
+            <path class="upg-circle-sector" id="chanceSector"
+                  d="M120 220 A100 100 0 1 1 120 20 A100 100 0 1 1 120 220"
+                  pathLength="100"
+                  stroke="url(#chanceGradient)"/>
           </svg>
-          <div class="upg-needle" id="circleNeedle"><div class="upg-needle-head"></div><div class="upg-needle-body"></div></div>
+
+          <div class="upg-needle" id="circleNeedle">
+            <div class="upg-needle-head"></div>
+            <div class="upg-needle-body"></div>
+          </div>
+
           <div class="upg-circle-center">
             <div class="upg-percent" id="circlePercent">—</div>
             <div class="upg-status" id="circleStatus">ВЫБЕРИ ПРЕДМЕТ</div>
           </div>
         </div>
+
         <div class="upg-speed-row">
           <button class="upg-speed-btn active" id="speedSlowBtn">МЕДЛЕННО</button>
           <button class="upg-speed-btn" id="speedFastBtn">БЫСТРО</button>
         </div>
+
         <button class="upg-action-btn" id="upgradeBtn" disabled>АПГРЕЙД</button>
       </div>
 
+      <!-- ПРАВА ПАНЕЛЬ — ЦІЛЬ -->
       <div class="upg-panel">
-        <div class="upg-panel-head"><span class="upg-panel-label">ЦЕЛЬ</span><span class="upg-panel-price" id="targetPriceLabel">—</span></div>
+        <div class="upg-panel-head">
+          <span class="upg-panel-label">ЦЕЛЬ</span>
+          <span class="upg-panel-price" id="targetPriceLabel">—</span>
+        </div>
         <div class="upg-item-slot" id="targetSlot">
-          <div class="upg-item-empty"><div class="upg-item-empty-icon">?</div><div class="upg-item-empty-text">Цель</div></div>
+          <div class="upg-item-empty">
+            <div class="upg-item-empty-icon">?</div>
+            <div class="upg-item-empty-text">Цель</div>
+          </div>
         </div>
         <button class="upg-btn-remove" id="targetRemoveBtn" style="display:none">✕ Убрать</button>
       </div>
@@ -126,13 +185,22 @@ window.dispatchEvent(new Event('fb-ready'));
 
     <div class="upg-bottom">
       <div class="upg-inv-panel">
-        <div class="upg-inv-head"><span class="upg-inv-title">МОЙ ИНВЕНТАРЬ</span><span class="upg-inv-count" id="invPanelCount">0 шт.</span></div>
+        <div class="upg-inv-head">
+          <span class="upg-inv-title">МОЙ ИНВЕНТАРЬ</span>
+          <span class="upg-inv-count" id="invPanelCount">0 шт.</span>
+        </div>
         <input type="text" class="upg-inv-input" id="invSearch" placeholder="Поиск...">
         <div class="upg-inv-filters" id="invPanelFilters"></div>
-        <div class="upg-inv-list" id="invPanelList"><div class="upg-inv-empty">Инвентарь пуст</div></div>
+        <div class="upg-inv-list" id="invPanelList">
+          <div class="upg-inv-empty">Инвентарь пуст</div>
+        </div>
       </div>
+
       <div class="upg-items-panel">
-        <div class="upg-inv-head"><span class="upg-inv-title">ПРЕДМЕТЫ ДЛЯ АПГРЕЙДА</span><span class="upg-items-count" id="targetsCount">0</span></div>
+        <div class="upg-inv-head">
+          <span class="upg-inv-title">ПРЕДМЕТЫ ДЛЯ АПГРЕЙДА</span>
+          <span class="upg-items-count" id="targetsCount">0</span>
+        </div>
         <input type="text" class="upg-inv-input" id="itemsSearch" placeholder="Поиск цели...">
         <div class="upg-inv-filters" id="itemsPanelFilters"></div>
         <div class="upg-items-grid" id="itemsPanelGrid"></div>
