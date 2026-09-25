@@ -197,8 +197,8 @@ var state={
     balance:0,inventory:[],profit:0,
     totalWon:0,totalLost:0,totalSold:0,upgrades:0,purchases:0,
     bestDrop:null,bestUpgrade:null,
-    upgradeSource:null,       // основний (перший) предмет
-    upgradeSource2:null,      // другий предмет (опційно)
+    upgradeSource:null,
+    upgradeSource2:null,
     upgradeTarget:null,selectedPreset:null,
     spinSpeed:'slow',
     housePlayerLost:0,houseCasinoWon:0,
@@ -336,7 +336,6 @@ function _lg(m,t){
 
 function _ch(sp,tp){var c=(sp/tp)*100*0.90;if(c>95)c=95;if(c<0.01)c=0.01;return c;}
 
-/* Сумарна ціна двох source предметів */
 function _sourceTotal(){
     var total = 0;
     if(state.upgradeSource) total += _a1(state.upgradeSource);
@@ -344,7 +343,6 @@ function _sourceTotal(){
     return total;
 }
 
-/* Чи обидва предмети однакові (не можна) */
 function _isSameItem(){
     return state.upgradeSource && state.upgradeSource2 && state.upgradeSource.uid === state.upgradeSource2.uid;
 }
@@ -441,15 +439,80 @@ function _sr(o){
 }
 function _cr(){_ck();$('resultModal').classList.remove('show');}
 
-var _CR=100;var _CC=2*Math.PI*_CR;
+/* ============================================================
+   КОЛЕСО — дуга росте знизу, поділки, червона зона знизу
+   ============================================================ */
+var _RING_R = 130;
+var _RING_CX = 150;
+var _RING_CY = 150;
+var _RING_CIRC = 2 * Math.PI * _RING_R;
+
+/* Малюємо 72 поділки (кожні 5%) */
+function _buildTicks(){
+    var g = document.getElementById('ringTicks');
+    if(!g) return;
+    var html = '';
+    for(var i = 0; i < 72; i++){
+        var angle = (i / 72) * 360 - 90; // 0° — вгорі
+        var rad = angle * Math.PI / 180;
+        var r1 = _RING_R - 14;
+        var r2 = _RING_R + 14;
+        var x1 = _RING_CX + Math.cos(rad) * r1;
+        var y1 = _RING_CY + Math.sin(rad) * r1;
+        var x2 = _RING_CX + Math.cos(rad) * r2;
+        var y2 = _RING_CY + Math.sin(rad) * r2;
+        var isMajor = (i % 2 === 0); // кожна 10% — товща
+        var sw = isMajor ? 2 : 1;
+        var op = isMajor ? 0.5 : 0.2;
+        html += '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="#4a4a5e" stroke-width="'+sw+'" stroke-opacity="'+op+'"/>';
+    }
+    g.innerHTML = html;
+}
+
+/* Малюємо червону зону виграшу знизу (від 170° до 190° — ширина 20°) */
+function _buildWinZone(chancePct){
+    var el = document.getElementById('winZone');
+    if(!el) return;
+    // Зона виграшу залежить від шансу — чим менше шанс, тим вужча зона
+    // Але мінімум 5° для видимості
+    var halfWidth = Math.max(5, Math.min(90, chancePct * 1.8));
+    // Знизу = 180°. Малюємо сектор від (180 - halfWidth) до (180 + halfWidth)
+    var startAngle = 180 - halfWidth;
+    var endAngle = 180 + halfWidth;
+
+    var startRad = startAngle * Math.PI / 180;
+    var endRad = endAngle * Math.PI / 180;
+    var rOuter = _RING_R + 10;
+    var rInner = _RING_R - 10;
+
+    var x1 = _RING_CX + Math.cos(startRad) * rOuter;
+    var y1 = _RING_CY + Math.sin(startRad) * rOuter;
+    var x2 = _RING_CX + Math.cos(endRad) * rOuter;
+    var y2 = _RING_CY + Math.sin(endRad) * rOuter;
+    var x3 = _RING_CX + Math.cos(endRad) * rInner;
+    var y3 = _RING_CY + Math.sin(endRad) * rInner;
+    var x4 = _RING_CX + Math.cos(startRad) * rInner;
+    var y4 = _RING_CY + Math.sin(startRad) * rInner;
+
+    var largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
+    var d = 'M ' + x1.toFixed(1) + ' ' + y1.toFixed(1)
+          + ' A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 1 ' + x2.toFixed(1) + ' ' + y2.toFixed(1)
+          + ' L ' + x3.toFixed(1) + ' ' + y3.toFixed(1)
+          + ' A ' + rInner + ' ' + rInner + ' 0 ' + largeArc + ' 0 ' + x4.toFixed(1) + ' ' + y4.toFixed(1)
+          + ' Z';
+    el.setAttribute('d', d);
+}
 
 function _dc(c){
     c = Math.max(0, Math.min(100, c));
     var el = $('chanceSector');
     if(!el) return;
+    // Дуга росте знизу (6:00) в обидва боки
     el.style.strokeDasharray = c + ' ' + (100 - c);
     el.style.strokeDashoffset = (c / 2);
     el.style.opacity = c <= 0 ? '0' : '1';
+    // Оновлюємо зону виграшу
+    _buildWinZone(c);
 }
 
 function _na(d){
@@ -466,7 +529,6 @@ function _cc(c,t,k){
     $('circlePercent').style.color=co;
 }
 
-/* Слот 1 */
 function _rs1(){
     var s=$('sourceSlot1');if(!s)return;
     if(state.upgradeSource){
@@ -481,7 +543,6 @@ function _rs1(){
     _updateSourceLabels();
 }
 
-/* Слот 2 */
 function _rs2(){
     var s=$('sourceSlot2');if(!s)return;
     var addBtn=$('addSecondBtn');
@@ -513,7 +574,6 @@ function _updateSourceLabels(){
         html += ' <span style="font-size:.7rem;color:#888">(2 шт.)</span>';
     }
     lbl.innerHTML = html;
-
     var rm = $('sourceRemoveBtn');
     if(rm){
         if(state.upgradeSource) rm.style.display='block';
@@ -610,7 +670,6 @@ function _sp2(i){
     _rt1();_rp1();_uc();
 }
 
-/* ── Інвентар для вибору source предметів ── */
 function _ri(){
     var l=$('invPanelList');if(!l)return;
     var f=state.invPanelFilter;
@@ -637,12 +696,6 @@ function _ri(){
         e.addEventListener('click',function(){
             if(_BUSY || state.upgrading) return;
             _un();_ck();
-            // Логіка вибору:
-            // 1) Якщо це вже source1 → прибрати
-            // 2) Якщо це вже source2 → прибрати
-            // 3) Якщо source1 порожній → поставити як source1
-            // 4) Якщо source1 є, source2 порожній → поставити як source2
-            // 5) Якщо обидва зайняті → замінити source1
             if(isSource1){
                 state.upgradeSource = state.upgradeSource2 || null;
                 state.upgradeSource2 = null;
@@ -708,7 +761,7 @@ function _rt2(){
 }
 
 /* ============================================================
-   _pa — СТРІЛКА
+   _pa — СТРІЛКА. ВИГРАШ = ВГОРУ, ПРОГРАШ = ВНИЗ
    ============================================================ */
 var _paRAF = null;
 function _pa(c, w){
@@ -716,15 +769,21 @@ function _pa(c, w){
         if(_paRAF){ cancelAnimationFrame(_paRAF); _paRAF = null; }
         var d = state.spinSpeed === 'fast' ? 2600 : 4800;
 
-        var half = c * 1.8;
+        // Знизу = 180°. Зона виграшу — знизу.
+        // half — пів-ширина зони виграшу в градусах
+        var half = Math.max(5, Math.min(90, c * 1.8));
         var fa;
         if(w){
-            var g1 = Math.min(5, half * 0.3);
+            // ВИГРАШ — падає в зону знизу (навколо 180°)
+            var g1 = Math.min(3, half * 0.3);
             fa = 180 + (Math.random() * 2 - 1) * (half - g1);
         } else {
-            var loseHalf = 180 - half;
-            var g2 = Math.min(5, loseHalf * 0.3);
-            fa = (Math.random() * 2 - 1) * (loseHalf - g2);
+            // ПРОГРАШ — падає ПОЗА зоною знизу (все, крім 180° ± half)
+            // Розділяємо на дві зони: верхня (0° ± (180-half)) і залишок
+            var upperHalf = 180 - half; // від 0° до 180° половина
+            var g2 = Math.min(3, upperHalf * 0.2);
+            // Кидаємо у верхню зону (0° ± upperHalf) з відступом від межі
+            fa = 0 + (Math.random() * 2 - 1) * (upperHalf - g2);
         }
         fa = ((fa % 360) + 360) % 360;
 
@@ -807,7 +866,6 @@ async function _hu(){
             _lg(ss.name+(ss2?' + '+ss2.name:'')+' -> провал','lose');
         }
 
-        // Прибираємо використані source предмети зі state.inventory
         state.inventory = state.inventory.filter(function(x){
             return x.uid !== ss.uid && (!ss2 || x.uid !== ss2.uid);
         });
@@ -1006,7 +1064,7 @@ async function _ssk(sk){
     }
 }
 
-function _ra(){_rs1();_rs2();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();_pr();}
+function _ra(){_buildTicks();_rs1();_rs2();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();_pr();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
@@ -1173,7 +1231,6 @@ function _ah(){
 
     var ub2=$('upgradeBtn');if(ub2)ub2.addEventListener('click',_hu);
 
-    /* Слот 1 */
     var ss1=$('sourceSlot1');
     if(ss1)ss1.addEventListener('click',function(){
         if(state.upgradeSource)return;
@@ -1182,7 +1239,6 @@ function _ah(){
         if(p)p.scrollIntoView({behavior:'smooth',block:'center'});
     });
 
-    /* Слот 2 */
     var ss22=$('sourceSlot2');
     if(ss22)ss22.addEventListener('click',function(){
         if(!state.upgradeSource){_lg('Сначала выбери первый предмет','lose');return;}
@@ -1192,7 +1248,6 @@ function _ah(){
         if(p)p.scrollIntoView({behavior:'smooth',block:'center'});
     });
 
-    /* Кнопка "Додати другий" */
     var asb=$('addSecondBtn');
     if(asb)asb.addEventListener('click',function(){
         if(!state.upgradeSource){_lg('Сначала выбери первый предмет','lose');return;}
