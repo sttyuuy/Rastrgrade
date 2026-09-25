@@ -1,5 +1,5 @@
 /**
- * API-клієнт для Rastgrade. Звичайний скрипт (без import/export).
+ * API-клієнт для RustUp. Звичайний скрипт (без import/export).
  * Кожен запит має тайм-аут, щоб сайт не «висів» при повільному сервері.
  */
 (function () {
@@ -46,9 +46,7 @@
         return data;
     }
 
-    /* ============================================================
-       КЕШ getUserData — щоб не спамити Firestore
-       ============================================================ */
+    /* ── Кеш getUserData на 3 секунди ── */
     let _lastUserFetch = 0;
     let _lastUserData = null;
     let _lastUserPromise = null;
@@ -88,8 +86,7 @@
         getSteamAuthUrl: () => `${API_BASE}/steam-auth`,
 
         getUserData: getUserDataCached,
-
-            getPrices: () => apiRequest('/prices', {}, 15000),
+        getPrices: () => apiRequest('/prices', {}, 15000),
 
         buyItem: (skinId, qty) => apiRequest('/buy', {
             method: 'POST',
