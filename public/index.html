@@ -61,6 +61,7 @@ window.dispatchEvent(new Event('fb-ready'));
     <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4"/><path d="M19 12H9"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".7" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5l3.2 2"/></symbol>
   </defs>
 </svg>
 
@@ -174,9 +175,6 @@ window.dispatchEvent(new Event('fb-ready'));
           </div>
         </div>
 
-        <!-- ПРЕСЕТИ ЗНИЗУ (як на референсі) -->
-        <div class="upg-presets-row" id="presetContainer"></div>
-
         <!-- КНОПКА АПГРЕЙД -->
         <button class="upg-action-btn" id="upgradeBtn" disabled>АПГРЕЙД</button>
       </div>
@@ -194,6 +192,14 @@ window.dispatchEvent(new Event('fb-ready'));
           </div>
         </div>
         <button class="upg-btn-remove" id="targetRemoveBtn" style="display:none"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>Убрать</button>
+      </div>
+    </div>
+
+    <div class="upg-controls-row">
+      <div class="upg-presets-row" id="presetContainer"></div>
+      <div class="upg-speed-toggle">
+        <button class="upg-speed-btn" id="speedSlowBtn" title="Медленное вращение"><svg class="icon" aria-hidden="true"><use href="#i-clock"></use></svg></button>
+        <button class="upg-speed-btn" id="speedFastBtn" title="Быстрое вращение"><svg class="icon" aria-hidden="true"><use href="#i-bolt"></use></svg></button>
       </div>
     </div>
 
