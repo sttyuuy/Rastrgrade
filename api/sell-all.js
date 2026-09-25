@@ -1,5 +1,6 @@
 const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { getClientIp, checkRateLimit } = require('../lib/rate-limit');
+const { withTimeout } = require('../lib/prices');
 
 const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
 
@@ -10,13 +11,6 @@ function setHeaders(res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-}
-
-function withTimeout(p, ms, label) {
-    return Promise.race([
-        p,
-        new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT ' + label)), ms))
-    ]);
 }
 
 function invalidateUserCache(uid) {
