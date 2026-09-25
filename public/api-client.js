@@ -1,6 +1,5 @@
 /**
  * API-клієнт для RustUp. Звичайний скрипт (без import/export).
- * Кожен запит має тайм-аут, щоб сайт не «висів» при повільному сервері.
  */
 (function () {
     'use strict';
@@ -54,9 +53,7 @@
 
     async function getUserDataCached() {
         const now = Date.now();
-        if (_lastUserData && now - _lastUserFetch < USER_CACHE_MS) {
-            return _lastUserData;
-        }
+        if (_lastUserData && now - _lastUserFetch < USER_CACHE_MS) return _lastUserData;
         if (_lastUserPromise) return _lastUserPromise;
 
         _lastUserPromise = apiRequest('/user', {}, 12000)
@@ -103,10 +100,14 @@
             body: JSON.stringify({})
         }, 25000),
 
-        doUpgrade: (sourceUid, targetId) => apiRequest('/upgrade', {
-            method: 'POST',
-            body: JSON.stringify({ sourceUid, targetId })
-        }, 25000),
+        /* ── Апгрейд тепер приймає масив (1 або 2 предмети) ── */
+        doUpgrade: (sourceUids, targetId) => {
+            const arr = Array.isArray(sourceUids) ? sourceUids : [sourceUids];
+            return apiRequest('/upgrade', {
+                method: 'POST',
+                body: JSON.stringify({ sourceUids: arr, targetId })
+            }, 25000);
+        },
 
         setBalance: (amount, targetUid, mode) => apiRequest('/admin/set-balance', {
             method: 'POST',
