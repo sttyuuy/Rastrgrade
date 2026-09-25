@@ -184,11 +184,12 @@ function _ub(){
     var b=document.getElementById('userBadge');
     var i=document.getElementById('userBadgeIcon');
     if(!b||!i)return;
+    var defaultIcon='<svg class="icon" aria-hidden="true"><use href="#i-user"></use></svg>';
     if(_CU){
         b.title='Профиль';
         if(_UPA){i.innerHTML='<img src="'+_UPA+'" referrerpolicy="no-referrer" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';}
-        else{i.textContent='X';}
-    }else{b.title='Войти';i.textContent='?';}
+        else{i.innerHTML=defaultIcon;}
+    }else{b.title='Войти';i.innerHTML=defaultIcon;}
 }
 function _oa(){var m=document.getElementById('authModal');if(m)m.classList.add('show');}
 function _ca(){var m=document.getElementById('authModal');if(m)m.classList.remove('show');}
@@ -323,8 +324,8 @@ function _lg(m,t){
     while(w.children.length>=5)w.removeChild(w.firstChild);
     var e=document.createElement('div');
     e.className='toast '+t;
-    var icon = t==='win' ? 'OK' : t==='lose' ? 'X' : t==='jackpot' ? '★' : 'i';
-    e.innerHTML='<span class="toast-icon">'+icon+'</span><span>'+m+'</span>';
+    var iconKey = t==='win' ? 'check' : t==='lose' ? 'x-circle' : t==='jackpot' ? 'star' : 'info';
+    e.innerHTML='<span class="toast-icon"><svg class="icon" aria-hidden="true"><use href="#i-'+iconKey+'"></use></svg></span><span>'+m+'</span>';
     w.appendChild(e);
     setTimeout(function(){
         e.style.transition='all 0.4s';
@@ -414,7 +415,7 @@ function _sr(o){
         $('resultIcon').innerHTML='';$('resultIcon').style.display='none';
         $('resultSkin').innerHTML='<div class="item '+o.skin.rarity+'" style="margin:0 auto;display:inline-flex;border:none;background:transparent;min-width:auto;height:auto;padding:0">'+renderSkinIcon(o.skin)+'<div style="margin-top:12px"><div class="name" style="font-size:0.85rem">'+o.skin.name+'</div><div class="price" style="font-size:1rem;margin-top:6px">'+formatRastr(_a1(o.skin))+' '+_MF_ICON+'</div></div></div>';
     }else{
-        $('resultIcon').textContent=o.icon;$('resultIcon').style.display='block';$('resultSkin').innerHTML='';
+        $('resultIcon').innerHTML='<svg class="icon" aria-hidden="true"><use href="#i-'+o.icon+'"></use></svg>';$('resultIcon').style.display='flex';$('resultSkin').innerHTML='';
     }
     $('resultTitle').textContent=o.title;
     $('resultValue').innerHTML=o.value;
@@ -423,7 +424,7 @@ function _sr(o){
     else sb.style.display='none';
     if(o.type==='result-win'||o.type==='result-jackpot'){
         var w=$('resultParticles');w.innerHTML='';
-        var cs=o.type==='result-jackpot'?['#f5c542','#ffdd88','#ff6b1a']:['#00e676','#4aa8ff','#a55cff'];
+        var cs=o.type==='result-jackpot'?['#f0c04a','#ffdd88','#ff6a2c']:['#39d97a','#4aa8ff','#9d6bef'];
         for(var i=0;i<12;i++){
             var p=document.createElement('div');p.className='particle';
             var a=Math.random()*Math.PI*2;var d=120+Math.random()*180;
@@ -525,7 +526,7 @@ function _cc(c,t,k){
     _dc(c);
     $('circlePercent').textContent=Math.round(c)+'%';
     var s=$('circleStatus');s.textContent=t||'';s.className='upg-status '+(k||'');
-    var co;if(c>=65)co='#7ed321';else if(c>=35)co='#f5c542';else if(c>=15)co='#ff6b1a';else co='#ff3b3b';
+    var co;if(c>=65)co='#39d97a';else if(c>=35)co='#f0c04a';else if(c>=15)co='#ff6a2c';else co='#ff4444';
     $('circlePercent').style.color=co;
 }
 
@@ -538,7 +539,7 @@ function _rs1(){
             +'<div class="upg-item-rarity" style="color:'+RARITIES[state.upgradeSource.rarity].color+'">'+RARITIES[state.upgradeSource.rarity].name+'</div>';
     }else{
         s.className='upg-item-slot';
-        s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">+</div><div class="upg-item-empty-text">Выбрать предмет</div></div>';
+        s.innerHTML='<div class="upg-item-empty"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg><div class="upg-item-empty-text">Выбрать предмет</div></div>';
     }
     _updateSourceLabels();
 }
@@ -555,7 +556,7 @@ function _rs2(){
         if(addBtn) addBtn.style.display='none';
     }else{
         s.style.display='none';
-        s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">+</div><div class="upg-item-empty-text">Второй предмет</div></div>';
+        s.innerHTML='<div class="upg-item-empty"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg><div class="upg-item-empty-text">Второй предмет</div></div>';
         if(addBtn){
             if(state.upgradeSource) addBtn.style.display='block';
             else addBtn.style.display='none';
@@ -592,7 +593,7 @@ function _rt1(){
         $('targetRemoveBtn').style.display='block';
     }else{
         s.className='upg-item-slot';
-        s.innerHTML='<div class="upg-item-empty"><div class="upg-item-empty-icon">?</div><div class="upg-item-empty-text">Цель</div></div>';
+        s.innerHTML='<div class="upg-item-empty"><svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg><div class="upg-item-empty-text">Цель</div></div>';
         $('targetPriceLabel').textContent='—';
         $('targetRemoveBtn').style.display='none';
     }
@@ -732,8 +733,8 @@ function _rt2(){
         var e=document.createElement('div');
         e.className='upg-target-item '+sk.rarity;
         if(state.upgradeTarget&&state.upgradeTarget.id===sk.id){
-            e.style.borderColor='#f5c542';
-            e.style.boxShadow='0 0 20px rgba(245,197,66,0.5)';
+            e.style.borderColor='#f0c04a';
+            e.style.boxShadow='0 0 20px rgba(240,192,74,0.5)';
         }
         if(_BUSY || state.upgrading) e.classList.add('blocked');
         e.innerHTML=renderSkinIcon(sk)
@@ -858,11 +859,11 @@ async function _hu(){
 
         if(res.success){
             _wn(ts.rarity);
-            _sr({ type:'result-win', icon:'🏆', title:'УСПЕХ', skin:ts, value:'+'+formatRastr(_a1(ts))+' '+_MF_ICON, canSell:false });
+            _sr({ type:'result-win', icon:'trophy', title:'УСПЕХ', skin:ts, value:'+'+formatRastr(_a1(ts))+' '+_MF_ICON, canSell:false });
             _lg(ss.name+(ss2?' + '+ss2.name:'')+' -> '+ts.name,'win');
         } else {
             _ls();
-            _sr({ type:'result-lose', icon:'X', title:'ПРОВАЛ', skin:null, value:'Потеряно: '+formatRastr(_sourceTotal())+' '+_MF_ICON, canSell:false });
+            _sr({ type:'result-lose', icon:'x-circle', title:'ПРОВАЛ', skin:null, value:'Потеряно: '+formatRastr(_sourceTotal())+' '+_MF_ICON, canSell:false });
             _lg(ss.name+(ss2?' + '+ss2.name:'')+' -> провал','lose');
         }
 
@@ -1164,7 +1165,7 @@ function _ah(){
     var ss=$('speedSlowBtn');if(ss)ss.addEventListener('click',function(){_un();_ck();state.spinSpeed='slow';_usb();save();});
     var sf=$('speedFastBtn');if(sf)sf.addEventListener('click',function(){_un();_ck();state.spinSpeed='fast';_usb();save();});
     var rc=$('resultContinue');if(rc)rc.addEventListener('click',_cr);
-    var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').textContent=state.soundOn?'S':'M';if(state.soundOn){_un();_ck();}save();});
+    var sb=$('soundBtn');if(sb)sb.addEventListener('click',function(){state.soundOn=!state.soundOn;$('soundIcon').innerHTML=state.soundOn?'<svg class="icon" aria-hidden="true"><use href="#i-sound-on"></use></svg>':'<svg class="icon" aria-hidden="true"><use href="#i-sound-off"></use></svg>';if(state.soundOn){_un();_ck();}save();});
 
     var plb = $('profileLoginBtn');
     if(plb) plb.addEventListener('click', function(){ _ck(); _oa(); });
@@ -1331,7 +1332,7 @@ function _init(){
     var sf=document.querySelector('.shop-filter[data-rarity="'+state.shopFilter+'"]');
     if(sf){document.querySelectorAll('.shop-filter').forEach(function(b){b.classList.remove('active');});sf.classList.add('active');}
     if($('shopSort'))$('shopSort').value=state.shopSort;
-    if($('soundIcon'))$('soundIcon').textContent=state.soundOn?'S':'M';
+    if($('soundIcon'))$('soundIcon').innerHTML=state.soundOn?'<svg class="icon" aria-hidden="true"><use href="#i-sound-on"></use></svg>':'<svg class="icon" aria-hidden="true"><use href="#i-sound-off"></use></svg>';
     _ah();
     _fb();
     loadPricesFromApi();
