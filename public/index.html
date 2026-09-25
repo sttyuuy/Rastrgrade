@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#07070c">
+<meta name="theme-color" content="#08080d">
 <title>RustUp</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,10 +40,34 @@ window.dispatchEvent(new Event('fb-ready'));
 </head>
 <body>
 
+<!-- ================= ІКОНКИ (єдиний спрайт, без емодзі) ================= -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z" fill="currentColor"/></symbol>
+    <symbol id="i-upgrade" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-shop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-inventory" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3h-4a2 2 0 1 0 0 4h4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle cx="16" cy="12" r=".8" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16l5-5 4 4 7-8"/><path d="M15 6h5v5"/></symbol>
+    <symbol id="i-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8a5 5 0 0 1 0 8"/><path d="M19.5 5.5a9 9 0 0 1 0 13"/></symbol>
+    <symbol id="i-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.3l2.6 2.6L16 9.3"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="i-x-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6L12 2z" fill="currentColor"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8.2" r=".9" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v3a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4z"/><path d="M7 5H4v2a4 4 0 0 0 4 4"/><path d="M17 5h3v2a4 4 0 0 1-4 4"/><path d="M12 12v3"/><path d="M8 19h8"/><path d="M9 19v-1.5A3 3 0 0 1 12 15a3 3 0 0 1 3 2.5V19"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4"/><path d="M19 12H9"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".7" fill="currentColor" stroke="none"/></symbol>
+  </defs>
+</svg>
+
 <header class="hud-header">
   <div class="hud-left">
     <a href="#upgrade" class="logo" id="logoBtn" title="На главную">
-      <span class="logo-icon">⚡</span><span class="logo-rust">Rust</span><span class="logo-grade">Up</span>
+      <svg class="icon logo-icon" aria-hidden="true"><use href="#i-bolt"></use></svg><span class="logo-rust">Rust</span><span class="logo-grade">Up</span>
     </a>
     <div class="level-box">
       <div class="level-badge" id="levelBadge">1</div>
@@ -55,23 +79,23 @@ window.dispatchEvent(new Event('fb-ready'));
   </div>
   <div class="hud-right">
     <div class="hud-stat">
-      <div class="hud-stat-icon" id="balanceIcon"></div>
+      <div class="hud-stat-icon" id="balanceIcon"><svg class="icon" aria-hidden="true"><use href="#i-wallet"></use></svg></div>
       <div><div class="hud-stat-label">Баланс</div><div class="hud-stat-value gold" id="balance">0</div></div>
     </div>
     <div class="hud-stat">
-      <div class="hud-stat-icon" id="profitIcon"></div>
+      <div class="hud-stat-icon" id="profitIcon"><svg class="icon" aria-hidden="true"><use href="#i-trend"></use></svg></div>
       <div><div class="hud-stat-label">Профит</div><div class="hud-stat-value" id="profit">0</div></div>
     </div>
-    <button class="hud-btn" id="userBadge" title="Аккаунт"><span id="userBadgeIcon">◐</span></button>
-    <button class="hud-btn" id="soundBtn" title="Звук"><span id="soundIcon">S</span></button>
+    <button class="hud-btn" id="userBadge" title="Аккаунт"><span id="userBadgeIcon"><svg class="icon" aria-hidden="true"><use href="#i-user"></use></svg></span></button>
+    <button class="hud-btn" id="soundBtn" title="Звук"><span id="soundIcon"><svg class="icon" aria-hidden="true"><use href="#i-sound-on"></use></svg></span></button>
   </div>
 </header>
 
 <nav class="nav-tabs">
-  <button class="nav-tab active" data-page="upgrade"><span class="nav-tab-icon">◆</span><span class="nav-tab-text">Апгрейд</span></button>
-  <button class="nav-tab" data-page="shop"><span class="nav-tab-icon">▣</span><span class="nav-tab-text">Магазин</span></button>
-  <button class="nav-tab" data-page="inventory"><span class="nav-tab-icon">▤</span><span class="nav-tab-text">Инвентарь</span></button>
-  <button class="nav-tab" data-page="profile"><span class="nav-tab-icon">◐</span><span class="nav-tab-text">Профиль</span></button>
+  <button class="nav-tab active" data-page="upgrade"><svg class="icon" aria-hidden="true"><use href="#i-upgrade"></use></svg><span class="nav-tab-text">Апгрейд</span></button>
+  <button class="nav-tab" data-page="shop"><svg class="icon" aria-hidden="true"><use href="#i-shop"></use></svg><span class="nav-tab-text">Магазин</span></button>
+  <button class="nav-tab" data-page="inventory"><svg class="icon" aria-hidden="true"><use href="#i-inventory"></use></svg><span class="nav-tab-text">Инвентарь</span></button>
+  <button class="nav-tab" data-page="profile"><svg class="icon" aria-hidden="true"><use href="#i-user"></use></svg><span class="nav-tab-text">Профиль</span></button>
 </nav>
 
 <main class="main">
@@ -89,20 +113,20 @@ window.dispatchEvent(new Event('fb-ready'));
 
         <div class="upg-item-slot" id="sourceSlot1">
           <div class="upg-item-empty">
-            <div class="upg-item-empty-icon">+</div>
+            <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
             <div class="upg-item-empty-text">Выбрать предмет</div>
           </div>
         </div>
 
         <div class="upg-item-slot upg-item-slot-second" id="sourceSlot2" style="display:none">
           <div class="upg-item-empty">
-            <div class="upg-item-empty-icon">+</div>
+            <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
             <div class="upg-item-empty-text">Второй предмет</div>
           </div>
         </div>
 
-        <button class="upg-btn-add-second" id="addSecondBtn" style="display:none">+ Добавить второй предмет</button>
-        <button class="upg-btn-remove" id="sourceRemoveBtn" style="display:none">✕ Убрать</button>
+        <button class="upg-btn-add-second" id="addSecondBtn" style="display:none"><svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>Добавить второй предмет</button>
+        <button class="upg-btn-remove" id="sourceRemoveBtn" style="display:none"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>Убрать</button>
       </div>
 
       <!-- ЦЕНТР — КОЛЕСО -->
@@ -131,13 +155,13 @@ window.dispatchEvent(new Event('fb-ready'));
             <defs>
               <linearGradient id="chanceGradient" gradientUnits="userSpaceOnUse" x1="150" y1="280" x2="150" y2="20">
                 <stop offset="0%" stop-color="#ff3b3b"/>
-                <stop offset="50%" stop-color="#f5c542"/>
-                <stop offset="100%" stop-color="#7ed321"/>
+                <stop offset="50%" stop-color="#f0c04a"/>
+                <stop offset="100%" stop-color="#39d97a"/>
               </linearGradient>
             </defs>
           </svg>
 
-          <!-- СТРІЛКА (біла, тонка, зверху) -->
+          <!-- СТРІЛКА (світла, тонка, зверху) -->
           <div class="upg-needle" id="circleNeedle">
             <div class="upg-needle-head"></div>
             <div class="upg-needle-body"></div>
@@ -165,11 +189,11 @@ window.dispatchEvent(new Event('fb-ready'));
         </div>
         <div class="upg-item-slot" id="targetSlot">
           <div class="upg-item-empty">
-            <div class="upg-item-empty-icon">?</div>
+            <svg class="icon" aria-hidden="true"><use href="#i-target"></use></svg>
             <div class="upg-item-empty-text">Цель</div>
           </div>
         </div>
-        <button class="upg-btn-remove" id="targetRemoveBtn" style="display:none">✕ Убрать</button>
+        <button class="upg-btn-remove" id="targetRemoveBtn" style="display:none"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>Убрать</button>
       </div>
     </div>
 
@@ -202,15 +226,15 @@ window.dispatchEvent(new Event('fb-ready'));
 <section class="page" id="page-shop">
   <div class="card">
     <div class="card-head">
-      <div><h2 class="card-title"><span class="card-title-icon">▣</span> Магазин скинов</h2><div class="card-sub">Цены в Metal Fragments</div></div>
+      <div><h2 class="card-title"><svg class="icon card-title-icon" aria-hidden="true"><use href="#i-shop"></use></svg> Магазин скинов</h2><div class="card-sub">Цены в Metal Fragments</div></div>
     </div>
     <div class="shop-info-bar"><span>Твой баланс:</span><div class="shop-info-value" id="shopBalance">0</div></div>
     <div class="shop-filters">
       <button class="shop-filter active" data-rarity="all">Все</button>
       <button class="shop-filter" data-rarity="common" style="color:#4aa8ff">Обычные</button>
-      <button class="shop-filter" data-rarity="rare" style="color:#a55cff">Редкие</button>
-      <button class="shop-filter" data-rarity="legendary" style="color:#f5c542">Легендарные</button>
-      <button class="shop-filter" data-rarity="mythical" style="color:#ff0044">Мифические</button>
+      <button class="shop-filter" data-rarity="rare" style="color:#9d6bef">Редкие</button>
+      <button class="shop-filter" data-rarity="legendary" style="color:#f0c04a">Легендарные</button>
+      <button class="shop-filter" data-rarity="mythical" style="color:#ff3d5a">Мифические</button>
       <select class="shop-sort" id="shopSort">
         <option value="price-asc">Цена ↑</option>
         <option value="price-desc">Цена ↓</option>
@@ -225,15 +249,15 @@ window.dispatchEvent(new Event('fb-ready'));
 <section class="page" id="page-inventory">
   <div class="card">
     <div class="card-head">
-      <div><h2 class="card-title"><span class="card-title-icon">▤</span> Инвентарь</h2>
+      <div><h2 class="card-title"><svg class="icon card-title-icon" aria-hidden="true"><use href="#i-inventory"></use></svg> Инвентарь</h2>
       <div class="card-sub">Предметов: <span id="invCount" class="gold">0</span> • Стоимость: <span id="invValue" class="gold">0</span></div></div>
     </div>
     <div class="inv-filters">
       <button class="inv-filter active" data-rarity="all">Все</button>
       <button class="inv-filter" data-rarity="common" style="color:#4aa8ff">Обычные</button>
-      <button class="inv-filter" data-rarity="rare" style="color:#a55cff">Редкие</button>
-      <button class="inv-filter" data-rarity="legendary" style="color:#f5c542">Легендарные</button>
-      <button class="inv-filter" data-rarity="mythical" style="color:#ff0044">Мифические</button>
+      <button class="inv-filter" data-rarity="rare" style="color:#9d6bef">Редкие</button>
+      <button class="inv-filter" data-rarity="legendary" style="color:#f0c04a">Легендарные</button>
+      <button class="inv-filter" data-rarity="mythical" style="color:#ff3d5a">Мифические</button>
       <button class="btn-mini" id="sellAllBtn" style="margin-left:auto">Продать всё</button>
     </div>
     <div class="inv-grid" id="inventory"></div>
@@ -242,17 +266,17 @@ window.dispatchEvent(new Event('fb-ready'));
 
 <section class="page" id="page-profile">
   <div class="card">
-    <div class="card-head"><h2 class="card-title"><span class="card-title-icon">◐</span> Профиль</h2></div>
+    <div class="card-head"><h2 class="card-title"><svg class="icon card-title-icon" aria-hidden="true"><use href="#i-user"></use></svg> Профиль</h2></div>
 
     <div id="profileNotLogged" class="profile-guest" style="display:none">
-      <div class="profile-guest-icon">◐</div>
+      <div class="profile-guest-icon"><svg class="icon" aria-hidden="true"><use href="#i-user"></use></svg></div>
       <div class="profile-guest-text">Войди, чтобы увидеть профиль</div>
       <button class="btn-primary" id="profileLoginBtn">ВОЙТИ</button>
     </div>
 
     <div id="profileContent" style="display:none">
       <div class="profile-head">
-        <div class="profile-avatar" id="profileAvatar">◐</div>
+        <div class="profile-avatar" id="profileAvatar"><svg class="icon" style="width:36px;height:36px" aria-hidden="true"><use href="#i-user"></use></svg></div>
         <div class="profile-info">
           <div class="profile-name" id="profileName">Гость</div>
           <div class="profile-id" id="profileId">ID: —</div>
@@ -288,7 +312,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <div class="modal" id="resultModal">
   <div class="modal-inner result-inner" id="resultInner">
     <div class="result-particles" id="resultParticles"></div>
-    <div class="result-icon" id="resultIcon">◆</div>
+    <div class="result-icon" id="resultIcon"><svg class="icon" aria-hidden="true"><use href="#i-trophy"></use></svg></div>
     <h2 class="result-title" id="resultTitle">ПОБЕДА</h2>
     <div class="result-skin" id="resultSkin"></div>
     <div class="result-value" id="resultValue">+0</div>
@@ -301,7 +325,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 <div class="modal" id="buyModal">
   <div class="modal-inner buy-inner" id="buyInner">
-    <div class="buy-icon-slot" id="buyIcon"><div class="skin-icon">◆</div></div>
+    <div class="buy-icon-slot" id="buyIcon"><div class="skin-icon"></div></div>
     <h2 class="buy-title" id="buyTitle">Покупка</h2>
     <div class="buy-sub" id="buySub">Подтвердить покупку?</div>
     <div class="buy-price" id="buyPrice">0</div>
@@ -314,12 +338,12 @@ window.dispatchEvent(new Event('fb-ready'));
 
 <div class="modal" id="authModal">
   <div class="modal-inner auth-inner">
-    <div class="auth-icon">◐</div>
+    <div class="auth-icon"><svg class="icon" aria-hidden="true"><use href="#i-user"></use></svg></div>
     <h2 class="auth-title">ВХОД</h2>
     <div class="auth-sub">Войди, чтобы синхронизировать прогресс</div>
     <div class="auth-hint-top">Первый раз? Аккаунт создастся автоматически.<br>Уже играл? Твой прогресс загрузится с облака.</div>
     <button class="auth-btn" id="googleLoginBtn">
-      <svg class="auth-google-icon" viewBox="0 0 48 48" width="22" height="22">
+      <svg class="auth-google-icon" viewBox="0 0 48 48" width="20" height="20">
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
         <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
@@ -335,7 +359,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 <div class="modal" id="logoutModal">
   <div class="modal-inner auth-inner" style="max-width:400px">
-    <div class="auth-icon">⇥</div>
+    <div class="auth-icon"><svg class="icon" aria-hidden="true"><use href="#i-logout"></use></svg></div>
     <h2 class="auth-title">ВЫХОД</h2>
     <div class="auth-hint-top" style="margin-bottom:20px">Точно ли вы хотите выйти из аккаунта?<br>Прогресс сохранится в облаке.</div>
     <div style="display:flex;gap:10px;justify-content:center">
