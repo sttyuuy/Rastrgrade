@@ -2,6 +2,7 @@ const { getFirestore, getAuth } = require('../lib/firebase-admin');
 const { getClientIp, checkRateLimit } = require('../lib/rate-limit');
 const { randomUUID } = require('crypto');
 const SKINS = require('../lib/skins');
+const { getCatalogPrice, withTimeout } = require('../lib/prices');
 
 const ALLOWED_ORIGIN = 'https://rastrgrade.vercel.app';
 const MAX_QTY = 50;
@@ -16,48 +17,6 @@ function setHeaders(res) {
     res.setHeader('Cache-Control', 'no-store');
 }
 
-function norm(s) {
-    return (s || '').toLowerCase().replace(/[^a-zа-я0-9]/gi, '');
-}
-
-function withTimeout(p, ms, label) {
-    return Promise.race([
-        p,
-        new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT ' + label)), ms))
-    ]);
-}
-
-/* ── Кеш цін скінів ── */
-let _priceCache = null;
-let _priceCacheAt = 0;
-const PRICE_CACHE_TTL = 5 * 60 * 1000;
-
-async function getFirestorePrices(db) {
-    const now = Date.now();
-    if (_priceCache && (now - _priceCacheAt) < PRICE_CACHE_TTL) return _priceCache;
-    try {
-        const snap = await withTimeout(db.collection('skins').get(), 8000, 'skins.get');
-        const map = {};
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (d.name && d.price) map[norm(d.name)] = d.price;
-        });
-        _priceCache = map;
-        _priceCacheAt = now;
-        return map;
-    } catch (e) {
-        console.error('[buy] prices error:', e.message);
-        return _priceCache || {};
-    }
-}
-
-async function getEffectivePrice(db, skin) {
-    const prices = await getFirestorePrices(db);
-    const fsPrice = prices[norm(skin.name)];
-    return (fsPrice && fsPrice > 0) ? fsPrice : (skin.price || 0);
-}
-
-/* Очищення кешу користувача після зміни */
 function invalidateUserCache(uid) {
     try {
         const userMod = require('./user');
@@ -105,7 +64,7 @@ module.exports = async (req, res) => {
 
     try {
         const db = getFirestore();
-        const unitPrice = await getEffectivePrice(db, skin);
+        const unitPrice = getCatalogPrice(skin);
         const total = Math.round(unitPrice * qty * 100) / 100;
         const userRef = db.collection('users').doc(steamId);
 
