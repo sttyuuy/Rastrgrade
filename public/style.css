@@ -162,12 +162,10 @@ svg.icon *{vector-effect:non-scaling-stroke}
 /* Колесо */
 .upg-circle-wrap{position:relative;width:296px;height:296px;display:grid;place-items:center}
 .upg-ring-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.upg-circle-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;display:none}
-.upg-circle-bg{fill:none;stroke:#17171f;stroke-width:14}
-.upg-circle-sector{fill:none;stroke-width:14;stroke-linecap:round;stroke-dasharray:0 100;stroke-dashoffset:0;opacity:0;filter:drop-shadow(0 0 7px rgba(255,150,60,.45));transition:stroke-dasharray .5s var(--ease),stroke-dashoffset .5s var(--ease),opacity .2s}
+.upg-gauge-cap{position:absolute;top:2px;left:50%;transform:translateX(-50%);font:700 .62rem 'Share Tech Mono',monospace;letter-spacing:1px;color:var(--dim2);z-index:3;pointer-events:none}
 
 /* Стрілка — світла, тонка, зверху */
-.upg-needle{position:absolute;inset:0;z-index:5;pointer-events:none;transform-origin:50% 50%;transform:translateZ(0) rotate(0deg);will-change:transform}
+.upg-needle{position:absolute;inset:0;z-index:5;pointer-events:none;transform-origin:50% 50%;transform:translateZ(0) rotate(20deg);will-change:transform}
 .upg-needle-head{position:absolute;top:15px;left:50%;width:0;height:0;transform:translateX(-50%);border-left:9px solid transparent;border-right:9px solid transparent;border-top:17px solid #f4f4f8;filter:drop-shadow(0 1px 4px rgba(0,0,0,.5)) drop-shadow(0 0 5px rgba(255,255,255,.7))}
 .upg-needle-body{position:absolute;top:32px;left:50%;width:3px;height:40px;transform:translateX(-50%);border-radius:2px;background:linear-gradient(180deg,#f4f4f8 0%,rgba(244,244,248,.25) 70%,transparent 100%)}
 
