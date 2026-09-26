@@ -441,26 +441,28 @@ function _sr(o){
 function _cr(){_ck();$('resultModal').classList.remove('show');}
 
 /* ============================================================
-   КОЛЕСО — статичний градієнтний ґейдж (як спідометр):
-   червоний → жовтий → зелений по колу з невеликим розривом зверху.
-   Стрілка в стані очікування стоїть на реальній позиції шансу;
-   під час спіна падає у "зелену" (виграш) або "червону" (програш)
-   частину — розмір цих частин залежить від шансу.
+   КОЛЕСО: колір = зона ВИГРАШУ, чорне (непофарбоване) = зона ПРОГРАШУ.
+   Розмір кольорової дуги = поточний % шансу, росте від червоного
+   краю (справа від розриву зверху) до зеленого. Стрілка в стані
+   очікування стоїть точно на межі колір/чорне.
    ============================================================ */
 var _RING_R = 130;
 var _RING_CX = 150;
 var _RING_CY = 150;
-var _GAP_DEG = 40;                 // розрив зверху (градуси)
-var _ARC_START = _GAP_DEG / 2;     // 20° — червоний край (CSS-кут, 0=верх, за годинниковою)
-var _ARC_END = 360 - _GAP_DEG / 2; // 340° — зелений край
+var _GAP_DEG = 40;                 // розрив зверху (градуси) — суто декоративний, поза грою
+var _ARC_START = _GAP_DEG / 2;     // 20° — початок дуги (червоний край)
+var _ARC_END = 360 - _GAP_DEG / 2; // 340° — кінець дуги (зелений край)
 var _ARC_SPAN = _ARC_END - _ARC_START;
 
+/* Кут (CSS, 0=верх, за годинниковою), де закінчується кольорова (виграшна) зона й починається чорна */
 function _gaugeAngle(c){
     c = Math.max(0, Math.min(100, c));
     return _ARC_START + (c / 100) * _ARC_SPAN;
 }
 
-/* Лінійна інтерполяція кольору вздовж ґейджа: червоний → помаранчевий → жовтий → зелений */
+/* Лінійна інтерполяція кольору вздовж ґейджа: червоний → помаранчевий → жовтий → зелений.
+   f рахується відносно ВСІЄЇ дуги (0..1 = _ARC_START.._ARC_END), тому колір у конкретній
+   точці не "розтягується" при зміні шансу — просто більше або менше цієї смуги стає видно. */
 var _GAUGE_STOPS = [
     [0, [255, 68, 68]],
     [0.35, [255, 106, 44]],
@@ -482,17 +484,24 @@ function _gaugeColor(f){
     return 'rgb(57,217,122)';
 }
 
-/* Малюємо статичний градієнтний ґейдж один раз (не залежить від поточного шансу) */
-function _buildGaugeRing(){
+/* Перемальовуємо кільце під поточний шанс c (0-100): від _ARC_START і на довжину
+   c% від _ARC_SPAN малюємо кольорову (виграшну) дугу; все, що лишається до
+   _ARC_END, просто НЕ малюється — там видно темний фоновий трек (програш). */
+function _buildGaugeRing(c){
     var g = document.getElementById('ringTicks');
     if(!g) return;
+    c = Math.max(0, Math.min(100, c));
+    var winLen = (c/100) * _ARC_SPAN;
+    var winEnd = _ARC_START + winLen;
     var STEPS = 96;
     var html = '';
     for(var i=0;i<STEPS;i++){
         var t0 = i/STEPS, t1=(i+1)/STEPS;
         var a0 = _ARC_START + t0*_ARC_SPAN;
         var a1 = _ARC_START + t1*_ARC_SPAN;
-        var mid = (t0+t1)/2;
+        if(a0 >= winEnd) break; // за межею виграшної зони — лишаємо чорним (не малюємо)
+        if(a1 > winEnd) a1 = winEnd; // останній сегмент обрізаємо точно по межі
+        var mid = ((a0+a1)/2 - _ARC_START) / _ARC_SPAN;
         var rad0 = (a0-90)*Math.PI/180, rad1=(a1-90)*Math.PI/180;
         var x0=_RING_CX+Math.cos(rad0)*_RING_R, y0=_RING_CY+Math.sin(rad0)*_RING_R;
         var x1=_RING_CX+Math.cos(rad1)*_RING_R, y1=_RING_CY+Math.sin(rad1)*_RING_R;
@@ -510,6 +519,7 @@ function _na(d){
 function _cc(c,t,k){
     c = Math.max(0, Math.min(100, c));
     _na(_gaugeAngle(c));
+    _buildGaugeRing(c);
     $('circlePercent').textContent=(Math.round(c*100)/100).toFixed(2)+'%';
     var s=$('circleStatus');s.textContent=t||'';s.className='upg-status '+(k||'');
     var co;if(c>=65)co='#39d97a';else if(c>=35)co='#f0c04a';else if(c>=15)co='#ff6a2c';else co='#ff4444';
@@ -753,22 +763,21 @@ function _pa(c, w){
         if(_paRAF){ cancelAnimationFrame(_paRAF); _paRAF = null; }
         var d = state.spinSpeed === 'fast' ? 2600 : 4800;
 
-        // Знизу = 180°. Зона виграшу — знизу.
-        // Зелений (виграшний) край ґейджа має довжину, пропорційну шансу c%.
-        // Решта дуги, від червоного краю — зона програшу.
+        // Кольорова (виграшна) зона на кільці росте від червоного краю (_ARC_START)
+        // на довжину, пропорційну шансу c%. Все, що після неї до зеленого краю — чорне (програш).
         var winLen = Math.max(4, Math.min(_ARC_SPAN, (c / 100) * _ARC_SPAN));
-        var winStart = _ARC_END - winLen;
-        var loseEnd = Math.max(_ARC_START + 4, winStart);
+        var winEnd = _ARC_START + winLen;
+        var loseStart = Math.min(_ARC_END - 4, winEnd);
         var fa;
         if(w){
-            // ВИГРАШ — падає десь у зеленій частині (ближче до зеленого краю)
+            // ВИГРАШ — падає десь усередині кольорової дуги (від червоного краю до winEnd)
             var padW = Math.min(3, winLen * 0.15);
-            fa = winStart + padW + Math.random() * Math.max(0.001, (_ARC_END - winStart - 2 * padW));
+            fa = _ARC_START + padW + Math.random() * Math.max(0.001, (winEnd - _ARC_START - 2 * padW));
         } else {
-            // ПРОГРАШ — падає десь у решті дуги (від червоного краю до початку зеленої зони)
-            var loseLen = loseEnd - _ARC_START;
+            // ПРОГРАШ — падає десь у чорній частині (від кінця кольорової зони до зеленого краю)
+            var loseLen = _ARC_END - loseStart;
             var padL = Math.min(3, loseLen * 0.15);
-            fa = _ARC_START + padL + Math.random() * Math.max(0.001, (loseLen - 2 * padL));
+            fa = loseStart + padL + Math.random() * Math.max(0.001, (loseLen - 2 * padL));
         }
 
         var fs = state.spinSpeed === 'fast'
@@ -1048,7 +1057,7 @@ async function _ssk(sk){
     }
 }
 
-function _ra(){_buildGaugeRing();_rs1();_rs2();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_usb();_pr();}
+function _ra(){_rs1();_rs2();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_usb();_pr();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
