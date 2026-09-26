@@ -371,7 +371,7 @@ function _rz(){
     state.upgradeSource2=null;
     state.upgradeTarget=null;
     state.selectedPreset=null;
-    _rs1();_rs2();_rt1();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);
+    _rs1();_rs2();_rt1();_rp1();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');
     if(DOM.upgradeBtn)DOM.upgradeBtn.disabled=true;
 }
 
@@ -441,79 +441,64 @@ function _sr(o){
 function _cr(){_ck();$('resultModal').classList.remove('show');}
 
 /* ============================================================
-   КОЛЕСО — дуга росте знизу, поділки, червона зона знизу
+   КОЛЕСО — статичний градієнтний ґейдж (як спідометр):
+   червоний → жовтий → зелений по колу з невеликим розривом зверху.
+   Стрілка в стані очікування стоїть на реальній позиції шансу;
+   під час спіна падає у "зелену" (виграш) або "червону" (програш)
+   частину — розмір цих частин залежить від шансу.
    ============================================================ */
 var _RING_R = 130;
 var _RING_CX = 150;
 var _RING_CY = 150;
-var _RING_CIRC = 2 * Math.PI * _RING_R;
+var _GAP_DEG = 40;                 // розрив зверху (градуси)
+var _ARC_START = _GAP_DEG / 2;     // 20° — червоний край (CSS-кут, 0=верх, за годинниковою)
+var _ARC_END = 360 - _GAP_DEG / 2; // 340° — зелений край
+var _ARC_SPAN = _ARC_END - _ARC_START;
 
-/* Малюємо 72 поділки (кожні 5%) */
-function _buildTicks(){
+function _gaugeAngle(c){
+    c = Math.max(0, Math.min(100, c));
+    return _ARC_START + (c / 100) * _ARC_SPAN;
+}
+
+/* Лінійна інтерполяція кольору вздовж ґейджа: червоний → помаранчевий → жовтий → зелений */
+var _GAUGE_STOPS = [
+    [0, [255, 68, 68]],
+    [0.35, [255, 106, 44]],
+    [0.62, [240, 192, 74]],
+    [1, [57, 217, 122]]
+];
+function _gaugeColor(f){
+    f = Math.max(0, Math.min(1, f));
+    for(var i=0;i<_GAUGE_STOPS.length-1;i++){
+        var a=_GAUGE_STOPS[i], b=_GAUGE_STOPS[i+1];
+        if(f>=a[0] && f<=b[0]){
+            var lt = (f-a[0])/(b[0]-a[0] || 1);
+            var r = Math.round(a[1][0]+(b[1][0]-a[1][0])*lt);
+            var g = Math.round(a[1][1]+(b[1][1]-a[1][1])*lt);
+            var bl = Math.round(a[1][2]+(b[1][2]-a[1][2])*lt);
+            return 'rgb('+r+','+g+','+bl+')';
+        }
+    }
+    return 'rgb(57,217,122)';
+}
+
+/* Малюємо статичний градієнтний ґейдж один раз (не залежить від поточного шансу) */
+function _buildGaugeRing(){
     var g = document.getElementById('ringTicks');
     if(!g) return;
+    var STEPS = 96;
     var html = '';
-    for(var i = 0; i < 72; i++){
-        var angle = (i / 72) * 360 - 90; // 0° — вгорі
-        var rad = angle * Math.PI / 180;
-        var r1 = _RING_R - 14;
-        var r2 = _RING_R + 14;
-        var x1 = _RING_CX + Math.cos(rad) * r1;
-        var y1 = _RING_CY + Math.sin(rad) * r1;
-        var x2 = _RING_CX + Math.cos(rad) * r2;
-        var y2 = _RING_CY + Math.sin(rad) * r2;
-        var isMajor = (i % 2 === 0); // кожна 10% — товща
-        var sw = isMajor ? 2 : 1;
-        var op = isMajor ? 0.5 : 0.2;
-        html += '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="#4a4a5e" stroke-width="'+sw+'" stroke-opacity="'+op+'"/>';
+    for(var i=0;i<STEPS;i++){
+        var t0 = i/STEPS, t1=(i+1)/STEPS;
+        var a0 = _ARC_START + t0*_ARC_SPAN;
+        var a1 = _ARC_START + t1*_ARC_SPAN;
+        var mid = (t0+t1)/2;
+        var rad0 = (a0-90)*Math.PI/180, rad1=(a1-90)*Math.PI/180;
+        var x0=_RING_CX+Math.cos(rad0)*_RING_R, y0=_RING_CY+Math.sin(rad0)*_RING_R;
+        var x1=_RING_CX+Math.cos(rad1)*_RING_R, y1=_RING_CY+Math.sin(rad1)*_RING_R;
+        html += '<line x1="'+x0.toFixed(2)+'" y1="'+y0.toFixed(2)+'" x2="'+x1.toFixed(2)+'" y2="'+y1.toFixed(2)+'" stroke="'+_gaugeColor(mid)+'" stroke-width="14" stroke-linecap="round"/>';
     }
     g.innerHTML = html;
-}
-
-/* Малюємо червону зону виграшу знизу (від 170° до 190° — ширина 20°) */
-function _buildWinZone(chancePct){
-    var el = document.getElementById('winZone');
-    if(!el) return;
-    // Зона виграшу залежить від шансу — чим менше шанс, тим вужча зона
-    // Але мінімум 5° для видимості
-    var halfWidth = Math.max(5, Math.min(90, chancePct * 1.8));
-    // Знизу відповідає куту 90° у системі координат SVG (0°=право, 90°=низ, 180°=ліво, 270°=верх)
-    var startAngle = 90 - halfWidth;
-    var endAngle = 90 + halfWidth;
-
-    var startRad = startAngle * Math.PI / 180;
-    var endRad = endAngle * Math.PI / 180;
-    var rOuter = _RING_R + 10;
-    var rInner = _RING_R - 10;
-
-    var x1 = _RING_CX + Math.cos(startRad) * rOuter;
-    var y1 = _RING_CY + Math.sin(startRad) * rOuter;
-    var x2 = _RING_CX + Math.cos(endRad) * rOuter;
-    var y2 = _RING_CY + Math.sin(endRad) * rOuter;
-    var x3 = _RING_CX + Math.cos(endRad) * rInner;
-    var y3 = _RING_CY + Math.sin(endRad) * rInner;
-    var x4 = _RING_CX + Math.cos(startRad) * rInner;
-    var y4 = _RING_CY + Math.sin(startRad) * rInner;
-
-    var largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
-    var d = 'M ' + x1.toFixed(1) + ' ' + y1.toFixed(1)
-          + ' A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 1 ' + x2.toFixed(1) + ' ' + y2.toFixed(1)
-          + ' L ' + x3.toFixed(1) + ' ' + y3.toFixed(1)
-          + ' A ' + rInner + ' ' + rInner + ' 0 ' + largeArc + ' 0 ' + x4.toFixed(1) + ' ' + y4.toFixed(1)
-          + ' Z';
-    el.setAttribute('d', d);
-}
-
-function _dc(c){
-    c = Math.max(0, Math.min(100, c));
-    var el = $('chanceSector');
-    if(!el) return;
-    // Дуга росте знизу (6:00) в обидва боки
-    el.style.strokeDasharray = c + ' ' + (100 - c);
-    el.style.strokeDashoffset = (c / 2);
-    el.style.opacity = c <= 0 ? '0' : '1';
-    // Оновлюємо зону виграшу
-    _buildWinZone(c);
 }
 
 function _na(d){
@@ -523,8 +508,9 @@ function _na(d){
 }
 
 function _cc(c,t,k){
-    _dc(c);
-    $('circlePercent').textContent=Math.round(c)+'%';
+    c = Math.max(0, Math.min(100, c));
+    _na(_gaugeAngle(c));
+    $('circlePercent').textContent=(Math.round(c*100)/100).toFixed(2)+'%';
     var s=$('circleStatus');s.textContent=t||'';s.className='upg-status '+(k||'');
     var co;if(c>=65)co='#39d97a';else if(c>=35)co='#f0c04a';else if(c>=15)co='#ff6a2c';else co='#ff4444';
     $('circlePercent').style.color=co;
@@ -602,13 +588,11 @@ function _rt1(){
 function _uc(){
     if(!state.upgradeSource||!state.upgradeTarget){
         _cc(0,'ВЫБЕРИ ПРЕДМЕТ','');
-        _na(0);
         DOM.upgradeBtn.disabled=true;
         return;
     }
     if(_isSameItem()){
         _cc(0,'ДВА ОДИНАКОВЫХ','lose');
-        _na(0);
         DOM.upgradeBtn.disabled=true;
         return;
     }
@@ -621,7 +605,6 @@ function _uc(){
     else if(c>=1){s='ХАЙ РИСК';sc='lose';}
     else{s='ПОЧТИ НЕВОЗМОЖНО';sc='lose';}
     _cc(c,s,sc);
-    _na(0);
     DOM.upgradeBtn.disabled=false;
 }
 
@@ -771,22 +754,22 @@ function _pa(c, w){
         var d = state.spinSpeed === 'fast' ? 2600 : 4800;
 
         // Знизу = 180°. Зона виграшу — знизу.
-        // half — пів-ширина зони виграшу в градусах
-        var half = Math.max(5, Math.min(90, c * 1.8));
+        // Зелений (виграшний) край ґейджа має довжину, пропорційну шансу c%.
+        // Решта дуги, від червоного краю — зона програшу.
+        var winLen = Math.max(4, Math.min(_ARC_SPAN, (c / 100) * _ARC_SPAN));
+        var winStart = _ARC_END - winLen;
+        var loseEnd = Math.max(_ARC_START + 4, winStart);
         var fa;
         if(w){
-            // ВИГРАШ — падає в зону знизу (навколо 180°)
-            var g1 = Math.min(3, half * 0.3);
-            fa = 180 + (Math.random() * 2 - 1) * (half - g1);
+            // ВИГРАШ — падає десь у зеленій частині (ближче до зеленого краю)
+            var padW = Math.min(3, winLen * 0.15);
+            fa = winStart + padW + Math.random() * Math.max(0.001, (_ARC_END - winStart - 2 * padW));
         } else {
-            // ПРОГРАШ — падає ПОЗА зоною знизу (все, крім 180° ± half)
-            // Розділяємо на дві зони: верхня (0° ± (180-half)) і залишок
-            var upperHalf = 180 - half; // від 0° до 180° половина
-            var g2 = Math.min(3, upperHalf * 0.2);
-            // Кидаємо у верхню зону (0° ± upperHalf) з відступом від межі
-            fa = 0 + (Math.random() * 2 - 1) * (upperHalf - g2);
+            // ПРОГРАШ — падає десь у решті дуги (від червоного краю до початку зеленої зони)
+            var loseLen = loseEnd - _ARC_START;
+            var padL = Math.min(3, loseLen * 0.15);
+            fa = _ARC_START + padL + Math.random() * Math.max(0.001, (loseLen - 2 * padL));
         }
-        fa = ((fa % 360) + 360) % 360;
 
         var fs = state.spinSpeed === 'fast'
             ? 6 + Math.floor(Math.random() * 3)
@@ -903,7 +886,7 @@ async function _hu(){
         b.style.pointerEvents='';
         b.disabled=true;
         _rs1();_rs2();_rt1();_ri();_rp1();
-        _cc(0,'ВЫБЕРИ ПРЕДМЕТ',''); _na(0);
+        _cc(0,'ВЫБЕРИ ПРЕДМЕТ','');
     } catch(e) {
         console.error('upgrade error', e);
         _lg(e.message || 'Ошибка апгрейда','lose');
@@ -1065,7 +1048,7 @@ async function _ssk(sk){
     }
 }
 
-function _ra(){_buildTicks();_rs1();_rs2();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_na(0);_usb();_pr();}
+function _ra(){_buildGaugeRing();_rs1();_rs2();_rt1();_rp1();_ri();_rt2();_rsh();_ui();_rinv();_cc(0,'ВЫБЕРИ ПРЕДМЕТ','');_usb();_pr();}
 function _usb(){var s=$('speedSlowBtn');var f=$('speedFastBtn');if(!s||!f)return;if(state.spinSpeed==='fast'){s.classList.remove('active');f.classList.add('active');}else{s.classList.add('active');f.classList.remove('active');}}
 
 /* ============================================================
