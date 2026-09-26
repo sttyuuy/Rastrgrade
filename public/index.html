@@ -134,33 +134,16 @@ window.dispatchEvent(new Event('fb-ready'));
       <div class="upg-center">
         <div class="upg-circle-wrap">
 
-          <!-- ЗОВНІШНЄ КОЛЬЦО З ПОДІЛКАМИ -->
+          <!-- ЗОВНІШНЄ КОЛЬЦО — статичний градієнтний ґейдж -->
           <svg class="upg-ring-svg" viewBox="0 0 300 300">
-            <!-- Фонове коло -->
+            <!-- Фонове коло (трек) -->
             <circle cx="150" cy="150" r="130" fill="none" stroke="#1a1a28" stroke-width="30"/>
 
-            <!-- Поділки кожні 5% (72 поділки) -->
+            <!-- Градієнтний ґейдж: червоний → жовтий → зелений, з розривом зверху -->
             <g id="ringTicks"></g>
-
-            <!-- ЧЕРВОНИЙ СЕКТОР ЗНИЗУ (зона виграшу) -->
-            <path id="winZone" d="" fill="rgba(255,59,59,0.35)" stroke="rgba(255,59,59,0.9)" stroke-width="1.5"/>
-
-            <!-- Заповнена дуга шансу (зверху, росте в обидва боки) -->
-            <path class="upg-circle-sector" id="chanceSector"
-                  d="M150 280 A130 130 0 1 1 150 20 A130 130 0 1 1 150 280"
-                  pathLength="100"
-                  stroke="url(#chanceGradient)"/>
           </svg>
 
-          <svg class="upg-circle-svg" viewBox="0 0 300 300" style="display:none">
-            <defs>
-              <linearGradient id="chanceGradient" gradientUnits="userSpaceOnUse" x1="150" y1="280" x2="150" y2="20">
-                <stop offset="0%" stop-color="#ff3b3b"/>
-                <stop offset="50%" stop-color="#f0c04a"/>
-                <stop offset="100%" stop-color="#39d97a"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <div class="upg-gauge-cap">100%</div>
 
           <!-- СТРІЛКА (світла, тонка, зверху) -->
           <div class="upg-needle" id="circleNeedle">
